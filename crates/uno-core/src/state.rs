@@ -86,38 +86,31 @@ pub struct GameState {
 
 impl GameState {
     pub fn new(seed: u64, profile: AiProfile) -> Self {
+        Self::new_with_player_count(seed, 4, profile)
+    }
+
+    pub fn new_with_player_count(seed: u64, player_count: usize, profile: AiProfile) -> Self {
+        let player_count = player_count.clamp(3, 8);
         let mut draw_pile = build_deck();
         shuffle(&mut draw_pile, seed);
-        let mut players = vec![
-            Player {
-                id: 0,
-                name: "You".to_string(),
-                kind: PlayerKind::Human,
-                hand: Vec::with_capacity(7),
-                uno_called: false,
-            },
-            Player {
-                id: 1,
-                name: "Mika".to_string(),
-                kind: PlayerKind::Ai(profile),
-                hand: Vec::with_capacity(7),
-                uno_called: false,
-            },
-            Player {
-                id: 2,
-                name: "Nori".to_string(),
-                kind: PlayerKind::Ai(profile),
-                hand: Vec::with_capacity(7),
-                uno_called: false,
-            },
-            Player {
-                id: 3,
-                name: "Juno".to_string(),
-                kind: PlayerKind::Ai(profile),
-                hand: Vec::with_capacity(7),
-                uno_called: false,
-            },
+        const SEAT_NAMES: [&str; 8] = [
+            "You", "Mika", "Nori", "Juno", "Kiki", "Olli", "Pika", "Rumi",
         ];
+        let mut players = SEAT_NAMES[..player_count]
+            .iter()
+            .enumerate()
+            .map(|(id, name)| Player {
+                id,
+                name: (*name).to_string(),
+                kind: if id == 0 {
+                    PlayerKind::Human
+                } else {
+                    PlayerKind::Ai(profile)
+                },
+                hand: Vec::with_capacity(7),
+                uno_called: false,
+            })
+            .collect::<Vec<_>>();
         for _ in 0..7 {
             for player in &mut players {
                 player

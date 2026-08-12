@@ -19,9 +19,13 @@ pub struct UnoGame {
 impl UnoGame {
     #[wasm_bindgen(constructor)]
     pub fn new(seed: u32, profile: &str) -> UnoGame {
+        Self::new_with_config(seed, profile, 4)
+    }
+
+    pub fn new_with_config(seed: u32, profile: &str, player_count: u8) -> UnoGame {
         let profile = AiProfile::from_wire(profile).unwrap_or(AiProfile::Garfield1993AiSimple);
         UnoGame {
-            state: GameState::new(seed as u64, profile),
+            state: GameState::new_with_player_count(seed as u64, player_count as usize, profile),
             profile,
         }
     }
@@ -68,6 +72,7 @@ impl UnoGame {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::state::PlayerKind;
 
     #[test]
     fn creates_a_standard_108_card_game_and_deals_seven() {
@@ -157,5 +162,32 @@ mod tests {
         assert_eq!(snapshot.players[0].hand.len(), 7);
         assert!(snapshot.players[1].hand.is_empty());
         assert_eq!(snapshot.draw_count + snapshot.discard_count, 80);
+    }
+
+    #[test]
+    fn supports_three_to_eight_player_tables_with_seven_card_hands() {
+        for player_count in 3..=8 {
+            let game = GameState::new_with_player_count(
+                100 + player_count as u64,
+                player_count,
+                AiProfile::Garfield1993AiSimple,
+            );
+            assert_eq!(game.players().len(), player_count);
+            assert!(game.players().iter().all(|player| player.hand.len() == 7));
+            assert_eq!(game.total_cards(), 108);
+            assert_eq!(game.players()[0].name, "You");
+            assert!(game.players()[1..]
+                .iter()
+                .all(|player| matches!(player.kind, PlayerKind::Ai(_))));
+        }
+    }
+
+    #[test]
+    fn player_count_is_bounded_and_turns_wrap_at_the_last_seat() {
+        let small = GameState::new_with_player_count(1, 1, AiProfile::Garfield1993AiHard);
+        assert_eq!(small.players().len(), 3);
+        let large = GameState::new_with_player_count(2, 99, AiProfile::Garfield1993AiHard);
+        assert_eq!(large.players().len(), 8);
+        assert_eq!(large.next_player_id(7), 0);
     }
 }
