@@ -84,9 +84,12 @@ not inspected. See [the provenance note](docs/ORIGINAL_REPOSITORY.md).
 ## Project status
 
 The offline table is implemented and covered by Rust, TypeScript, production-build,
-and Playwright smoke checks in the local checkout. A live Vercel URL and a public
-`GarfieldZHU/Uno-2026` remote are not asserted by this repository until they are
-verified from an account with access.
+and Playwright smoke checks in the local checkout. The public repository is
+[GarfieldZHU/Uno-2026](https://github.com/GarfieldZHU/Uno-2026), and the verified
+production client is available at
+[uno-2026-garfieldzhus-projects.vercel.app](https://uno-2026-garfieldzhus-projects.vercel.app/).
+The live page reaches the offline table, loads the Rust/WASM HUD, and keeps online
+rooms locked as designed.
 
 ## License and attribution
 

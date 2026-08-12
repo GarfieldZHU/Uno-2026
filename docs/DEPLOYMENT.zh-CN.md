@@ -17,11 +17,12 @@
 部署必须从本仓库根目录运行。`npm run build` 先保证 WASM 产物存在，再把 `web/` 构建到
 `web/dist`。离线客户端不需要服务端运行时。
 
-## 诚实的状态说明
+## 已验证的生产状态
 
-本文档只说明配置，不等同于线上部署。只有当真实 Vercel 部署达到 `READY`、页面成功加载
-WASM、并在该线上 URL 验证离线流程后，完成报告才能提供 URL。一次本地构建或存在一个
-Vercel 项目都不代表线上可用。
+当前生产客户端位于
+[uno-2026-garfieldzhus-projects.vercel.app](https://uno-2026-garfieldzhus-projects.vercel.app/)。
+已在认证后的部署页面核验：页面进入离线牌桌、加载 Rust/WASM HUD，并按设计保持联机房间锁定。
+修改 Vercel 项目或构建设置后，应重新执行这项核验。
 
 ## Preview 检查清单
 

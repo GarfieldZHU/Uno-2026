@@ -18,12 +18,13 @@ The deployment must run from this repository root. `npm run build` first ensures
 WASM artifact exists, then builds the `web/` app into `web/dist`. No server runtime
 is required for the offline client.
 
-## Honest status
+## Verified production status
 
-This file documents the configuration, not a live deployment. A completion report
-may include a URL only after a real Vercel deployment reaches `READY`, the page loads
-the WASM module, and the offline smoke flow is checked at that URL. A local build or
-an existing Vercel project is not proof of production availability.
+The current production client is available at
+[uno-2026-garfieldzhus-projects.vercel.app](https://uno-2026-garfieldzhus-projects.vercel.app/).
+The page was checked from the authenticated deployment surface: it reaches the
+offline table, loads the Rust/WASM HUD, and keeps online rooms locked. Repeat the
+check after changing the Vercel project or build settings.
 
 ## Preview checklist
 
