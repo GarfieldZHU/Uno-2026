@@ -52,3 +52,10 @@ Preserve unrelated user changes. Do not use destructive reset/checkout commands.
 Keep `node_modules/`, `target/`, `web/dist/`, Playwright output, and `.DS_Store`
 out of commits. Commit `web/public/wasm/` because the static production build
 needs a reproducible browser artifact.
+
+## Repository identity
+
+This checkout belongs to the `GarfieldZHU` GitHub account. Its local Git identity
+must remain `GarfieldZHU <garfield.bupt@gmail.com>` with `user.useConfigOnly=true`,
+so commits cannot silently inherit the `jiazhu_mstr` identity used by unrelated
+repositories under `~/Dev`.
