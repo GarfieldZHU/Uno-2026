@@ -32,7 +32,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:4173`. For a production-shaped local run:
+Open `http://localhost:1411`. For a production-shaped local run:
 
 ```bash
 npm run build

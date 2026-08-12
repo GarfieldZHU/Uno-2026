@@ -39,7 +39,7 @@ npm install
 npm run dev
 ```
 
-Then open `http://localhost:4173`.
+Then open `http://localhost:1411`.
 
 The verification gate is:
 

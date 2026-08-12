@@ -29,7 +29,7 @@ npm install
 npm run dev
 ```
 
-打开 `http://localhost:4173`。如需模拟生产构建：
+打开 `http://localhost:1411`。如需模拟生产构建：
 
 ```bash
 npm run build

@@ -22,6 +22,8 @@ cargo test -p uno-core
 cargo run -p uno-server
 ```
 
+The Vite dev server uses port `1411` by default, a number reserved for this project.
+
 ## Change order
 
 For a rules change, write or update a native Rust test first, implement in

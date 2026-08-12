@@ -22,6 +22,8 @@ cargo test -p uno-core
 cargo run -p uno-server
 ```
 
+Vite 开发服务器默认使用 `1411` 端口，这是本项目专用的纪念数字。
+
 ## 修改顺序
 
 规则变更先写/更新 Rust 原生测试，再改 `crates/uno-core`，重建 WASM，最后同步
