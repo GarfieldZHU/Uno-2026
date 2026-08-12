@@ -33,6 +33,13 @@ export type Snapshot = {
   ai_profile: string;
 };
 
+export type PlayerCount = 3 | 4 | 5 | 6 | 7 | 8;
+
+export const PLAYER_COUNTS: PlayerCount[] = [3, 4, 5, 6, 7, 8];
+export const AI_DELAY_MIN_SECONDS = 1;
+export const AI_DELAY_MAX_SECONDS = 30;
+export const DEFAULT_AI_DELAY_SECONDS = 3;
+
 export type CommandError = {
   ok: false;
   error: string | null;

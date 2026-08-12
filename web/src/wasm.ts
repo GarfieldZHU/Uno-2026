@@ -9,12 +9,17 @@ export type WasmGame = {
 
 type WasmBindings = {
   default: () => Promise<unknown>;
-  UnoGame: new (seed: number, profile: string) => WasmGame;
+  UnoGame: {
+    new (seed: number, profile: string): WasmGame;
+    new_with_config?: (seed: number, profile: string, playerCount: number) => WasmGame;
+  };
 };
 
-export async function createWasmGame(seed: number, profile: string): Promise<WasmGame> {
+export async function createWasmGame(seed: number, profile: string, playerCount = 4): Promise<WasmGame> {
   const loadBindings = new Function("return import('/wasm/uno_core.js')") as () => Promise<WasmBindings>;
   const bindings = await loadBindings();
   await bindings.default();
-  return new bindings.UnoGame(seed, profile);
+  return bindings.UnoGame.new_with_config
+    ? bindings.UnoGame.new_with_config(seed, profile, playerCount)
+    : new bindings.UnoGame(seed, profile);
 }
