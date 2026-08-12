@@ -1,0 +1,25 @@
+# UNO 2026
+
+Rust 规则、WebAssembly 离线运行时、React 牌桌。
+
+UNO 2026 是一个确定性的浏览器 UNO 游戏，拥有可原生测试的 Rust 核心和响应式
+TypeScript HUD。当前支持的是离线牌桌；联机房间留到后续协议里程碑，UI 仍保持锁定。
+
+## 启动
+
+```bash
+npm install
+npm run dev
+```
+
+## 导航
+
+- [架构](Architecture.zh-CN.md)
+- [规则](Rules.zh-CN.md)
+- [AI 档位](AI-Profiles.zh-CN.md)
+- [WASM 契约](WASM-Contract.zh-CN.md)
+- [开发](Development.zh-CN.md)
+- [部署](Deployment.zh-CN.md)
+- [历史](History.zh-CN.md)
+
+完整说明见[英文项目指南](../docs/README.en.md)和[中文项目说明](../docs/README.zh-CN.md)。

@@ -1,0 +1,2 @@
+# The release browser artifact is intentionally checked in so Vercel can build
+# the static client without a pre-existing local cache.

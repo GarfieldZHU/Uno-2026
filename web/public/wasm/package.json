@@ -1,0 +1,17 @@
+{
+  "name": "uno-core",
+  "type": "module",
+  "description": "Deterministic UNO rules and AI shared by native Rust and WebAssembly.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "uno_core_bg.wasm",
+    "uno_core.js",
+    "uno_core.d.ts"
+  ],
+  "main": "uno_core.js",
+  "types": "uno_core.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
