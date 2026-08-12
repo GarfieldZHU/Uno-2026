@@ -22,6 +22,7 @@ export type Snapshot = {
   direction: number;
   active_color: Color;
   top_card: Card;
+  discard_cards: Card[];
   draw_count: number;
   discard_count: number;
   pending_draw: number;

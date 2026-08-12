@@ -165,6 +165,11 @@ mod tests {
         assert_eq!(snapshot.players[0].hand.len(), 7);
         assert!(snapshot.players[1].hand.is_empty());
         assert_eq!(snapshot.draw_count + snapshot.discard_count, 80);
+        assert_eq!(snapshot.discard_cards.len(), snapshot.discard_count);
+        assert_eq!(
+            snapshot.discard_cards.last().unwrap().id,
+            snapshot.top_card.id
+        );
     }
 
     #[test]
