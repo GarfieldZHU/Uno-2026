@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 504" role="img" aria-label="UNO card back">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#182a68"/><stop offset=".5" stop-color="#283f91"/><stop offset="1" stop-color="#101c51"/></linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff8de"/><stop offset=".5" stop-color="#d9cda6"/><stop offset="1" stop-color="#fff4d0"/></linearGradient>
+    <linearGradient id="oval" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff3e27"/><stop offset=".55" stop-color="#e3221b"/><stop offset="1" stop-color="#a50d1b"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#081039" flood-opacity=".55"/></filter>
+  </defs>
+  <rect x="4" y="4" width="352" height="496" rx="28" fill="url(#rim)"/>
+  <rect x="14" y="14" width="332" height="476" rx="22" fill="url(#bg)" stroke="#0b1644" stroke-width="3"/>
+  <path d="M35 70Q180 8 325 70M35 434Q180 496 325 434" fill="none" stroke="#5b6db8" stroke-opacity=".35" stroke-width="3"/>
+  <ellipse cx="180" cy="252" rx="126" ry="166" transform="rotate(-28 180 252)" fill="url(#oval)" stroke="#fff4d0" stroke-width="10" filter="url(#shadow)"/>
+  <ellipse cx="180" cy="252" rx="104" ry="143" transform="rotate(-28 180 252)" fill="none" stroke="#ff8b59" stroke-opacity=".65" stroke-width="3"/>
+  <path d="M122 286c28-45 59-78 109-111-12 34-29 64-52 91 18 8 37 9 59 3-30 37-64 52-102 45 9-9 15-18 18-28-12 1-22 0-32 0z" fill="#fff8df" opacity=".96"/>
+</svg>

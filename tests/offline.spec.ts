@@ -43,7 +43,7 @@ test("点击弃牌堆可以查看已打出的牌", async ({ page }) => {
   await expect(page.getByTestId("discard-history")).toBeVisible();
   await expect(page.getByTestId("discard-history").getByText("最新")).toBeVisible();
   await expect(page.getByTestId("discard-history").locator(".history-card")).toHaveCount(1);
-  await page.getByRole("button", { name: "关闭已打出的牌" }).click();
+  await page.locator(".history-close-button").click();
   await expect(page.getByTestId("discard-history")).toBeHidden();
 });
 

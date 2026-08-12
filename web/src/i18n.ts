@@ -3,6 +3,25 @@ import { PROFILE_OPTIONS } from "./types";
 export type Language = "zh" | "en";
 
 type UiCopy = {
+  menuEyebrow: string;
+  menuTitle: string;
+  menuSubtitle: string;
+  startGame: string;
+  settings: string;
+  about: string;
+  statusOffline: string;
+  statusOnlineLocked: string;
+  closeSettings: string;
+  settingsEyebrow: string;
+  settingsTitle: string;
+  settingsLede: string;
+  saveSettings: string;
+  aboutEyebrow: string;
+  aboutTitle: string;
+  aboutBody: string;
+  memorialLink: string;
+  aboutStatus: string;
+  closeAbout: string;
   offlineTable: string;
   quietTable: string;
   rustRuntime: string;
@@ -65,6 +84,10 @@ type UiCopy = {
   chooseColor: string;
   wildExplanation: string;
   cancel: string;
+  viewDiscardHistory: string;
+  closeDiscardHistory: string;
+  discardHistoryTitle: string;
+  latestCard: string;
   tableUnavailable: string;
   retryTable: string;
   loading: string;
@@ -76,6 +99,25 @@ type UiCopy = {
 
 const COPY: Record<Language, UiCopy> = {
   zh: {
+    menuEyebrow: "UNO-2026 / 1411",
+    menuTitle: "把下一张牌，\\n发到桌上。",
+    menuSubtitle: "一张为纪念而重做的离线 UNO 牌桌。Rust 负责规则，WASM 让它留在你的浏览器里。",
+    startGame: "开始游戏",
+    settings: "设置",
+    about: "关于",
+    statusOffline: "离线 · Rust / WASM",
+    statusOnlineLocked: "联机 · 暂未开放",
+    closeSettings: "关闭设置",
+    settingsEyebrow: "牌桌偏好 / 1411",
+    settingsTitle: "设置你的节奏",
+    settingsLede: "人数、AI 档位和每一次出牌之间的停顿，都只影响本地牌局。",
+    saveSettings: "保存设置",
+    aboutEyebrow: "一段牌桌的来路",
+    aboutTitle: "给旧代码的一次回声",
+    aboutBody: "UNO-2026 纪念 1411-duliu/Uno 那个陈旧的 C++ UNO 项目。规则在 Rust 中重新整理，界面换成可缩放的网页牌桌；原仓库仍是本项目的历史参考，不复制它的专有图像。",
+    memorialLink: "查看原版仓库",
+    aboutStatus: "当前版本：离线可玩 · 联机传输层已预留",
+    closeAbout: "关闭关于",
     offlineTable: "离线牌桌",
     quietTable: "一张安静、每一手都值得记住的牌桌",
     rustRuntime: "Rust 核心 · WASM 运行时",
@@ -138,6 +180,10 @@ const COPY: Record<Language, UiCopy> = {
     chooseColor: "选择下一个颜色。",
     wildExplanation: "牌桌会按照你的选择继续。",
     cancel: "取消",
+    viewDiscardHistory: "查看已打出的牌",
+    closeDiscardHistory: "关闭已打出的牌",
+    discardHistoryTitle: "已打出的牌",
+    latestCard: "最新",
     tableUnavailable: "牌桌暂时不可用",
     retryTable: "重试牌桌",
     loading: "正在洗牌…",
@@ -147,6 +193,25 @@ const COPY: Record<Language, UiCopy> = {
     cards: (count, unoCalled) => `${count} 张牌${unoCalled ? " · 已喊 UNO" : ""}`,
   },
   en: {
+    menuEyebrow: "UNO-2026 / 1411",
+    menuTitle: "Deal the next card\\nto the table.",
+    menuSubtitle: "An offline UNO table rebuilt as a small memorial. Rust owns the rules; WASM keeps the match in your browser.",
+    startGame: "Start game",
+    settings: "Settings",
+    about: "About",
+    statusOffline: "OFFLINE · RUST / WASM",
+    statusOnlineLocked: "ONLINE · NOT OPEN",
+    closeSettings: "Close settings",
+    settingsEyebrow: "TABLE PREFERENCES / 1411",
+    settingsTitle: "Set your rhythm",
+    settingsLede: "Room size, AI profile, and the pause between moves stay local to this table.",
+    saveSettings: "Save settings",
+    aboutEyebrow: "A TABLE WITH A MEMORY",
+    aboutTitle: "An echo for the old code",
+    aboutBody: "UNO-2026 remembers the old C++ UNO project at 1411-duliu/Uno. Its rules are reorganized in Rust and its surface becomes a scalable web table; the original repository remains a historical reference, not a source for proprietary artwork.",
+    memorialLink: "Open the original repository",
+    aboutStatus: "Current build: playable offline · online transport reserved",
+    closeAbout: "Close about",
     offlineTable: "OFFLINE TABLE",
     quietTable: "A quiet table for loud plays",
     rustRuntime: "Rust core · WASM runtime",
@@ -209,6 +274,10 @@ const COPY: Record<Language, UiCopy> = {
     chooseColor: "Name the next color.",
     wildExplanation: "The table will continue with your choice.",
     cancel: "Cancel",
+    viewDiscardHistory: "View played cards",
+    closeDiscardHistory: "Close played cards",
+    discardHistoryTitle: "Played cards",
+    latestCard: "LATEST",
     tableUnavailable: "Table unavailable",
     retryTable: "Retry table",
     loading: "Shuffling the Rust table…",
