@@ -9,9 +9,10 @@
    WildDrawFour restriction, AI legality, UNO calls, and snapshot privacy.
 3. `npm run typecheck` checks the WASM facade and React contract.
 4. `npm run build` proves the release artifact and Vite bundle can be produced.
-5. `npm run test:browser` boots Vite on port 1411 and checks setup defaults,
-   three-seat and eight-seat starts, per-seat pause controls, responsive table
-   layout, Chinese-default copy, the English toggle, and the locked online control.
+5. `npm run test:browser` boots Vite on port 1411 and checks the Chinese-first
+   main menu, settings drawer defaults, three-seat and eight-seat starts,
+   responsive table layout, discard-history open/close, draw animation state,
+   the English toggle, and the locked online control.
 
 ## Evidence discipline
 

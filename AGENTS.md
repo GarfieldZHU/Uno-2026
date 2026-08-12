@@ -17,6 +17,12 @@ semantics are designed and tested.
 
 - `crates/uno-core`: deterministic card/domain logic; no DOM, network, or UI state.
 - `web`: React HUD and input; never mutate cards or turns locally.
+- `web/src/MainMenuScreen.tsx`, `SettingsDrawer.tsx`, and `AboutPanel.tsx`: low-chrome
+  menu surfaces; keep room configuration behind Settings and keep About off the table.
+- `web/src/CardArt.tsx` and `web/public/assets/cards/`: resolution-independent SVG
+  card art; use generated raster art only for atmosphere, never as the rules source.
+- `web/src/DiscardHistory.tsx`: renders Rust's ordered `discard_cards` snapshot field;
+  never reconstruct played-card history from DOM or CSS.
 - `server`: `/health` and disabled room placeholder only.
 - `web/public/wasm`: generated release artifact; rebuild after Rust changes.
 - `wiki`: reviewed GitHub Wiki mirror; update English and Chinese pages together.
@@ -39,7 +45,7 @@ npm run test:browser
 ## Documentation rules
 
 - Every player-visible or public-contract change updates English and Simplified
-  Chinese pages.
+  Chinese pages and adds/adjusts a Playwright assertion when the flow changes.
 - Link the historical repositories; do not claim their internals were inspected
   unless a checkout or archive is actually available.
 - Separate local build evidence, browser evidence, and live deployment evidence.

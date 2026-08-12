@@ -47,9 +47,11 @@ Normal commands return a `Snapshot`. Rejected commands return:
 ```
 
 The snapshot contains `players`, `current_player`, `direction`, `active_color`,
-`top_card`, draw/discard counts, `pending_draw`, `status`, `winner`, `turn_number`,
-`message`, `last_action`, and `ai_profile`. Human `players[0].hand` contains cards;
-AI hand arrays are empty while `hand_count` remains visible.
+`top_card`, ordered `discard_cards` (oldest to newest, including `top_card`),
+draw/discard counts, `pending_draw`, `status`, `winner`, `turn_number`, `message`,
+`last_action`, and `ai_profile`. Human `players[0].hand` contains cards; AI hand
+arrays are empty while `hand_count` remains visible. The React discard-history
+dialog renders `discard_cards` and never reconstructs history from CSS or local UI state.
 
 ## Error handling
 

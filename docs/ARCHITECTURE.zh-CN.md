@@ -29,8 +29,12 @@ Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `Ga
 | `crates/uno-core/src/state.rs` | 牌堆、手牌、回合、效果、罚牌、快照 | CSS、网络会话 |
 | `crates/uno-core/src/ai.rs` | 确定性的出牌选择 | UI 延迟或浏览器随机数 |
 | `crates/uno-core/src/lib.rs` | Rust 公共导出和 wasm-bindgen 门面 | 复制规则 |
-| `web/src/App.tsx` | 牌桌组合、输入、AI 节奏 | 权威状态修改 |
-| `web/src/SetupScreen.tsx` | 中文优先的离线席位、档位、停顿设置 | 牌和回合规则 |
+| `web/src/App.tsx` | 牌桌组合、输入、AI 节奏、展示动画 | 权威状态修改 |
+| `web/src/MainMenuScreen.tsx` | 中文优先的低干扰主菜单和语言切换 | 游戏配置状态 |
+| `web/src/SettingsDrawer.tsx` | 离线席位、档位、停顿设置 | 牌和回合规则 |
+| `web/src/AboutPanel.tsx` | 项目来路与原版仓库链接 | 游戏状态 |
+| `web/src/CardArt.tsx` | 可缩放 SVG 卡牌渲染 | 规则判断 |
+| `web/src/DiscardHistory.tsx` | 有序弃牌历史对话框 | 游戏状态修改 |
 | `web/src/i18n.ts` | 中英文 UI 文案与引擎消息本地化 | 规则或快照状态 |
 | `web/src/types.ts` | TypeScript 视图类型和文案 | 规则判断 |
 | `web/src/wasm.ts` | 延迟加载浏览器模块 | 备用规则引擎 |
@@ -39,10 +43,10 @@ Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `Ga
 
 ## 状态流
 
-1. `SetupScreen` 默认渲染中文，收集 3–8 个席位（默认四人）、AI 档位和每个 AI 的 1–30 秒展示停顿（默认三秒）；顶栏可以切换英文。
+1. `MainMenuScreen` 默认渲染中文，只提供开始游戏、设置、关于；`SettingsDrawer` 收集 3–8 个席位（默认四人）、AI 档位和每个 AI 的 1–30 秒展示停顿（默认三秒）。
 2. 只有点击离线开始后，`App` 才创建 `UnoGame.new_with_config(seed, profile, player_count)`。
 3. Rust 构造确定性的 108 张牌、使用 seed 洗牌、给每个席位发七张牌，并以数字牌作为首张弃牌。
-4. 门面返回 JSON `Snapshot`；AI 的具体手牌被隐藏，只公开数量。
+4. 门面返回 JSON `Snapshot`；AI 的具体手牌被隐藏，只公开数量；`discard_cards` 按从旧到新的顺序提供给按需打开的弃牌历史面板。
 5. 人类命令（`play_card`、`draw`、`call_uno`）由 Rust 校验。
 6. AI 回合通过 `ai_step` 推进，UI 只添加设置好的展示停顿以便看清动作；选择本身在 Rust 中
    确定性完成。

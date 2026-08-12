@@ -24,10 +24,11 @@ The current vertical slice includes:
   readable or rapid rhythm;
 - four deterministic AI profiles, including the compatibility names
   `garfield1993-ai-simple` and `garfield1993-ai-hard`;
-- a CSS-rendered card table with responsive HUD and original, non-franchise card
-  artwork;
-- a Chinese-first interface with an English toggle available on both setup and
-  table screens;
+- a Chinese-first main menu with only Start game, Settings, and About, plus a
+  settings drawer for the 3–8 seat and 1–30 second offline controls;
+- a focused felt tabletop with resolution-independent SVG card fronts/backs,
+  deal/draw/play/shuffle motion, and a clickable discard history;
+- an English toggle available from the menu, settings drawer, and table HUD;
 - a Rust server scaffold with `/health` and an explicitly disabled room endpoint;
 - Vercel configuration for the static Vite client.
 

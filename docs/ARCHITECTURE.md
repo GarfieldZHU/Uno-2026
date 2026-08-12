@@ -30,8 +30,12 @@ own. This keeps native tests and browser behavior on the same implementation.
 | `crates/uno-core/src/state.rs` | deck, hands, turn, effects, penalties, snapshots | CSS, network sessions |
 | `crates/uno-core/src/ai.rs` | deterministic move selection | UI timing or random browser state |
 | `crates/uno-core/src/lib.rs` | public Rust exports and wasm-bindgen facade | duplicated game rules |
-| `web/src/App.tsx` | table composition, input, AI pacing | authoritative state mutation |
-| `web/src/SetupScreen.tsx` | Chinese-first offline seat/profile/pause setup | card or turn rules |
+| `web/src/App.tsx` | table composition, input, AI pacing, presentation animation | authoritative state mutation |
+| `web/src/MainMenuScreen.tsx` | low-chrome Chinese-first menu and language control | game configuration state |
+| `web/src/SettingsDrawer.tsx` | offline seat/profile/pause configuration | card or turn rules |
+| `web/src/AboutPanel.tsx` | project lineage and original-repository link | game state |
+| `web/src/CardArt.tsx` | resolution-independent SVG card renderer | rule decisions |
+| `web/src/DiscardHistory.tsx` | ordered discard-history dialog | game mutation |
 | `web/src/i18n.ts` | Chinese/English UI copy and engine-message localization | rules or snapshot state |
 | `web/src/types.ts` | TypeScript view types and labels | rule decisions |
 | `web/src/wasm.ts` | lazy browser module loading | fallback rule engine |
@@ -40,15 +44,16 @@ own. This keeps native tests and browser behavior on the same implementation.
 
 ## State flow
 
-1. `SetupScreen` renders Chinese by default and collects 3–8 seats (default four), the AI profile, and each
-   AI seat's 1–30 second presentation pause (default three).
+1. `MainMenuScreen` renders Chinese by default with only Start game, Settings, and About. `SettingsDrawer`
+   collects 3–8 seats (default four), the AI profile, and each AI seat's 1–30 second presentation pause (default three).
 2. `App` creates `UnoGame.new_with_config(seed, profile, player_count)` only
    after the offline start action.
 3. Rust creates a deterministic 108-card deck, shuffles it with the supplied
    seed, deals seven cards to every configured seat, and starts on a numeric
    discard.
 4. The facade returns a JSON `Snapshot`; AI hands are intentionally omitted from
-   the public snapshot while their counts remain visible.
+   the public snapshot while their counts remain visible. `discard_cards` is an
+   ordered oldest-to-newest list used by the table's on-demand history dialog.
 5. A human command (`play_card`, `draw`, or `call_uno`) is validated by Rust.
 6. AI turns call `ai_step` with the configured UI delay. The delay is presentation only;
    the choice is deterministic inside Rust.

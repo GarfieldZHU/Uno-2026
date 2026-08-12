@@ -21,7 +21,7 @@ source link and the unverified parity boundary are recorded in
 | Offline game | Playable in the browser through Rust/WASM |
 | Rules | 108 cards, 3–8 offline seats (default four), classic actions, wild colors, UNO penalty |
 | AI | `garfield1993-ai-simple`, `garfield1993-ai-hard`, plus two `uno-2026` profiles |
-| UI | Chinese-first setup ritual, responsive React HUD, hand rail, draw/discard piles, color chooser, English toggle |
+| UI | Chinese-first main menu (Start game/Settings/About), settings drawer, responsive React table, SVG cards, deal/draw/play/shuffle motion, discard history, English toggle |
 | Offline setup | One human plus AI seats; each AI pause is 1–30 seconds, default three |
 | Multiplayer | Scaffold only; UI remains locked and room endpoint returns 503 |
 | Deployment | `vercel.json` is present; live deployment must be verified separately |
@@ -46,10 +46,12 @@ To force a fresh Rust artifact instead of using the committed browser artifact:
 UNO_REBUILD_WASM=1 npm run build
 ```
 
-The first screen is the offline setup surface. Chinese is the default UI
-language; use the `EN` control to switch the setup and table HUD to English.
-Choose 3–8 players (four is the default), select an AI profile, and tune each AI
-seat's pause independently.
+The first screen is a focused main menu with Start game, Settings, and About.
+Chinese is the default UI language; use the `EN` control to switch the menu,
+settings drawer, and table HUD to English. Open Settings to choose 3–8 players
+(four is the default), select an AI profile, and tune each AI seat's pause
+independently. Click the discard pile during a match to inspect played cards in
+chronological order.
 Online remains a deliberately locked future mode; its eventual room model can
 contain multiple human players and any number of AI seats.
 

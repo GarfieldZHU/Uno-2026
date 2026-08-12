@@ -4,7 +4,15 @@ UNO 2026 is a standalone, offline-first card table. The authoritative rules and 
 
 The first release keeps multiplayer behind a deliberate boundary. `server/` is a small Rust health/protocol scaffold so a future room service can reuse the same JSON snapshot shape, while the public UI labels the network mode as unavailable. This avoids shipping a misleading online mode before transport, identity, and reconnect semantics exist.
 
-The table uses CSS-rendered original card art: color-coded cards, action glyphs, a felt table, opponent chips, turn state, draw/discard piles, and a responsive hand. It does not copy protected UNO artwork or branding. The shipped profiles are `garfield1993-ai-simple`, `garfield1993-ai-hard`, `uno-2026-ai-easy`, and `uno-2026-ai-strategist`. The first two preserve the requested compatibility names; the latter two are the new reference strategies.
+The UI opens on a Chinese-first main menu with Start game, Settings, and About;
+the settings drawer owns the offline room controls. The table uses a felt surface,
+resolution-independent SVG card fronts/backs, opponent chips, turn state,
+draw/discard piles, a responsive hand, deliberate deal/draw/play/shuffle motion,
+and an on-demand chronological discard-history dialog. It does not copy protected
+UNO artwork or branding. The shipped profiles are `garfield1993-ai-simple`,
+`garfield1993-ai-hard`, `uno-2026-ai-easy`, and `uno-2026-ai-strategist`. The
+first two preserve the requested compatibility names; the latter two are the new
+reference strategies.
 
 The local verification gate is:
 
