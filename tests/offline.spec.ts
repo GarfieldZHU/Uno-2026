@@ -32,6 +32,7 @@ test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
 
   await expect(page.getByText(/牌局 \/ 001 · 3 席/)).toBeVisible();
   await expect(page.locator(".player-row")).toHaveCount(3);
+  await page.screenshot({ path: "test-results/offline-table-desktop-zh.png", fullPage: true });
 });
 
 test("点击弃牌堆可以查看已打出的牌", async ({ page }) => {
@@ -43,6 +44,7 @@ test("点击弃牌堆可以查看已打出的牌", async ({ page }) => {
   await expect(page.getByTestId("discard-history")).toBeVisible();
   await expect(page.getByTestId("discard-history").getByText("最新")).toBeVisible();
   await expect(page.getByTestId("discard-history").locator(".history-card")).toHaveCount(1);
+  await page.screenshot({ path: "test-results/offline-discard-history-zh.png", fullPage: true });
   await page.locator(".history-close-button").click();
   await expect(page.getByTestId("discard-history")).toBeHidden();
 });
