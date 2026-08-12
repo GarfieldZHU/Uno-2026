@@ -16,6 +16,7 @@ Rust first, rebuild WASM, then run the TypeScript and browser checks.
 
 ```text
 new UnoGame(seed: number, profile: string)
+static new_with_config(seed: number, profile: string, player_count: number)
 snapshot(): string
 play_card(card_id: number, chosen_color: string): string
 draw(): string
@@ -27,6 +28,11 @@ restart(seed: number): string
 `profile` accepts `garfield1993-ai-simple`, `garfield1993-ai-hard`,
 `uno-2026-ai-easy`, or `uno-2026-ai-strategist`. An unknown profile currently
 defaults to `garfield1993-ai-simple` in the Rust constructor.
+
+`new_with_config` bounds `player_count` to 3–8 and creates one human seat plus
+the remaining AI seats. The old two-argument constructor still creates four
+seats for compatibility. React's per-seat AI pause values are intentionally not
+sent through this ABI; they are UI scheduling values around `ai_step`.
 
 ## JSON shape
 

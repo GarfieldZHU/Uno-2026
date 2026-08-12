@@ -13,6 +13,7 @@ use wasm_bindgen::prelude::*;
 pub struct UnoGame {
     state: GameState,
     profile: AiProfile,
+    player_count: usize,
 }
 
 #[wasm_bindgen]
@@ -24,9 +25,11 @@ impl UnoGame {
 
     pub fn new_with_config(seed: u32, profile: &str, player_count: u8) -> UnoGame {
         let profile = AiProfile::from_wire(profile).unwrap_or(AiProfile::Garfield1993AiSimple);
+        let player_count = (player_count as usize).clamp(3, 8);
         UnoGame {
-            state: GameState::new_with_player_count(seed as u64, player_count as usize, profile),
+            state: GameState::new_with_player_count(seed as u64, player_count, profile),
             profile,
+            player_count,
         }
     }
 
@@ -64,7 +67,7 @@ impl UnoGame {
     }
 
     pub fn restart(&mut self, seed: u32) -> String {
-        self.state = GameState::new(seed as u64, self.profile);
+        self.state = GameState::new_with_player_count(seed as u64, self.player_count, self.profile);
         self.state.snapshot_json()
     }
 }
@@ -189,5 +192,14 @@ mod tests {
         let large = GameState::new_with_player_count(2, 99, AiProfile::Garfield1993AiHard);
         assert_eq!(large.players().len(), 8);
         assert_eq!(large.next_player_id(7), 0);
+    }
+
+    #[test]
+    fn wasm_config_and_restart_preserve_the_selected_player_count() {
+        let mut game = UnoGame::new_with_config(3, "garfield1993-ai-hard", 8);
+        let initial: Snapshot = serde_json::from_str(&game.snapshot()).unwrap();
+        assert_eq!(initial.players.len(), 8);
+        let restarted: Snapshot = serde_json::from_str(&game.restart(4)).unwrap();
+        assert_eq!(restarted.players.len(), 8);
     }
 }

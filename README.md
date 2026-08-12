@@ -16,8 +16,12 @@ game truth.
 
 The current vertical slice includes:
 
-- a standard 108-card deck, four players, draw/discard recycling, action cards,
-  wild-color selection, UNO calls, penalties, and winner detection;
+- a standard 108-card deck with configurable offline tables for 3–8 seats
+  (default four), draw/discard recycling, action cards, wild-color selection,
+  UNO calls, penalties, and winner detection;
+- one human seat plus AI seats in offline mode, with an independent 1–30 second
+  pause per AI seat (default three seconds) so the table can be tuned for a
+  readable or rapid rhythm;
 - four deterministic AI profiles, including the compatibility names
   `garfield1993-ai-simple` and `garfield1993-ai-hard`;
 - a CSS-rendered card table with responsive HUD and original, non-franchise card

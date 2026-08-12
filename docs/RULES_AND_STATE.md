@@ -11,10 +11,17 @@ The implementation builds the classic 108-card shape:
 - each color has two `Skip`, two `Reverse`, and two `DrawTwo` cards;
 - there are four `Wild` and four `WildDrawFour` cards.
 
-Four players receive seven cards each. The first discard is selected from the
-remaining numeric cards so the table starts with an active color and no action
-effect. The draw pile is recycled from the discard pile (keeping the top card)
-when it runs out.
+Offline tables support three to eight seats. Seat zero is the human (`You`) and
+the remaining seats use the selected AI profile; four seats is the default. Every
+seat receives seven cards. The first discard is selected from the remaining
+numeric cards so the table starts with an active color and no action effect. The
+draw pile is recycled from the discard pile (keeping the top card) when it runs
+out. `GameState::new` remains a four-seat compatibility constructor while
+`new_with_player_count` bounds domain input to 3–8.
+
+The per-seat 1–30 second AI pause is a React scheduling setting, not part of the
+Rust snapshot or rules. It only makes AI turns readable; `ai_step` still decides
+the move and advances the authoritative state.
 
 ## Legal moves
 

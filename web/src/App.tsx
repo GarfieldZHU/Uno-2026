@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SetupScreen, createDefaultSetup, type SetupConfig } from "./SetupScreen";
 import { createWasmGame, type WasmGame } from "./wasm";
 import { COLORS, PROFILE_OPTIONS, type Card, type Color, type Snapshot } from "./types";
 
@@ -52,7 +53,7 @@ function CardView({ card, disabled, onClick, compact = false }: { card: Card; di
 
 function BackStack({ count, onDraw, disabled }: { count: number; onDraw: () => void; disabled: boolean }) {
   return (
-    <button className="draw-stack" onClick={onDraw} disabled={disabled} aria-label="Draw from the deck">
+    <button className="draw-stack" onClick={onDraw} disabled={disabled} aria-label="Draw from the deck" type="button">
       <span className="stack-offset stack-offset-one" />
       <span className="stack-offset stack-offset-two" />
       <span className="card-back">
@@ -77,36 +78,62 @@ function PlayerChip({ player, active }: { player: Snapshot["players"][number]; a
 }
 
 export function App() {
-  const [profile, setProfile] = useState<string>(PROFILE_OPTIONS[1].value);
+  const [setupConfig, setSetupConfig] = useState<SetupConfig>(() => createDefaultSetup());
+  const [activeConfig, setActiveConfig] = useState<SetupConfig | null>(null);
+  const [screen, setScreen] = useState<"setup" | "table">("setup");
   const [game, setGame] = useState<WasmGame | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [wasmError, setWasmError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [wildCardId, setWildCardId] = useState<number | null>(null);
   const aiBusy = useRef(false);
   const gameRef = useRef<WasmGame | null>(null);
+  const runTokenRef = useRef(0);
 
-  const startGame = useCallback(async (nextProfile: string, nextSeed = seedFromClock()) => {
+  const startGame = useCallback(async (nextConfig: SetupConfig, nextSeed = seedFromClock()) => {
+    const runToken = runTokenRef.current + 1;
+    runTokenRef.current = runToken;
+    aiBusy.current = false;
     setLoading(true);
     setWasmError(null);
     setNotice(null);
     setWildCardId(null);
     try {
-      const nextGame = await createWasmGame(nextSeed, nextProfile);
+      const nextGame = await createWasmGame(nextSeed, nextConfig.profile, nextConfig.playerCount);
+      if (runToken !== runTokenRef.current) return;
       gameRef.current = nextGame;
       setGame(nextGame);
       setSnapshot(parseSnapshot(nextGame.snapshot()).snapshot);
+      setActiveConfig(nextConfig);
+      setSetupConfig(nextConfig);
+      setScreen("table");
     } catch (error) {
-      setWasmError(error instanceof Error ? error.message : "WASM table failed to load.");
+      if (runToken === runTokenRef.current) {
+        setWasmError(error instanceof Error ? error.message : "WASM table failed to load.");
+        setScreen("setup");
+      }
     } finally {
-      setLoading(false);
+      if (runToken === runTokenRef.current) setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    void startGame(profile);
-  }, [profile, startGame]);
+  useEffect(() => () => {
+    runTokenRef.current += 1;
+  }, []);
+
+  const openSetup = useCallback(() => {
+    runTokenRef.current += 1;
+    aiBusy.current = false;
+    gameRef.current = null;
+    setGame(null);
+    setSnapshot(null);
+    setActiveConfig(null);
+    setNotice(null);
+    setWildCardId(null);
+    setWasmError(null);
+    setScreen("setup");
+  }, []);
 
   const applyRaw = useCallback((raw: string) => {
     const result = parseSnapshot(raw);
@@ -117,15 +144,17 @@ export function App() {
   }, []);
 
   const runAiTurns = useCallback(async () => {
-    if (aiBusy.current || !gameRef.current) return;
+    if (aiBusy.current || !gameRef.current || !activeConfig) return;
     aiBusy.current = true;
+    const runToken = runTokenRef.current;
     try {
       let current = snapshot;
-      for (let step = 0; step < 16; step += 1) {
-        if (!current || current.status === "Won" || current.current_player === HUMAN_ID) break;
-        await delay(420);
-        const raw = gameRef.current.ai_step();
-        const result = parseSnapshot(raw);
+      for (let step = 0; step < 64; step += 1) {
+        if (!current || current.status === "Won" || current.current_player === HUMAN_ID || runToken !== runTokenRef.current) break;
+        const pauseSeconds = activeConfig.seatPauses[current.current_player] ?? activeConfig.defaultPauseSeconds;
+        await delay(pauseSeconds * 1_000);
+        if (runToken !== runTokenRef.current || !gameRef.current) break;
+        const result = parseSnapshot(gameRef.current.ai_step());
         current = result.snapshot;
         setSnapshot(result.snapshot);
         if (result.error) setNotice(result.error);
@@ -134,11 +163,11 @@ export function App() {
     } finally {
       aiBusy.current = false;
     }
-  }, [snapshot]);
+  }, [activeConfig, snapshot]);
 
   useEffect(() => {
-    if (snapshot && snapshot.current_player !== HUMAN_ID && snapshot.status === "Playing") void runAiTurns();
-  }, [snapshot, runAiTurns]);
+    if (screen === "table" && snapshot && snapshot.current_player !== HUMAN_ID && snapshot.status === "Playing") void runAiTurns();
+  }, [runAiTurns, screen, snapshot]);
 
   const human = snapshot?.players[HUMAN_ID];
   const currentPlayer = snapshot?.players[snapshot.current_player];
@@ -178,18 +207,11 @@ export function App() {
   }
 
   if (loading) {
-    return <div className="loading-screen"><div className="loading-mark">UNO<small>2026</small></div><p>Loading the Rust table…</p></div>;
+    return <div className="loading-screen"><div className="loading-mark">UNO<small>2026</small></div><p>Shuffling the Rust table…</p></div>;
   }
 
-  if (wasmError || !snapshot || !game) {
-    return (
-      <div className="loading-screen error-screen">
-        <div className="loading-mark">UNO<small>2026</small></div>
-        <h1>Table unavailable</h1>
-        <p>{wasmError ?? "The offline table did not return a snapshot."}</p>
-        <button className="primary-button" onClick={() => void startGame(profile)}>Retry table</button>
-      </div>
-    );
+  if (screen === "setup" || !snapshot || !game || !activeConfig) {
+    return <SetupScreen initialConfig={setupConfig} onStart={(config) => void startGame(config)} error={wasmError} />;
   }
 
   return (
@@ -201,18 +223,18 @@ export function App() {
           <div className="brand-context"><span>OFFLINE TABLE</span><small>Rust core · WASM runtime</small></div>
         </div>
         <div className="mode-switch" aria-label="Game mode">
-          <button className="mode-button is-selected">OFFLINE <span className="mode-live-dot" /></button>
-          <button className="mode-button" disabled>ONLINE <span className="mode-lock">LOCKED</span></button>
+          <button className="mode-button is-selected" type="button">OFFLINE <span className="mode-live-dot" /></button>
+          <button className="mode-button" type="button" disabled>ONLINE <span className="mode-lock">LOCKED</span></button>
         </div>
         <div className="top-actions">
-          <label className="profile-select"><span>AI PROFILE</span><select value={profile} onChange={(event) => setProfile(event.target.value)}>{PROFILE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-          <button className="icon-button" onClick={() => void startGame(profile)} aria-label="Start a new game">↻</button>
+          <div className="table-profile"><span>AI PROFILE</span><strong>{PROFILE_OPTIONS.find((option) => option.value === activeConfig.profile)?.label}</strong><small>{snapshot.players.length} SEATS · {activeConfig.defaultPauseSeconds}s BASE PAUSE</small></div>
+          <button className="icon-button" onClick={openSetup} aria-label="Set up a new table" type="button">↻</button>
         </div>
       </header>
 
       <main className="game-layout">
         <section className="table-column">
-          <div className="table-heading"><div><p className="eyebrow">MATCH / 001</p><h1>Make your move.</h1></div><div className="round-meta"><span>TURN {String(snapshot.turn_number).padStart(2, "0")}</span><span className="direction-mark">{snapshot.direction === 1 ? "↻" : "↺"}</span></div></div>
+          <div className="table-heading"><div><p className="eyebrow">MATCH / 001 · {snapshot.players.length} SEATS</p><h1>Make your move.</h1></div><div className="round-meta"><span>TURN {String(snapshot.turn_number).padStart(2, "0")}</span><span className="direction-mark">{snapshot.direction === 1 ? "↻" : "↺"}</span></div></div>
           <div className="felt-table">
             <div className="table-grid-lines" />
             <div className="opponent-row">{snapshot.players.slice(1).map((player) => <PlayerChip key={player.id} player={player} active={player.id === snapshot.current_player} />)}</div>
@@ -231,18 +253,18 @@ export function App() {
         </section>
 
         <aside className="side-column">
-          <div className="panel panel-players"><div className="panel-title"><span>PLAYERS</span><span className="panel-count">04</span></div><div className="player-list">{snapshot.players.map((player) => <div className={`player-row ${player.id === snapshot.current_player ? "is-active" : ""}`} key={player.id}><div className="mini-avatar">{player.name.slice(0, 1)}</div><div className="player-row-copy"><strong>{player.name}</strong><span>{player.id === 0 ? "YOU / HUMAN" : "AI / " + profile.replace("uno-2026-", "").replace("garfield1993-", "")}</span></div><span className="count-pill">{player.hand_count}</span></div>)}</div></div>
-          <div className="panel panel-rules"><div className="panel-title"><span>TABLE SIGNAL</span><span className="signal-bars"><i /><i /><i /></span></div><div className="rule-line"><span>ENGINE</span><strong>RUST / WASM</strong></div><div className="rule-line"><span>NETWORK</span><strong className="muted">DISABLED</strong></div><div className="rule-line"><span>PROFILE</span><strong>{PROFILE_OPTIONS.find((option) => option.value === profile)?.hint}</strong></div><div className="panel-note">Online rooms stay closed while the transport layer is being hardened. Your offline match is fully local and deterministic.</div></div>
+          <div className="panel panel-players"><div className="panel-title"><span>PLAYERS</span><span className="panel-count">{String(snapshot.players.length).padStart(2, "0")}</span></div><div className="player-list">{snapshot.players.map((player) => <div className={`player-row ${player.id === snapshot.current_player ? "is-active" : ""}`} key={player.id}><div className="mini-avatar">{player.name.slice(0, 1)}</div><div className="player-row-copy"><strong>{player.name}</strong><span>{player.id === 0 ? "YOU / HUMAN" : "AI / " + activeConfig.profile.replace("uno-2026-", "").replace("garfield1993-", "")}</span></div><span className="count-pill">{player.hand_count}</span></div>)}</div></div>
+          <div className="panel panel-rules"><div className="panel-title"><span>TABLE SIGNAL</span><span className="signal-bars"><i /><i /><i /></span></div><div className="rule-line"><span>ENGINE</span><strong>RUST / WASM</strong></div><div className="rule-line"><span>NETWORK</span><strong className="muted">DISABLED</strong></div><div className="rule-line"><span>PROFILE</span><strong>{PROFILE_OPTIONS.find((option) => option.value === activeConfig.profile)?.hint}</strong></div><div className="panel-note">Online rooms stay closed while the transport layer is being hardened. Your offline match is fully local and deterministic.</div></div>
         </aside>
 
         <section className="hand-column">
-          <div className="hand-heading"><div><p className="eyebrow">YOUR HAND / {String(human?.hand_count ?? 0).padStart(2, "0")}</p><h2>{human?.hand_count === 1 ? "One card left." : "Keep the rhythm."}</h2></div><div className="hand-actions"><button className="ghost-button" onClick={handleUno} disabled={human?.hand_count !== 1 || snapshot.status === "Won"}>CALL UNO <span>!</span></button><button className="primary-button" onClick={handleDraw} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"}>DRAW CARD</button></div></div>
+          <div className="hand-heading"><div><p className="eyebrow">YOUR HAND / {String(human?.hand_count ?? 0).padStart(2, "0")}</p><h2>{human?.hand_count === 1 ? "One card left." : "Keep the rhythm."}</h2></div><div className="hand-actions"><button className="ghost-button" onClick={handleUno} disabled={human?.hand_count !== 1 || snapshot.status === "Won"} type="button">CALL UNO <span>!</span></button><button className="primary-button" onClick={handleDraw} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} type="button">DRAW CARD</button></div></div>
           <div className="hand-rail">{human?.hand.map((card) => <CardView key={card.id} card={card} disabled={snapshot.current_player !== HUMAN_ID || !playableIds.has(card.id) || snapshot.status === "Won"} onClick={() => handlePlay(card)} />)}</div>
           <div className="hand-help"><span><kbd>CLICK</kbd> a lit card to play</span><span><kbd>DRAW</kbd> when no move is open</span><span className="help-right">{notice ? <strong className="notice">{notice}</strong> : "A playable card glows on the rail."}</span></div>
         </section>
       </main>
 
-      {wildCardId !== null && <div className="modal-scrim" role="presentation"><div className="color-modal" role="dialog" aria-modal="true" aria-labelledby="color-title"><p className="eyebrow">WILD CARD</p><h2 id="color-title">Name the next color.</h2><p>The table will continue with your choice.</p><div className="color-options">{COLORS.map((color) => <button key={color.name} className={`color-option color-option-${color.className}`} onClick={() => handleWildColor(color.name)}><span className={`color-swatch swatch-${color.className}`} />{color.label}</button>)}</div><button className="cancel-button" onClick={() => setWildCardId(null)}>Cancel</button></div></div>}
+      {wildCardId !== null && <div className="modal-scrim" role="presentation"><div className="color-modal" role="dialog" aria-modal="true" aria-labelledby="color-title"><p className="eyebrow">WILD CARD</p><h2 id="color-title">Name the next color.</h2><p>The table will continue with your choice.</p><div className="color-options">{COLORS.map((color) => <button key={color.name} className={`color-option color-option-${color.className}`} onClick={() => handleWildColor(color.name)} type="button"><span className={`color-swatch swatch-${color.className}`} />{color.label}</button>)}</div><button className="cancel-button" onClick={() => setWildCardId(null)} type="button">Cancel</button></div></div>}
     </div>
   );
 }

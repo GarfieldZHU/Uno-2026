@@ -6,6 +6,11 @@ UNO 2026 is a deterministic browser UNO game with a native-testable Rust core an
 a responsive TypeScript HUD. The offline table is the supported experience. Online
 rooms are reserved for a later protocol milestone and remain locked in the UI.
 
+The setup surface supports 3–8 offline seats (four by default), one human plus
+AI seats, and an independent 1–30 second pause for every AI seat (three by
+default). The future online room model is allowed to mix multiple humans with
+any number of AI, but is not enabled yet.
+
 ## Start
 
 ```bash

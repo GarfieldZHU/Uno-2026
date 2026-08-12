@@ -31,6 +31,7 @@ own. This keeps native tests and browser behavior on the same implementation.
 | `crates/uno-core/src/ai.rs` | deterministic move selection | UI timing or random browser state |
 | `crates/uno-core/src/lib.rs` | public Rust exports and wasm-bindgen facade | duplicated game rules |
 | `web/src/App.tsx` | table composition, input, AI pacing | authoritative state mutation |
+| `web/src/SetupScreen.tsx` | offline seat/profile/pause setup | card or turn rules |
 | `web/src/types.ts` | TypeScript view types and labels | rule decisions |
 | `web/src/wasm.ts` | lazy browser module loading | fallback rule engine |
 | `web/src/styles.css` | visual language and responsive layout | game state |
@@ -38,15 +39,19 @@ own. This keeps native tests and browser behavior on the same implementation.
 
 ## State flow
 
-1. `App` creates `UnoGame(seed, profile)` after the page shell is ready.
-2. `UnoGame::new` creates a deterministic 108-card deck, shuffles it with the
-   supplied seed, deals four hands, and starts on a numeric discard.
-3. The facade returns a JSON `Snapshot`; AI hands are intentionally omitted from
+1. `SetupScreen` collects 3–8 seats (default four), the AI profile, and each
+   AI seat's 1–30 second presentation pause (default three).
+2. `App` creates `UnoGame.new_with_config(seed, profile, player_count)` only
+   after the offline start action.
+3. Rust creates a deterministic 108-card deck, shuffles it with the supplied
+   seed, deals seven cards to every configured seat, and starts on a numeric
+   discard.
+4. The facade returns a JSON `Snapshot`; AI hands are intentionally omitted from
    the public snapshot while their counts remain visible.
-4. A human command (`play_card`, `draw`, or `call_uno`) is validated by Rust.
-5. AI turns call `ai_step` with a short UI delay. The delay is presentation only;
+5. A human command (`play_card`, `draw`, or `call_uno`) is validated by Rust.
+6. AI turns call `ai_step` with the configured UI delay. The delay is presentation only;
    the choice is deterministic inside Rust.
-6. A terminal snapshot reports `status: "Won"` and `winner`.
+7. A terminal snapshot reports `status: "Won"` and `winner`.
 
 ## Determinism
 

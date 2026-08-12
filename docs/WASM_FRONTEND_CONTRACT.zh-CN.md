@@ -16,6 +16,7 @@ TypeScript 和浏览器检查。
 
 ```text
 new UnoGame(seed: number, profile: string)
+static new_with_config(seed: number, profile: string, player_count: number)
 snapshot(): string
 play_card(card_id: number, chosen_color: string)
 draw(): string
@@ -27,6 +28,10 @@ restart(seed: number): string
 `profile` 支持 `garfield1993-ai-simple`、`garfield1993-ai-hard`、
 `uno-2026-ai-easy`、`uno-2026-ai-strategist`。未知档位在 Rust 构造函数中暂时回退到
 `garfield1993-ai-simple`。
+
+`new_with_config` 会把 `player_count` 限制在 3–8，并创建一个人类席位与其余 AI 席位。
+旧的双参数构造器仍创建四人牌桌，以保持兼容。React 的每席位 AI 停顿不会进入这个 ABI；
+它只是围绕 `ai_step` 的 UI 调度设置。
 
 ## JSON 形状
 

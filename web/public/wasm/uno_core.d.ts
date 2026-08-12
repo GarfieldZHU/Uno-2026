@@ -15,6 +15,7 @@ export class UnoGame {
     call_uno(): string;
     draw(): string;
     constructor(seed: number, profile: string);
+    static new_with_config(seed: number, profile: string, player_count: number): UnoGame;
     play_card(card_id: number, chosen_color: string): string;
     restart(seed: number): string;
     snapshot(): string;
@@ -29,6 +30,7 @@ export interface InitOutput {
     readonly unogame_call_uno: (a: number) => [number, number];
     readonly unogame_draw: (a: number) => [number, number];
     readonly unogame_new: (a: number, b: number, c: number) => number;
+    readonly unogame_new_with_config: (a: number, b: number, c: number, d: number) => number;
     readonly unogame_play_card: (a: number, b: number, c: number, d: number) => [number, number];
     readonly unogame_restart: (a: number, b: number) => [number, number];
     readonly unogame_snapshot: (a: number) => [number, number];

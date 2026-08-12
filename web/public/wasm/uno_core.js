@@ -4,6 +4,12 @@
  * Browser-facing owner of the same deterministic game state used by native tests.
  */
 export class UnoGame {
+    static __wrap(ptr) {
+        const obj = Object.create(UnoGame.prototype);
+        obj.__wbg_ptr = ptr;
+        UnoGameFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
         this.__wbg_ptr = 0;
@@ -72,6 +78,18 @@ export class UnoGame {
         this.__wbg_ptr = ret;
         UnoGameFinalization.register(this, this.__wbg_ptr, this);
         return this;
+    }
+    /**
+     * @param {number} seed
+     * @param {string} profile
+     * @param {number} player_count
+     * @returns {UnoGame}
+     */
+    static new_with_config(seed, profile, player_count) {
+        const ptr0 = passStringToWasm0(profile, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.unogame_new_with_config(seed, ptr0, len0, player_count);
+        return UnoGame.__wrap(ret);
     }
     /**
      * @param {number} card_id
