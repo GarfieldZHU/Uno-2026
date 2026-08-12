@@ -32,6 +32,11 @@ test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
 
   await expect(page.getByText(/牌局 \/ 001 · 3 席/)).toBeVisible();
   await expect(page.locator(".player-row")).toHaveCount(3);
+  await expect(page.locator(".table-scene")).toBeVisible();
+  await expect(page.locator(".seat-player")).toHaveCount(3);
+  await expect(page.locator(".table-players-rail")).toHaveCount(0);
+  await expect(page.locator('img[src="/assets/cards/card-back-v2.svg"]')).toHaveCount(7);
+  await expect(page.locator(".hand-fan")).toBeVisible();
   await page.screenshot({ path: "test-results/offline-table-desktop-zh.png", fullPage: true });
 });
 

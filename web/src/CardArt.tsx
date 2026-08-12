@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
 import { translateCardLabel, translateColor, type Language } from "./i18n";
 import type { Card } from "./types";
 
@@ -9,6 +9,7 @@ type CardArtProps = {
   className?: string;
   disabled?: boolean;
   onClick?: () => void;
+  style?: CSSProperties;
 };
 
 function glyphFor(card: Card) {
@@ -27,7 +28,7 @@ function paletteFor(card: Card) {
   return { base: "#31426d", deep: "#121b42", ink: "#fff8e5" };
 }
 
-export function CardArt({ card, language, compact = false, className = "", disabled = false, onClick }: CardArtProps) {
+export function CardArt({ card, language, compact = false, className = "", disabled = false, onClick, style }: CardArtProps) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const palette = paletteFor(card);
   const label = translateCardLabel(language, card.label);
@@ -41,6 +42,7 @@ export function CardArt({ card, language, compact = false, className = "", disab
       type={onClick ? "button" : undefined}
       disabled={onClick ? disabled : undefined}
       onClick={onClick}
+      style={style}
       aria-label={language === "zh" ? `${color}${label}牌` : `${label} ${color} card`}
     >
       <svg viewBox="0 0 200 280" role="img" aria-hidden="true" focusable="false">

@@ -57,6 +57,7 @@ UNO_REBUILD_WASM=1 npm run build
 - [开发指南](DEVELOPMENT.zh-CN.md) —— 工具链、命令和目录规则。
 - [测试指南](TESTING.zh-CN.md) —— 单元、构建和浏览器证据。
 - [部署指南](DEPLOYMENT.zh-CN.md) —— Vercel 配置与诚实的状态说明。
+- [牌桌视觉参考](TABLE_UI_REFERENCE.zh-CN.md) —— 生成资源、布局决策和交互。
 - [原版仓库](ORIGINAL_REPOSITORY.zh-CN.md) —— 来源、链接和纪念意义。
 - [路线图](ROADMAP.zh-CN.md) —— 下一步安全增量。
 - [贡献指南](CONTRIBUTING.zh-CN.md) —— 修改边界和检查清单。

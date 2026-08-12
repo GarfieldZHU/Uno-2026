@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { AboutPanel } from "./AboutPanel";
 import { CardArt } from "./CardArt";
 import { DiscardHistory } from "./DiscardHistory";
@@ -36,22 +36,46 @@ function BackStack({ count, language, onDraw, disabled }: { count: number; langu
     <button className="draw-stack" onClick={onDraw} disabled={disabled} aria-label={language === "zh" ? "从摸牌堆摸牌" : "Draw from the deck"} type="button">
       <span className="stack-offset stack-offset-one" />
       <span className="stack-offset stack-offset-two" />
-      <img className="card-back-image" src="/assets/cards/card-back.svg" alt="" />
+      <img className="card-back-image" src="/assets/cards/card-back-v2.svg" alt="" />
       <span className="pile-count">{count}</span>
     </button>
   );
 }
 
-function PlayerChip({ player, language, active }: { player: Snapshot["players"][number]; language: Language; active: boolean }) {
+const SEAT_LAYOUTS: Record<number, string[]> = {
+  3: ["north", "west"],
+  4: ["north-west", "north-east", "west"],
+  5: ["north-west", "north", "north-east", "west"],
+  6: ["north-west", "north", "north-east", "east", "west"],
+  7: ["north-west", "north", "north-east", "east", "south-east", "west"],
+  8: ["north-west", "north", "north-east", "east", "south-east", "south-west", "west"],
+};
+
+function SeatAvatar({ player, language }: { player: Snapshot["players"][number]; language: Language }) {
+  return <span className={`seat-avatar seat-avatar-${player.id % 4}`} role="img" aria-label={`${player.name} ${language === "zh" ? "头像" : "avatar"}`} />;
+}
+
+function CardBackFan({ count }: { count: number }) {
+  const visible = Math.min(3, Math.max(1, count));
+  return (
+    <span className="seat-card-fan" aria-hidden="true">
+      {Array.from({ length: visible }, (_, index) => <img key={index} src="/assets/cards/card-back-v2.svg" alt="" style={{ "--fan-index": index } as CSSProperties} />)}
+      <b>{count}</b>
+    </span>
+  );
+}
+
+function SeatPlayer({ player, language, active, slot, human = false }: { player: Snapshot["players"][number]; language: Language; active: boolean; slot: string; human?: boolean }) {
   const text = copy(language);
   return (
-    <div className={`player-chip player-${player.id} ${active ? "is-active" : ""}`}>
-      <div className="avatar">{player.name.slice(0, 1)}</div>
-      <div className="player-copy">
-        <span className="player-name">{player.name}</span>
-        <span className="player-hand-count">{text.cards(player.hand_count, player.uno_called)}</span>
+    <div className={`seat-player player-row seat-${slot} ${human ? "seat-human" : ""} ${active ? "is-active" : ""}`} data-seat={slot}>
+      <SeatAvatar player={player} language={language} />
+      <div className="seat-player-info">
+        <strong>{player.name}</strong>
+        <span>{human ? text.youHuman : text.cards(player.hand_count, player.uno_called)}</span>
       </div>
-      {active && <span className="turn-dot" aria-label={language === "zh" ? "当前回合" : "current turn"} />}
+      {!human && <CardBackFan count={player.hand_count} />}
+      {active && <span className="seat-turn-pip" aria-label={language === "zh" ? "当前回合" : "current turn"} />}
     </div>
   );
 }
@@ -234,11 +258,14 @@ export function App() {
       <main className="game-layout">
         <section className="table-column">
           <div className="table-heading"><div><p className="eyebrow">{text.match} / 001 · {text.seats(snapshot.players.length)}</p><h1>{text.makeYourMove}</h1></div><div className="round-meta"><span>{text.turn} {String(snapshot.turn_number).padStart(2, "0")}</span><span className="direction-mark">{snapshot.direction === 1 ? "↻" : "↺"}</span></div></div>
-          <div className="felt-table" data-animation={animation ?? undefined}>
+          <div className="felt-table table-scene" data-animation={animation ?? undefined}>
             <div className="table-grid-lines" />
-            <div className="opponent-row">{snapshot.players.slice(1).map((player) => <PlayerChip key={player.id} player={player} language={language} active={player.id === snapshot.current_player} />)}</div>
+            <div className="table-scene-badge"><span className="live-pip" />{snapshot.status === "Won" ? text.tableComplete : currentPlayer?.name === "You" ? text.yourMove : text.thinking(currentPlayer?.name ?? "AI")}</div>
+            <div className="table-seats">
+              {snapshot.players.slice(1).map((player, index) => <SeatPlayer key={player.id} player={player} language={language} active={player.id === snapshot.current_player} slot={SEAT_LAYOUTS[snapshot.players.length]?.[index] ?? `seat-${index}`} />)}
+              {human && <SeatPlayer player={human} language={language} active={human.id === snapshot.current_player} slot="south" human />}
+            </div>
             <div className="table-center">
-              <div className="center-label"><span className="live-pip" />{snapshot.status === "Won" ? text.tableComplete : currentPlayer?.name === "You" ? text.yourMove : text.thinking(currentPlayer?.name ?? "AI")}</div>
               <div className="piles">
                 <BackStack count={snapshot.draw_count} language={language} onDraw={handleDraw} disabled={snapshot.current_player !== HUMAN_ID || aiBusy.current || snapshot.status === "Won"} />
                 <div className="pile-separator" />
@@ -246,15 +273,14 @@ export function App() {
               </div>
               <div className="active-color"><span className={`color-swatch swatch-${colorClass(snapshot.active_color)}`} />{text.activeColor} <strong>{translateColor(language, snapshot.active_color)}</strong></div>
             </div>
-            <div className="table-status"><span>{localizeEngineMessage(language, snapshot.message)}</span><span className="status-code">{snapshot.last_action}</span></div>
-            <div className="table-footnote"><span>{text.drawPile} {snapshot.draw_count}</span><span>{text.discard} {snapshot.discard_count}</span><span>{text.ruleset}</span></div>
+            <div className="table-scene-status"><span>{localizeEngineMessage(language, snapshot.message)}</span><span className="status-code">{snapshot.last_action}</span></div>
+            <div className="table-scene-footnote"><span>{text.drawPile} {snapshot.draw_count}</span><span>{text.discard} {snapshot.discard_count}</span><span>{text.ruleset}</span></div>
           </div>
-          <div className="table-players-rail" aria-label={text.players}>{snapshot.players.map((player) => <div className={`player-row ${player.id === snapshot.current_player ? "is-active" : ""}`} key={player.id}><div className="mini-avatar">{player.name.slice(0, 1)}</div><div className="player-row-copy"><strong>{player.name}</strong><span>{player.id === 0 ? text.youHuman : `${text.ai} / ${profileLabel(language, activeConfig.profile)}`}</span></div><span className="count-pill">{player.hand_count}</span></div>)}</div>
         </section>
 
         <section className="hand-column">
           <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human?.hand_count ?? 0).padStart(2, "0")}</p><h2>{human?.hand_count === 1 ? text.oneCardLeft : text.keepRhythm}</h2></div><div className="hand-actions"><button className="ghost-button" onClick={handleUno} disabled={human?.hand_count !== 1 || snapshot.status === "Won"} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={handleDraw} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
-          <div className="hand-rail">{human?.hand.map((card) => <CardArt key={card.id} card={card} language={language} disabled={snapshot.current_player !== HUMAN_ID || !playableIds.has(card.id) || snapshot.status === "Won"} onClick={() => handlePlay(card)} />)}</div>
+          <div className="hand-rail hand-fan">{human?.hand.map((card, index) => <CardArt key={card.id} card={card} language={language} className="hand-card" style={{ "--hand-index": index, "--hand-total": human.hand.length } as CSSProperties} disabled={snapshot.current_player !== HUMAN_ID || !playableIds.has(card.id) || snapshot.status === "Won"} onClick={() => handlePlay(card)} />)}</div>
           <div className="hand-help"><span><kbd>{language === "zh" ? "点击" : "CLICK"}</kbd> {text.clickHint}</span><span><kbd>{language === "zh" ? "摸牌" : "DRAW"}</kbd> {text.drawHint}</span><span className="help-right">{notice ? <strong className="notice">{localizeEngineMessage(language, notice)}</strong> : text.playableHint}</span></div>
         </section>
       </main>

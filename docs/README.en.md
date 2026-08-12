@@ -65,6 +65,7 @@ contain multiple human players and any number of AI seats.
 - [Development](DEVELOPMENT.md) — toolchain, commands, and directory rules.
 - [Testing](TESTING.md) — unit, build, and browser evidence.
 - [Deployment](DEPLOYMENT.md) — Vercel configuration and honest status reporting.
+- [Table UI reference](TABLE_UI_REFERENCE.md) — generated assets, layout decisions, and interactions.
 - [Original repository](ORIGINAL_REPOSITORY.md) — source link, provenance, and memorial note.
 - [Roadmap](ROADMAP.md) — the next safe increments.
 - [Contributing](CONTRIBUTING.md) — change boundaries and review checklist.

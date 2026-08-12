@@ -221,6 +221,51 @@ h1, h2, p { margin-top: 0; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
 
+/* Reference table v2: a real top-down oval felt, perimeter seats, and a fan of cards. */
+.app-shell { background: radial-gradient(circle at 50% 9%, rgba(52, 101, 77, .19), transparent 32%), #071918; }
+.game-layout { max-width: 1420px; gap: 28px; padding-top: 30px; }
+.table-heading { padding: 0 8px; }
+.table-heading h1 { color: #f8f0d7; }
+.felt-table.table-scene { min-height: 0; height: min(67vw, 690px); margin-top: 18px; border: 1px solid rgba(229, 202, 119, .42); border-radius: 42px; background-color: #063325; background-image: linear-gradient(rgba(3, 27, 22, .12), rgba(3, 17, 17, .25)), url("/assets/uno-table-oval-v2.png"); background-position: center; background-size: cover; box-shadow: 0 34px 88px rgba(0, 0, 0, .48), 0 0 0 8px rgba(4, 18, 17, .68), inset 0 0 0 2px rgba(252, 225, 144, .18); }
+.felt-table.table-scene::before { inset: 20px; border: 1px solid rgba(255, 243, 190, .23); border-radius: 34px; box-shadow: inset 0 0 38px rgba(0, 0, 0, .21); }
+.table-grid-lines { opacity: .09; background: radial-gradient(ellipse at center, transparent 0 37%, rgba(255, 245, 193, .12) 37.1% 37.3%, transparent 37.5%), linear-gradient(90deg, transparent 49.9%, rgba(255,255,255,.08) 50%, transparent 50.1%), linear-gradient(0deg, transparent 49.9%, rgba(255,255,255,.08) 50%, transparent 50.1%); }
+.table-scene-badge { position: absolute; top: 50%; left: 50%; z-index: 3; display: flex; align-items: center; gap: 9px; padding: 7px 12px; border: 1px solid rgba(237, 228, 181, .18); border-radius: 999px; color: rgba(255, 247, 210, .74); background: rgba(3, 25, 22, .53); box-shadow: 0 8px 20px rgba(0, 0, 0, .18); font-size: 9px; font-weight: 850; letter-spacing: .14em; transform: translate(-50%, -172px); backdrop-filter: blur(5px); }
+.table-seats { position: absolute; z-index: 4; inset: 0; }
+.table-seats .seat-player { position: absolute; display: flex; align-items: center; gap: 8px; width: 166px; min-height: 62px; padding: 7px 9px; border: 1px solid rgba(246, 237, 195, .17); border-radius: 16px; color: #f9f2d9; background: rgba(3, 25, 23, .72); box-shadow: 0 10px 24px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .08); backdrop-filter: blur(7px); transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+.table-seats .seat-player.is-active { border-color: rgba(245, 201, 107, .86); background: rgba(37, 59, 42, .82); box-shadow: 0 0 0 3px rgba(245, 201, 107, .11), 0 14px 30px rgba(0, 0, 0, .3); }
+.table-seats .seat-north { top: 6%; left: 50%; transform: translateX(-50%); }
+.table-seats .seat-north-west { top: 15%; left: 10%; }
+.table-seats .seat-north-east { top: 15%; right: 10%; }
+.table-seats .seat-east { top: 44%; right: 4%; }
+.table-seats .seat-west { top: 44%; left: 4%; }
+.table-seats .seat-south-east { right: 12%; bottom: 16%; }
+.table-seats .seat-south-west { bottom: 16%; left: 12%; }
+.table-seats .seat-south { bottom: 5%; left: 50%; transform: translateX(-50%); }
+.table-seats .seat-avatar { display: block; width: 50px; height: 50px; flex: 0 0 50px; border: 2px solid rgba(255, 225, 130, .88); border-radius: 50%; background-image: url("/assets/uno-avatar-sheet-v2.png"); background-repeat: no-repeat; background-size: 200% 200%; box-shadow: 0 6px 14px rgba(0, 0, 0, .35); }
+.seat-avatar-0 { background-position: 0 0; }.seat-avatar-1 { background-position: 100% 0; }.seat-avatar-2 { background-position: 0 100%; }.seat-avatar-3 { background-position: 100% 100%; }
+.seat-player-info { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.seat-player-info strong { overflow: hidden; color: #fff8dc; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.seat-player-info span { color: rgba(238, 233, 202, .65); font-size: 8px; font-weight: 700; white-space: nowrap; }
+.seat-card-fan { position: relative; display: block; width: 38px; height: 49px; margin-left: auto; flex: 0 0 38px; }
+.seat-card-fan img { position: absolute; top: 3px; left: 3px; width: 28px; height: 40px; border-radius: 5px; object-fit: cover; box-shadow: 0 3px 7px rgba(0, 0, 0, .38); transform: rotate(calc((var(--fan-index) - 1) * 12deg)) translateX(calc((var(--fan-index) - 1) * 6px)); transform-origin: bottom center; }
+.seat-card-fan b { position: absolute; right: -2px; bottom: -4px; display: grid; place-items: center; width: 21px; height: 21px; border: 2px solid #0b2b24; border-radius: 50%; color: #17251e; background: #f5c96b; font-size: 9px; }
+.seat-turn-pip { position: absolute; top: -4px; right: -4px; width: 11px; height: 11px; border: 3px solid #104033; border-radius: 50%; background: #f16f60; box-shadow: 0 0 0 4px rgba(241, 111, 96, .15), 0 0 18px rgba(241, 111, 96, .65); }
+.table-seats .seat-human { width: 184px; padding: 7px 11px; }
+.table-seats .seat-human .seat-avatar { width: 56px; height: 56px; flex-basis: 56px; }
+.table-center { top: 50%; z-index: 5; transform: translate(-50%, -50%); }
+.table-center::before { content: ""; position: absolute; z-index: -1; top: 50%; left: 50%; width: 260px; height: 180px; border: 1px solid rgba(239, 215, 135, .2); border-radius: 50%; box-shadow: 0 0 0 14px rgba(2, 25, 20, .12), inset 0 0 30px rgba(0, 0, 0, .15); transform: translate(-50%, -50%); }
+.piles { gap: 34px; }.pile-separator { height: 112px; background: rgba(255, 243, 195, .24); }.draw-stack, .discard-stack { width: 102px; height: 142px; }.card-back-image, .stack-offset { width: 102px; height: 142px; border-radius: 15px; }.stack-offset-one { left: 8px; top: 8px; }.stack-offset-two { left: 4px; top: 5px; }.draw-stack .pile-count { right: -7px; bottom: -4px; border-color: #0a2c24; }.discard-stack .card-art { width: 102px; height: 142px; }.discard-shadow { width: 91px; height: 128px; }
+.active-color { margin-top: 22px; color: rgba(255, 248, 213, .71); }.active-color strong { color: #fff5c9; }
+.table-scene-status { position: absolute; right: 46px; bottom: 61px; left: 46px; z-index: 3; display: flex; justify-content: space-between; gap: 18px; color: rgba(255, 246, 210, .79); font-size: 11px; }
+.table-scene-footnote { position: absolute; right: 46px; bottom: 27px; left: 46px; z-index: 3; display: flex; align-items: center; gap: 18px; color: rgba(238, 231, 190, .56); font-size: 8px; font-weight: 850; letter-spacing: .11em; }.history-link { margin-left: auto; padding: 4px 8px; border: 1px solid rgba(255, 244, 199, .24); border-radius: 6px; color: #f5ca72; background: rgba(3, 22, 20, .35); cursor: pointer; font-size: 8px; font-weight: 850; }
+.table-players-rail { display: none; }
+.hand-column { padding-top: 6px; }.hand-heading { padding: 0 8px; }.hand-rail.hand-fan { min-height: 190px; justify-content: center; gap: 0; margin-top: 15px; padding: 26px 24px 18px; overflow-x: auto; border: 1px solid rgba(229, 235, 210, .19); border-radius: 22px; background: linear-gradient(180deg, rgba(6, 34, 29, .92), rgba(3, 20, 20, .94)); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 18px 44px rgba(0, 0, 0, .24); }
+.hand-fan .hand-card { width: 108px; height: 151px; margin-left: -17px; transform: translateY(calc(abs(var(--hand-index) - (var(--hand-total) - 1) / 2) * 4px)) rotate(calc((var(--hand-index) - (var(--hand-total) - 1) / 2) * 4deg)); transform-origin: 50% 100%; }.hand-fan .hand-card:first-child { margin-left: 0; }.hand-fan .hand-card:not(:disabled):hover { z-index: 8; transform: translateY(-17px) rotate(0deg) scale(1.04); }.hand-fan .hand-card:not(:disabled) { filter: drop-shadow(0 12px 9px rgba(0, 0, 0, .28)); }
+
+@media (max-width: 760px) {
+  .game-layout { padding-top: 16px; }.table-heading { padding: 0 2px; }.felt-table.table-scene { height: 590px; border-radius: 28px; }.felt-table.table-scene::before { inset: 13px; border-radius: 23px; }.table-scene-badge { transform: translate(-50%, -137px); }.table-seats .seat-player { width: 132px; min-height: 53px; padding: 5px 6px; border-radius: 12px; }.table-seats .seat-avatar { width: 40px; height: 40px; flex-basis: 40px; }.table-seats .seat-human .seat-avatar { width: 44px; height: 44px; flex-basis: 44px; }.seat-player-info strong { font-size: 9px; }.seat-player-info span { font-size: 7px; }.seat-card-fan { transform: scale(.82); transform-origin: right center; }.table-seats .seat-north-west { left: 5%; }.table-seats .seat-north-east { right: 5%; }.table-seats .seat-east { right: 1%; }.table-seats .seat-west { left: 1%; }.table-seats .seat-south-east { right: 5%; }.table-seats .seat-south-west { left: 5%; }.table-center::before { width: 208px; height: 150px; }.piles { gap: 20px; }.draw-stack, .discard-stack { width: 82px; height: 115px; }.card-back-image, .stack-offset { width: 82px; height: 115px; }.discard-stack .card-art { width: 82px; height: 115px; }.discard-shadow { width: 73px; height: 103px; }.table-scene-status { right: 25px; bottom: 58px; left: 25px; font-size: 9px; }.table-scene-footnote { right: 25px; bottom: 23px; left: 25px; gap: 9px; font-size: 7px; }.table-scene-footnote span:nth-child(3) { display: none; }.history-link { font-size: 7px; }.hand-rail.hand-fan { justify-content: flex-start; margin-right: -15px; margin-left: -15px; border-right: 0; border-left: 0; border-radius: 0; padding-left: 24px; }.hand-fan .hand-card { width: 84px; height: 118px; margin-left: -14px; }.hand-fan .hand-card:first-child { margin-left: 0; }
+}
+
 /* UNO 2026 table direction: midnight felt, warm paper, and a little signal. */
 :root {
   --ink: #f7f1e4;
@@ -298,6 +343,16 @@ body { background: radial-gradient(circle at 50% -16%, #254b46 0, #0b1c1d 44%, #
 .opponent-row { flex-wrap: wrap; row-gap: 7px; }
 .player-chip { max-width: 170px; }
 .player-4 .avatar, .player-4 .mini-avatar { background: var(--coral); }.player-5 .avatar, .player-5 .mini-avatar { background: #bca2ec; }.player-6 .avatar, .player-6 .mini-avatar { background: var(--green); }.player-7 .avatar, .player-7 .mini-avatar { background: var(--blue); }
+
+/* Keep the tabletop skin above the legacy setup selectors. */
+.table-seats .seat-avatar { display: block; width: 50px; height: 50px; flex: 0 0 50px; border: 2px solid rgba(255, 225, 130, .88); border-radius: 50%; background-color: transparent; background-image: url("/assets/uno-avatar-sheet-v2.png"); background-repeat: no-repeat; background-size: 200% 200%; box-shadow: 0 6px 14px rgba(0, 0, 0, .35); }
+.table-seats .seat-avatar-0 { background-position: 0 0; }.table-seats .seat-avatar-1 { background-position: 100% 0; }.table-seats .seat-avatar-2 { background-position: 0 100%; }.table-seats .seat-avatar-3 { background-position: 100% 100%; }
+.table-seats .seat-avatar-2, .table-seats .seat-avatar-3 { background-color: transparent; }
+.table-seats .seat-human .seat-avatar { width: 56px; height: 56px; flex-basis: 56px; }
+.table-scene { background-image: linear-gradient(rgba(3, 27, 22, .12), rgba(3, 17, 17, .25)), url("/assets/uno-table-oval-v2.png"); background-position: center; background-size: cover; }
+.table-seats .seat-player { position: absolute; display: flex; align-items: center; gap: 8px; width: 166px; min-height: 62px; padding: 7px 9px; border: 1px solid rgba(246, 237, 195, .17); border-radius: 16px; color: #f9f2d9; background: rgba(3, 25, 23, .72); box-shadow: 0 10px 24px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .08); backdrop-filter: blur(7px); }
+.table-seats .seat-player.is-active { border-color: rgba(245, 201, 107, .86); background: rgba(37, 59, 42, .82); }
+.table-seats .seat-north { top: 6%; left: 50%; transform: translateX(-50%); }.table-seats .seat-north-west { top: 15%; left: 10%; }.table-seats .seat-north-east { top: 15%; right: 10%; }.table-seats .seat-east { top: 44%; right: 4%; }.table-seats .seat-west { top: 44%; left: 4%; }.table-seats .seat-south-east { right: 12%; bottom: 16%; }.table-seats .seat-south-west { bottom: 16%; left: 12%; }.table-seats .seat-south { bottom: 5%; left: 50%; transform: translateX(-50%); }
 
 @media (max-width: 900px) {
   .setup-shell { padding: 0 22px 32px; }.setup-layout { grid-template-columns: 1fr; gap: 38px; padding-top: 58px; }.setup-intro { max-width: 620px; }.setup-intro h1 { font-size: clamp(48px, 10vw, 72px); }.setup-lede { margin-top: 20px; }.setup-card { max-width: 680px; justify-self: center; }
