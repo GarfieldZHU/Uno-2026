@@ -11,7 +11,7 @@
 4. `npm run build` proves the release artifact and Vite bundle can be produced.
 5. `npm run test:browser` boots Vite on port 1411 and checks setup defaults,
    three-seat and eight-seat starts, per-seat pause controls, responsive table
-   layout, and the locked online control.
+   layout, Chinese-default copy, the English toggle, and the locked online control.
 
 ## Evidence discipline
 

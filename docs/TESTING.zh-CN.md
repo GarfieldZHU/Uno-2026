@@ -9,8 +9,8 @@
    AI 合法性、UNO 喊牌和快照隐私；
 3. `npm run typecheck` 检查 WASM 门面和 React 契约；
 4. `npm run build` 证明 release 产物和 Vite 包可以生成；
-5. `npm run test:browser` 在 1411 端口启动 Vite，检查开局默认值、三人/八人启动、每席位
-   AI 停顿、响应式牌桌和锁定的联机控件。
+5. `npm run test:browser` 在 1411 端口启动 Vite，检查中文默认文案、英文切换、开局默认值、
+   三人/八人启动、每席位 AI 停顿、响应式牌桌和锁定的联机控件。
 
 ## 证据边界
 

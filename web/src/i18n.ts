@@ -1,0 +1,278 @@
+import { PROFILE_OPTIONS } from "./types";
+
+export type Language = "zh" | "en";
+
+type UiCopy = {
+  offlineTable: string;
+  quietTable: string;
+  rustRuntime: string;
+  offline: string;
+  online: string;
+  locked: string;
+  switchToEnglish: string;
+  switchToChinese: string;
+  setupEyebrow: string;
+  setupTitle: string;
+  setupTitleAccent: string;
+  setupLede: string;
+  deterministicCore: string;
+  noNetwork: string;
+  startingLineup: string;
+  setTable: string;
+  players: string;
+  playerCountLabel: string;
+  youAiSeats: string;
+  playerOption: (count: number) => string;
+  aiProfile: string;
+  aiProfileLabel: string;
+  appliesToEveryAi: string;
+  defaultAiPause: string;
+  defaultAiPauseLabel: string;
+  secondsBetweenMoves: string;
+  seatRhythm: string;
+  individualOverrides: string;
+  setAllTo: (seconds: number) => string;
+  youHuman: string;
+  ready: string;
+  aiPause: (seconds: number) => string;
+  startOffline: string;
+  rustLocal: string;
+  onlineRoomsLocked: string;
+  match: string;
+  seats: (count: number) => string;
+  makeYourMove: string;
+  turn: string;
+  yourMove: string;
+  thinking: (name: string) => string;
+  tableComplete: string;
+  activeColor: string;
+  drawPile: string;
+  discard: string;
+  ruleset: string;
+  tableSignal: string;
+  engine: string;
+  network: string;
+  disabled: string;
+  onlineNote: string;
+  oneCardLeft: string;
+  keepRhythm: string;
+  callUno: string;
+  drawCard: string;
+  clickHint: string;
+  drawHint: string;
+  playableHint: string;
+  wildCard: string;
+  chooseColor: string;
+  wildExplanation: string;
+  cancel: string;
+  tableUnavailable: string;
+  retryTable: string;
+  loading: string;
+  ai: string;
+  human: string;
+  basePause: (seconds: number) => string;
+  cards: (count: number, unoCalled: boolean) => string;
+};
+
+const COPY: Record<Language, UiCopy> = {
+  zh: {
+    offlineTable: "离线牌桌",
+    quietTable: "一张安静、每一手都值得记住的牌桌",
+    rustRuntime: "Rust 核心 · WASM 运行时",
+    offline: "离线",
+    online: "联机",
+    locked: "已锁定",
+    switchToEnglish: "切换到英文",
+    switchToChinese: "切换到中文",
+    setupEyebrow: "牌桌设置 / 1411",
+    setupTitle: "发一桌",
+    setupTitleAccent: "值得记住的牌。",
+    setupLede: "由 Rust 引擎驱动的本地 UNO 牌桌。选择人数，调好节奏，让每一步都留在你的设备上。",
+    deterministicCore: "确定性核心",
+    noNetwork: "无需网络",
+    startingLineup: "开局阵容",
+    setTable: "设置牌桌",
+    players: "玩家",
+    playerCountLabel: "玩家",
+    youAiSeats: "你 + AI 席位",
+    playerOption: (count) => `${count} 名玩家`,
+    aiProfile: "AI 档位",
+    aiProfileLabel: "AI 档位",
+    appliesToEveryAi: "应用到所有 AI 席位",
+    defaultAiPause: "AI 默认停顿",
+    defaultAiPauseLabel: "AI 默认停顿",
+    secondsBetweenMoves: "出牌间隔（秒）",
+    seatRhythm: "席位节奏",
+    individualOverrides: "单独调整",
+    setAllTo: (seconds) => `全部设为 ${seconds} 秒`,
+    youHuman: "你 / 人类",
+    ready: "就绪",
+    aiPause: (seconds) => `AI / ${seconds} 秒停顿`,
+    startOffline: "开始离线牌局",
+    rustLocal: "Rust / WASM 在本地运行。联机房间仍处于锁定状态。",
+    onlineRoomsLocked: "联机房间正在等待传输层完善。当前牌局完全本地且确定。",
+    match: "牌局",
+    seats: (count) => `${count} 席`,
+    makeYourMove: "轮到你出牌。",
+    turn: "回合",
+    yourMove: "你的回合",
+    thinking: (name) => `${name} 思考中`,
+    tableComplete: "牌局结束",
+    activeColor: "当前颜色",
+    drawPile: "摸牌堆",
+    discard: "弃牌",
+    ruleset: "规则 / 经典 + UNO 喊牌",
+    tableSignal: "牌桌信号",
+    engine: "引擎",
+    network: "网络",
+    disabled: "未启用",
+    onlineNote: "联机房间正在等待传输层完善。当前牌局完全本地且确定。",
+    oneCardLeft: "只剩一张。",
+    keepRhythm: "保持节奏。",
+    callUno: "喊 UNO",
+    drawCard: "摸一张牌",
+    clickHint: "点击亮起的牌出牌",
+    drawHint: "没有可出牌时摸牌",
+    playableHint: "可出的牌会在手牌轨道上发光。",
+    wildCard: "万能牌",
+    chooseColor: "选择下一个颜色。",
+    wildExplanation: "牌桌会按照你的选择继续。",
+    cancel: "取消",
+    tableUnavailable: "牌桌暂时不可用",
+    retryTable: "重试牌桌",
+    loading: "正在洗牌…",
+    ai: "AI",
+    human: "人类",
+    basePause: (seconds) => `${seconds} 秒基础停顿`,
+    cards: (count, unoCalled) => `${count} 张牌${unoCalled ? " · 已喊 UNO" : ""}`,
+  },
+  en: {
+    offlineTable: "OFFLINE TABLE",
+    quietTable: "A quiet table for loud plays",
+    rustRuntime: "Rust core · WASM runtime",
+    offline: "OFFLINE",
+    online: "ONLINE",
+    locked: "LOCKED",
+    switchToEnglish: "Switch to English",
+    switchToChinese: "Switch to Chinese",
+    setupEyebrow: "TABLE SETUP / 1411",
+    setupTitle: "Deal a table",
+    setupTitleAccent: "worth remembering.",
+    setupLede: "A local UNO table powered by the Rust engine. Choose the room size, tune the rhythm, and keep every move on your machine.",
+    deterministicCore: "DETERMINISTIC CORE",
+    noNetwork: "NO NETWORK REQUIRED",
+    startingLineup: "STARTING LINEUP",
+    setTable: "Set the table.",
+    players: "PLAYERS",
+    playerCountLabel: "Player count",
+    youAiSeats: "YOU + AI SEATS",
+    playerOption: (count) => `${count} players`,
+    aiProfile: "AI PROFILE",
+    aiProfileLabel: "AI profile",
+    appliesToEveryAi: "APPLIES TO EVERY AI SEAT",
+    defaultAiPause: "DEFAULT AI PAUSE",
+    defaultAiPauseLabel: "Default AI pause",
+    secondsBetweenMoves: "SECONDS BETWEEN MOVES",
+    seatRhythm: "SEAT RHYTHM",
+    individualOverrides: "INDIVIDUAL OVERRIDES",
+    setAllTo: (seconds) => `SET ALL TO ${seconds}S`,
+    youHuman: "YOU / HUMAN",
+    ready: "READY",
+    aiPause: (seconds) => `AI / ${seconds}s pause`,
+    startOffline: "START OFFLINE TABLE",
+    rustLocal: "Rust / WASM stays local. Online rooms are still locked.",
+    onlineRoomsLocked: "Online rooms stay closed while the transport layer is being hardened. Your offline match is fully local and deterministic.",
+    match: "MATCH",
+    seats: (count) => `${count} SEATS`,
+    makeYourMove: "Make your move.",
+    turn: "TURN",
+    yourMove: "YOUR MOVE",
+    thinking: (name) => `${name.toUpperCase()} IS THINKING`,
+    tableComplete: "TABLE COMPLETE",
+    activeColor: "ACTIVE COLOR",
+    drawPile: "DRAW PILE",
+    discard: "DISCARD",
+    ruleset: "RULESET / CLASSIC + UNO CALL",
+    tableSignal: "TABLE SIGNAL",
+    engine: "ENGINE",
+    network: "NETWORK",
+    disabled: "DISABLED",
+    onlineNote: "Online rooms stay closed while the transport layer is being hardened. Your offline match is fully local and deterministic.",
+    oneCardLeft: "One card left.",
+    keepRhythm: "Keep the rhythm.",
+    callUno: "CALL UNO",
+    drawCard: "DRAW CARD",
+    clickHint: "a lit card to play",
+    drawHint: "when no move is open",
+    playableHint: "A playable card glows on the rail.",
+    wildCard: "WILD CARD",
+    chooseColor: "Name the next color.",
+    wildExplanation: "The table will continue with your choice.",
+    cancel: "Cancel",
+    tableUnavailable: "Table unavailable",
+    retryTable: "Retry table",
+    loading: "Shuffling the Rust table…",
+    ai: "AI",
+    human: "HUMAN",
+    basePause: (seconds) => `${seconds}s BASE PAUSE`,
+    cards: (count, unoCalled) => `${count} cards${unoCalled ? " · UNO" : ""}`,
+  },
+};
+
+export function copy(language: Language) {
+  return COPY[language];
+}
+
+export function profileLabel(language: Language, value: string) {
+  const option = PROFILE_OPTIONS.find((candidate) => candidate.value === value);
+  if (!option || language === "en") return option?.label ?? value;
+  const suffix: Record<string, string> = {
+    "garfield1993-ai-simple": "简单",
+    "garfield1993-ai-hard": "困难",
+    "uno-2026-ai-easy": "入门",
+    "uno-2026-ai-strategist": "策略",
+  };
+  return `${value.startsWith("garfield1993") ? "garfield1993" : "uno-2026"} · ${suffix[value] ?? option.label}`;
+}
+
+export function profileHint(language: Language, value: string) {
+  if (language === "en") return PROFILE_OPTIONS.find((option) => option.value === value)?.hint ?? "";
+  const hints: Record<string, string> = {
+    "garfield1993-ai-simple": "先出第一张合法牌",
+    "garfield1993-ai-hard": "施加功能牌压力",
+    "uno-2026-ai-easy": "节奏清晰易读",
+    "uno-2026-ai-strategist": "颜色与威胁评分",
+  };
+  return hints[value] ?? "";
+}
+
+export function translateColor(language: Language, color: string) {
+  if (language === "en") return color;
+  return ({ Red: "红色", Yellow: "黄色", Green: "绿色", Blue: "蓝色", Wild: "万能" } as Record<string, string>)[color] ?? color;
+}
+
+export function translateCardLabel(language: Language, label: string) {
+  if (language === "en") return label;
+  return ({ SKIP: "跳过", "↻": "反转", WILD: "万能" } as Record<string, string>)[label] ?? label;
+}
+
+export function localizeEngineMessage(language: Language, message: string) {
+  if (language === "en") return message;
+  if (message === "Your turn. Match the color or symbol.") return "轮到你了。匹配颜色或牌型出牌。";
+  if (message === "You drew a playable card. Play it or pass.") return "你摸到了一张可出的牌。可以出牌，也可以跳过。";
+  const draw = message.match(/^(.*) draws (\d+) cards?\.$/);
+  if (draw) return `${draw[1]} 摸了 ${draw[2]} 张牌。`;
+  const singleDraw = message.match(/^(.*) draws a card\.$/);
+  if (singleDraw) return `${singleDraw[1]} 摸了一张牌。`;
+  const missedUno = message.match(/^(.*) missed UNO and draws 2\.$/);
+  if (missedUno) return `${missedUno[1]} 漏喊 UNO，摸两张牌。`;
+  const calledUno = message.match(/^(.*) called UNO!$/);
+  if (calledUno) return `${calledUno[1]} 喊了 UNO！`;
+  const choseColor = message.match(/^(.*) chose (Red|Yellow|Green|Blue)\.$/);
+  if (choseColor) return `${choseColor[1]} 选择了${translateColor(language, choseColor[2])}。`;
+  const played = message.match(/^(.*) played (.+)\.$/);
+  if (played) return `${played[1]} 打出了 ${translateCardLabel(language, played[2])}。`;
+  const winner = message.match(/^(.*) wins the table!$/);
+  if (winner) return `${winner[1]} 赢得了牌局！`;
+  return message;
+}

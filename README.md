@@ -26,6 +26,8 @@ The current vertical slice includes:
   `garfield1993-ai-simple` and `garfield1993-ai-hard`;
 - a CSS-rendered card table with responsive HUD and original, non-franchise card
   artwork;
+- a Chinese-first interface with an English toggle available on both setup and
+  table screens;
 - a Rust server scaffold with `/health` and an explicitly disabled room endpoint;
 - Vercel configuration for the static Vite client.
 

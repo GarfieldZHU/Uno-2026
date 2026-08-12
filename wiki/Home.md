@@ -11,6 +11,9 @@ AI seats, and an independent 1–30 second pause for every AI seat (three by
 default). The future online room model is allowed to mix multiple humans with
 any number of AI, but is not enabled yet.
 
+Chinese is the default interface language. The `EN` control switches both the
+setup surface and the in-game HUD to English without restarting the table.
+
 ## Start
 
 ```bash

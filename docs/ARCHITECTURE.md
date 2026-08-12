@@ -31,7 +31,8 @@ own. This keeps native tests and browser behavior on the same implementation.
 | `crates/uno-core/src/ai.rs` | deterministic move selection | UI timing or random browser state |
 | `crates/uno-core/src/lib.rs` | public Rust exports and wasm-bindgen facade | duplicated game rules |
 | `web/src/App.tsx` | table composition, input, AI pacing | authoritative state mutation |
-| `web/src/SetupScreen.tsx` | offline seat/profile/pause setup | card or turn rules |
+| `web/src/SetupScreen.tsx` | Chinese-first offline seat/profile/pause setup | card or turn rules |
+| `web/src/i18n.ts` | Chinese/English UI copy and engine-message localization | rules or snapshot state |
 | `web/src/types.ts` | TypeScript view types and labels | rule decisions |
 | `web/src/wasm.ts` | lazy browser module loading | fallback rule engine |
 | `web/src/styles.css` | visual language and responsive layout | game state |
@@ -39,7 +40,7 @@ own. This keeps native tests and browser behavior on the same implementation.
 
 ## State flow
 
-1. `SetupScreen` collects 3–8 seats (default four), the AI profile, and each
+1. `SetupScreen` renders Chinese by default and collects 3–8 seats (default four), the AI profile, and each
    AI seat's 1–30 second presentation pause (default three).
 2. `App` creates `UnoGame.new_with_config(seed, profile, player_count)` only
    after the offline start action.

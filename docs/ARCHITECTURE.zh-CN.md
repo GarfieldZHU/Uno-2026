@@ -30,7 +30,8 @@ Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `Ga
 | `crates/uno-core/src/ai.rs` | 确定性的出牌选择 | UI 延迟或浏览器随机数 |
 | `crates/uno-core/src/lib.rs` | Rust 公共导出和 wasm-bindgen 门面 | 复制规则 |
 | `web/src/App.tsx` | 牌桌组合、输入、AI 节奏 | 权威状态修改 |
-| `web/src/SetupScreen.tsx` | 离线席位、档位、停顿设置 | 牌和回合规则 |
+| `web/src/SetupScreen.tsx` | 中文优先的离线席位、档位、停顿设置 | 牌和回合规则 |
+| `web/src/i18n.ts` | 中英文 UI 文案与引擎消息本地化 | 规则或快照状态 |
 | `web/src/types.ts` | TypeScript 视图类型和文案 | 规则判断 |
 | `web/src/wasm.ts` | 延迟加载浏览器模块 | 备用规则引擎 |
 | `web/src/styles.css` | 视觉系统和响应式布局 | 游戏状态 |
@@ -38,7 +39,7 @@ Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `Ga
 
 ## 状态流
 
-1. `SetupScreen` 收集 3–8 个席位（默认四人）、AI 档位和每个 AI 的 1–30 秒展示停顿（默认三秒）。
+1. `SetupScreen` 默认渲染中文，收集 3–8 个席位（默认四人）、AI 档位和每个 AI 的 1–30 秒展示停顿（默认三秒）；顶栏可以切换英文。
 2. 只有点击离线开始后，`App` 才创建 `UnoGame.new_with_config(seed, profile, player_count)`。
 3. Rust 构造确定性的 108 张牌、使用 seed 洗牌、给每个席位发七张牌，并以数字牌作为首张弃牌。
 4. 门面返回 JSON `Snapshot`；AI 的具体手牌被隐藏，只公开数量。
