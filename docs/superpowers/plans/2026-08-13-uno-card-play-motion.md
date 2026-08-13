@@ -234,7 +234,7 @@ npm run build
 npm run test:browser
 ```
 
-- [ ] **Step 2: Verify identity and worktree.**
+- [x] **Step 2: Verify identity and worktree.**
 
 ```bash
 git config user.name
@@ -245,7 +245,7 @@ git log -1 --format='%an <%ae>%n%cn <%ce>%n%s'
 
 Expected identity: `GarfieldZHU <garfield.bupt@gmail.com>` for both author and committer; no unrelated files changed.
 
-- [ ] **Step 3: Push the verified commits.**
+- [x] **Step 3: Push the verified commits.**
 
 ```bash
 git push origin main
@@ -253,5 +253,7 @@ git ls-remote origin refs/heads/main
 ```
 
 - [ ] **Step 4: Validate the production page.**
+
+The repository is pushed to GarfieldZHU/Uno-2026 at `5ad0030`. Vercel validation is pending because the connected GarfieldZHU team currently exposes no Uno project through the available API, the previous Uno hostname redirects to Vercel authentication, and the local CLI has no active credentials. Do not report a production URL as updated until the project is linked and a READY deployment is observed.
 
 Open the authenticated Vercel production URL, start an offline table, trigger a human play, and visually confirm the flight, AI card-back flip, impact ripple, and stable discard state on desktop and mobile-sized viewports.
