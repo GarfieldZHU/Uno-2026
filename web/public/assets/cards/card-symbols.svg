@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" aria-hidden="true">
+  <!-- Original, project-owned vector symbols. UNO is a game mechanic reference;
+       this file does not reproduce Mattel artwork or logos. -->
+  <defs>
+    <path id="arrow" d="M78 200a122 122 0 1 1 4 112l28-18a90 90 0 1 0-3-78Z"/>
+  </defs>
+  <symbol id="skip" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="39" fill="none" stroke="currentColor" stroke-width="9"/>
+    <path d="M23 77 77 23" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="reverse" viewBox="0 0 100 100">
+    <path d="M25 36a28 28 0 0 1 48 4l-10 8 27 5-5-27-8 7A43 43 0 0 0 16 32" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M75 64a28 28 0 0 1-48-4l10-8-27-5 5 27 8-7a43 43 0 0 0 61 1" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="draw-two" viewBox="0 0 100 100">
+    <rect x="19" y="29" width="43" height="53" rx="6" transform="rotate(-12 19 29)" fill="none" stroke="currentColor" stroke-width="8"/>
+    <rect x="38" y="18" width="43" height="53" rx="6" transform="rotate(12 38 18)" fill="none" stroke="currentColor" stroke-width="8"/>
+    <text x="61" y="55" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="900" fill="currentColor">+2</text>
+  </symbol>
+  <symbol id="wild" viewBox="0 0 100 100">
+    <path d="M50 8 61 38 92 28 70 51 92 72 61 63 50 94 39 63 8 72 30 51 8 28 39 38Z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="draw-four" viewBox="0 0 100 100">
+    <use href="#wild"/>
+    <text x="50" y="59" text-anchor="middle" font-family="Arial,sans-serif" font-size="29" font-weight="900" fill="currentColor">+4</text>
+  </symbol>
+</svg>

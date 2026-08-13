@@ -88,6 +88,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [topbarOpen, setTopbarOpen] = useState(false);
   const [game, setGame] = useState<WasmGame | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(false);
@@ -119,6 +120,7 @@ export function App() {
     setNotice(null);
     setWildCardId(null);
     setHistoryOpen(false);
+    setTopbarOpen(false);
     try {
       const nextGame = await createWasmGame(nextSeed, nextConfig.profile, nextConfig.playerCount);
       if (runToken !== runTokenRef.current) return;
@@ -248,7 +250,8 @@ export function App() {
   const discardCards = snapshot.discard_cards?.length ? snapshot.discard_cards : [snapshot.top_card];
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${topbarOpen ? "topbar-is-open" : "topbar-is-hidden"}`}>
+      <button className="topbar-toggle" type="button" onClick={() => setTopbarOpen((open) => !open)} aria-expanded={topbarOpen} aria-label={topbarOpen ? (language === "zh" ? "隐藏顶部信息栏" : "Hide top information bar") : (language === "zh" ? "显示顶部信息栏" : "Show top information bar")}>{topbarOpen ? "−" : "☰"}</button>
       <header className="topbar">
         <div className="brand-lockup"><div className="brand-mark">UNO<small>2026</small></div><div className="brand-divider" /><div className="brand-context"><span>{text.offlineTable}</span><small>{text.rustRuntime}</small></div></div>
         <div className="table-mode"><span className="mode-live-dot" />{text.offline}<span className="mode-lock">· {text.online} {text.locked}</span></div>
