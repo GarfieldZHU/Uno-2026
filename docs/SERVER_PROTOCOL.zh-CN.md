@@ -27,7 +27,7 @@ curl http://127.0.0.1:8787/health
 | `GET /api/v1/rooms/:code` | 开始后需 `X-Player-Token` | 房间成员、过期时间、倒计时和对当前玩家安全的快照 |
 | `POST /api/v1/rooms/:code/start` | 房主 token | 至少三个总席位时开局，只能开始一次 |
 | `POST /api/v1/rooms/:code/actions` | 玩家 token | `play`、`draw`、`call_uno` |
-| `DELETE /api/v1/rooms/:code/players/:id` | 对应玩家 token | 退出；房主退出会关闭房间 |
+| `DELETE /api/v1/rooms/:code/players/:id` | 对应玩家 token | 退出；等待阶段房主退出关闭房间，开局后席位转 AI |
 | `GET /api/v1/rooms/:code/ws?token=...` | query 中玩家 token | WebSocket 快照流 |
 
 创建示例：
@@ -44,7 +44,8 @@ curl http://127.0.0.1:8787/health
 
 `max_players` 限制为 3–8，与离线引擎一致。`ai_count` 可以为 0，但必须保留至少一个
 人类席位。服务只把当前 token 对应玩家的手牌返回给该玩家，其他玩家只返回数量。牌局开始
-后有人退出时，原席位保留在出牌环中，并立即交给配置的 AI 接管，不会打乱其他人的顺序。
+后有人退出时，原席位保留在出牌环中，并立即交给配置的 AI 接管，不会打乱其他人的顺序；
+如果离席的是房主，房主权限转移给剩余人类玩家。
 AI 由房间调度器自动行动；人类倒计时结束时，服务会确定性地随机选择一张合法牌，或摸取
 应受的牌数，然后广播新快照。每个快照都包含 `current_player`、`next_player` 和
 `direction`，网页端不再自行猜测下家。每个改变状态的 REST 请求都会广播 `room.snapshot`；

@@ -27,7 +27,7 @@ const copy = {
     empty: "还没有玩家",
     minPlayers: "至少需要 3 个席位（可由 AI 补齐）",
     expires: (seconds: number) => `房间将在 ${Math.max(0, seconds)} 秒后失效`,
-    onlineHint: "房主离开后房间会立即关闭；联机状态通过实时通道同步。",
+    onlineHint: "等待阶段房主离开会关闭房间；开局后任何席位离开都会由 AI 接管。",
     back: "返回",
   },
   en: {
@@ -47,7 +47,7 @@ const copy = {
     empty: "No players yet",
     minPlayers: "At least 3 seats are required (AI can fill them).",
     expires: (seconds: number) => `Room expires in ${Math.max(0, seconds)}s`,
-    onlineHint: "The room closes when its host leaves; state is synced over a live channel.",
+    onlineHint: "A waiting-room host closes the room; after start, any leaving seat is taken over by AI.",
     back: "Back",
   },
 } as const;

@@ -31,7 +31,7 @@ never duplicate card legality or effects.
 | `GET /api/v1/rooms/:code` | `X-Player-Token` after start | room roster, expiry, countdown, viewer-safe snapshot |
 | `POST /api/v1/rooms/:code/start` | host token | start once at least three total seats exist |
 | `POST /api/v1/rooms/:code/actions` | player token | `play`, `draw`, or `call_uno` |
-| `DELETE /api/v1/rooms/:code/players/:id` | matching player token | leave; host departure closes the room |
+| `DELETE /api/v1/rooms/:code/players/:id` | matching player token | leave; waiting host closes the room, started-game seats become AI |
 | `GET /api/v1/rooms/:code/ws?token=...` | player token query | WebSocket snapshot stream |
 
 Example create request:
@@ -50,7 +50,8 @@ Example create request:
 zero, but must leave at least one human seat. Human hands are returned only to
 the token's viewer; opponent hands are count-only. If a player leaves after the
 game starts, that seat remains in the turn ring and is immediately controlled by
-the configured AI profile. AI seats automatically step on the room scheduler.
+the configured AI profile; if that seat was the host, host control transfers to
+the lowest remaining human seat. AI seats automatically step on the room scheduler.
 When a human deadline expires, the server deterministically chooses a legal card
 or draws the required cards, then broadcasts the resulting snapshot. Each
 snapshot includes `current_player`, `next_player`, and `direction` so clients do

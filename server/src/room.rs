@@ -463,10 +463,11 @@ pub fn leave_room(
             .iter()
             .position(|player| player.token == token_value && player.seat.to_string() == player_id)
             .ok_or_else(|| error("403 Forbidden", "player-not-in-room"))?;
-        if room.players[index].host {
+        if room.players[index].host && !room.started {
             true
         } else {
             let seat = room.players[index].seat;
+            let was_host = room.players[index].host;
             room.players.remove(index);
             if !room.started {
                 // Before the game starts, compact the waiting human ring so a
@@ -480,6 +481,16 @@ pub fn leave_room(
                         player.name = format!("AI {}", seat + 1);
                     }
                     room.ai_count = (room.ai_count + 1).min(room.seat_count.saturating_sub(1));
+                }
+                if was_host {
+                    if let Some(next_host) =
+                        room.players.iter_mut().min_by_key(|player| player.seat)
+                    {
+                        next_host.host = true;
+                        room.host_token = next_host.token.clone();
+                    } else {
+                        room.host_token.clear();
+                    }
                 }
             }
             false
@@ -737,5 +748,24 @@ mod tests {
             .as_str()
             .unwrap()
             .starts_with("player-0-"));
+    }
+
+    #[test]
+    fn started_host_leave_is_taken_over_by_ai_and_host_role_transfers() {
+        let rooms = new_store();
+        let (_, host) = create_room(r#"{"name":"Host","max_players":3}"#, &rooms).unwrap();
+        let code = host["room_code"].as_str().unwrap().to_string();
+        let (_, guest) = join_room(&code, r#"{"name":"Guest"}"#, &rooms).unwrap();
+        let _ = join_room(&code, r#"{"name":"Other"}"#, &rooms).unwrap();
+        start_room(&code, host["player_token"].as_str(), &rooms).unwrap();
+        leave_room(&code, "0", host["player_token"].as_str(), &rooms).unwrap();
+
+        let (_, view) = view_room(&code, guest["player_token"].as_str(), &rooms).unwrap();
+        assert_eq!(
+            view["snapshot"]["players"][0]["kind"],
+            "garfield1993-ai-simple"
+        );
+        assert_eq!(view["host_id"], guest["player_id"]);
+        assert_eq!(view["ai_count"], 1);
     }
 }
