@@ -2,9 +2,10 @@
 
 [English](SERVER_PROTOCOL.md) · [架构说明](ARCHITECTURE.zh-CN.md)
 
-`server/` 现在是一个 Rust 权威房间服务。它在内存中保存房间，复用
-`uno-core` 的牌堆、规则和 AI；服务重启会关闭所有活动房间，这是第一版联机切片的
-明确边界。
+`server/` 现在是模块化的 Rust 权威房间服务：`room.rs` 负责房间/牌局状态和广播，
+`http.rs` 负责 REST 路由，`websocket.rs` 负责 RFC 6455 会话。它在内存中保存房间，
+复用 `uno-core` 的牌堆、规则和 AI，并把按玩家隔离的快照广播给所有已连接网页。服务
+重启会关闭所有活动房间，这是第一版联机切片的明确边界。
 
 ## 启动
 
@@ -27,6 +28,7 @@ curl http://127.0.0.1:8787/health
 | `POST /api/v1/rooms/:code/start` | 房主 token | 至少三个总席位时开局，只能开始一次 |
 | `POST /api/v1/rooms/:code/actions` | 玩家 token | `play`、`draw`、`call_uno` |
 | `DELETE /api/v1/rooms/:code/players/:id` | 对应玩家 token | 退出；房主退出会关闭房间 |
+| `GET /api/v1/rooms/:code/ws?token=...` | query 中玩家 token | WebSocket 快照流 |
 
 创建示例：
 
@@ -41,13 +43,24 @@ curl http://127.0.0.1:8787/health
 ```
 
 `max_players` 限制为 3–8，与离线引擎一致。`ai_count` 可以为 0，但必须保留至少一个
-人类席位。服务只把当前 token 对应玩家的手牌返回给该玩家，其他玩家只返回数量。AI 会
-在轮询时自动行动，人类倒计时结束会自动摸牌。
+人类席位。服务只把当前 token 对应玩家的手牌返回给该玩家，其他玩家只返回数量。牌局开始
+后有人退出时，原席位保留在出牌环中，并立即交给配置的 AI 接管，不会打乱其他人的顺序。
+AI 由房间调度器自动行动；人类倒计时结束时，服务会确定性地随机选择一张合法牌，或摸取
+应受的牌数，然后广播新快照。每个快照都包含 `current_player`、`next_player` 和
+`direction`，网页端不再自行猜测下家。每个改变状态的 REST 请求都会广播 `room.snapshot`；
+AI 和超时变化也会广播。网页端以 WebSocket 为主通道，断线会使用有界退避重连；无法升级时
+再降级到有限频率的 REST 刷新。
+
+WebSocket 使用文本 JSON 信封：
+
+```json
+{"type":"room.snapshot","room":{"code":"ABCD","status":"playing","snapshot":{}}}
+```
 
 网页客户端会明确以 snake_case 发送 `max_players`、`ai_count`、
 `countdown_seconds` 和 `ai_profile`。本地 Vite 开发服务器把 `/api` 代理到
 `127.0.0.1:8787`；部署后的客户端应把 `VITE_ONLINE_API_URL` 设置为 Rust 房间服务的
 HTTPS 地址。
 
-第一版使用小型 HTTP 实现，公开部署前必须放在 TLS 和反向代理后。不要把房间 token、部署
-凭据或服务器密码提交到仓库。
+第一版使用小型 HTTP/WebSocket 实现，公开部署前必须放在 TLS 和反向代理后；Vite 开发
+代理已启用 `ws: true` 转发 WebSocket。不要把房间 token、部署凭据或服务器密码提交到仓库。

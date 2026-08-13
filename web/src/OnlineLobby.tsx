@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Language } from "./i18n";
-import { createOnlineApi, type OnlineApi, type OnlineRoom } from "./online";
+import { connectOnlineRoom, createOnlineApi, type OnlineApi, type OnlineRoom, type OnlineSyncStatus } from "./online";
 
 type Props = {
   language?: Language;
@@ -27,7 +27,7 @@ const copy = {
     empty: "还没有玩家",
     minPlayers: "至少需要 3 个席位（可由 AI 补齐）",
     expires: (seconds: number) => `房间将在 ${Math.max(0, seconds)} 秒后失效`,
-    onlineHint: "房主离开后房间会立即关闭；联机状态每 2.5 秒同步。",
+    onlineHint: "房主离开后房间会立即关闭；联机状态通过实时通道同步。",
     back: "返回",
   },
   en: {
@@ -47,7 +47,7 @@ const copy = {
     empty: "No players yet",
     minPlayers: "At least 3 seats are required (AI can fill them).",
     expires: (seconds: number) => `Room expires in ${Math.max(0, seconds)}s`,
-    onlineHint: "The room closes when its host leaves; state syncs every 2.5 seconds.",
+    onlineHint: "The room closes when its host leaves; state is synced over a live channel.",
     back: "Back",
   },
 } as const;
@@ -62,19 +62,40 @@ export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarte
   const [countdownSeconds, setCountdownSeconds] = useState(15);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<OnlineSyncStatus>("connecting");
+  const roomRef = useRef<OnlineRoom | null>(null);
+  const syncStatusRef = useRef<OnlineSyncStatus>("connecting");
+  const onStartedRef = useRef(onStarted);
+  roomRef.current = room;
+  onStartedRef.current = onStarted;
 
   const humanCapacity = useMemo(() => Math.max(1, maxPlayers - aiCount), [maxPlayers, aiCount]);
 
   useEffect(() => {
     if (!room || room.status !== "waiting") return undefined;
+    const handleStatus = (status: OnlineSyncStatus) => {
+      syncStatusRef.current = status;
+      setSyncStatus(status);
+    };
+    const liveSocket = connectOnlineRoom(room, (next) => {
+      setRoom(next);
+      if (next.status === "playing") onStartedRef.current?.(next);
+    }, handleStatus);
     const timer = window.setInterval(() => {
-      void api.getRoom(room).then((next) => {
-        setRoom(next);
-        if (next.status === "playing") onStarted?.(next);
-      }).catch(() => undefined);
-    }, 2_500);
-    return () => window.clearInterval(timer);
-  }, [api, onStarted, room]);
+      if (syncStatusRef.current !== "connected") {
+        const current = roomRef.current;
+        if (!current) return;
+        void api.getRoom(current).then((next) => {
+          setRoom(next);
+          if (next.status === "playing") onStartedRef.current?.(next);
+        }).catch(() => undefined);
+      }
+    }, 5_000);
+    return () => {
+      liveSocket.close();
+      window.clearInterval(timer);
+    };
+  }, [api, room?.code, room?.session?.playerToken]);
 
   async function run(action: () => Promise<OnlineRoom | void>) {
     setBusy(true);
@@ -121,7 +142,7 @@ export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarte
 
   const isHost = room.session?.host ?? room.players.find((player) => player.id === room.session?.playerId)?.isHost ?? false;
   return (
-    <section className="online-lobby-panel" aria-labelledby="online-room-title" data-testid="online-room">
+    <section className="online-lobby-panel" aria-labelledby="online-room-title" data-testid="online-room" data-sync-state={syncStatus} data-sync-transport={syncStatus === "connected" ? "websocket" : "rest-fallback"}>
       <div className="drawer-heading"><div><p className="eyebrow">{room.status === "playing" ? "MATCH LIVE" : "WAITING ROOM"}</p><h2 id="online-room-title">{t.title} <code>{room.code}</code></h2></div>{room.status === "waiting" && onClose && <button className="drawer-close" onClick={onClose} type="button" aria-label={t.back}>×</button>}</div>
       <p className="online-room-meta">{room.players.length + room.aiCount}/{room.maxPlayers} · {room.countdownSeconds} {t.seconds} · {t.expires(room.expiresInSeconds)}</p>
       <ul className="online-player-list">{room.players.map((player) => <li key={player.id}><span className={`seat-avatar seat-avatar-${player.id % 4}`}>{player.name.slice(0, 1).toUpperCase()}</span><span>{player.name}</span>{(player.isHost || player.host) && <small>{t.host}</small>}</li>)}{Array.from({ length: room.aiCount }, (_, index) => <li key={`ai-${index}`}><span className="seat-avatar seat-avatar-2">A</span><span>AI {index + 1}</span><small>AI</small></li>)}</ul>

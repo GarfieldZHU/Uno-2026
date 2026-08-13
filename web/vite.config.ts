@@ -7,7 +7,11 @@ export default defineConfig({
   server: {
     port: 1411,
     proxy: {
-      "/api": "http://127.0.0.1:8787",
+      "/api": {
+        target: "http://127.0.0.1:8787",
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
   build: {

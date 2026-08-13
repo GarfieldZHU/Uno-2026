@@ -12,12 +12,17 @@
 5. `npm run test:browser` boots Vite on port 1411 and checks the Chinese-first
    main menu, settings drawer defaults, three-seat and eight-seat starts,
    responsive table layout, discard-history open/close, draw animation state,
-   the English toggle, online entry, card asset loading, drag/drop, wild-color
-   selection, AI back-to-front flight, and offline settlement.
+   the English toggle, online entry, card asset loading, first-click lift/
+   second-click or double-click play, drag/drop, hand sorting, wild-color
+   selection, direction/current-turn/next-player markers, AI back-to-front
+   flight, action effects, and offline settlement.
 6. With `uno-server` listening on `127.0.0.1:8787`, the same command also runs
    `tests/online.spec.ts`: three isolated browser contexts create/join one
    six-seat room with three AI seats, verify viewer-safe hands and SVG assets,
-   and drive the room to a `Won` snapshot in every window.
+   and drive the room to a `Won` snapshot in every window. It also asserts that
+   all three tables report `data-sync-transport="websocket"` and that a guest
+   receives a changed action without waiting for a polling interval. Rust room
+   tests cover lowest-free seat reuse and AI takeover after a started-game leave.
 
 ## Evidence discipline
 

@@ -45,6 +45,7 @@ pub struct SnapshotPlayer {
 pub struct Snapshot {
     pub players: Vec<SnapshotPlayer>,
     pub current_player: usize,
+    pub next_player: usize,
     pub direction: i8,
     pub active_color: Color,
     pub top_card: SnapshotCard,
@@ -153,6 +154,21 @@ impl GameState {
 
     pub fn players_mut(&mut self) -> &mut [Player] {
         &mut self.players
+    }
+
+    /// Keep a disconnected seat in the turn ring while changing its control
+    /// to AI. Clearing UNO state prevents a stale penalty from leaking into
+    /// the replacement player's next action.
+    pub fn replace_player_with_ai(&mut self, player_id: usize, profile: AiProfile) -> bool {
+        let Some(player) = self.players.get_mut(player_id) else {
+            return false;
+        };
+        player.kind = PlayerKind::Ai(profile);
+        player.uno_called = false;
+        if self.uno_pending == Some(player_id) {
+            self.uno_pending = None;
+        }
+        true
     }
 
     pub fn top_card(&self) -> &Card {
@@ -336,6 +352,43 @@ impl GameState {
         result.unwrap_or_else(|error| self.error_json(error))
     }
 
+    /// Resolve a human turn that expired on the room server. The choice is
+    /// intentionally pseudo-random but deterministic for replayability: play
+    /// a random legal card when one exists, otherwise draw the required card
+    /// count. This never changes the normal human/WASM interaction path.
+    pub fn timeout_step(&mut self, player_id: usize) -> String {
+        if self.status != GameStatus::Playing || player_id != self.current_player {
+            return self.snapshot_json();
+        }
+        self.seed = self
+            .seed
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
+        let legal = self.players[player_id]
+            .hand
+            .iter()
+            .filter(|card| self.is_playable(player_id, card))
+            .map(|card| card.id)
+            .collect::<Vec<_>>();
+        let result = if let Some(card_id) = legal.get((self.seed as usize) % legal.len().max(1)) {
+            let chosen_color = if self.players[player_id]
+                .hand
+                .iter()
+                .find(|card| card.id == *card_id)
+                .map(|card| card.is_wild())
+                .unwrap_or(false)
+            {
+                Color::PLAYABLE[(self.seed.rotate_left(11) as usize) % Color::PLAYABLE.len()]
+            } else {
+                Color::Red
+            };
+            self.play_card(player_id, *card_id, Some(chosen_color))
+        } else {
+            self.draw_for_player(player_id)
+        };
+        result.unwrap_or_else(|error| self.error_json(error))
+    }
+
     pub fn snapshot_json(&self) -> String {
         self.snapshot_json_for(0)
     }
@@ -382,6 +435,7 @@ impl GameState {
                 })
                 .collect(),
             current_player: self.current_player,
+            next_player: self.next_index(self.current_player),
             direction: self.direction,
             active_color: self.active_color,
             top_card: SnapshotCard::from(self.top_card()),

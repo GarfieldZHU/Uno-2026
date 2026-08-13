@@ -46,7 +46,7 @@ Normal commands return a `Snapshot`. Rejected commands return:
 }
 ```
 
-The snapshot contains `players`, `current_player`, `direction`, `active_color`,
+The snapshot contains `players`, `current_player`, `next_player`, `direction`, `active_color`,
 `top_card`, ordered `discard_cards` (oldest to newest, including `top_card`),
 draw/discard counts, `pending_draw`, `status`, `winner`, `turn_number`, `message`,
 `last_action`, and `ai_profile`. Human `players[0].hand` contains cards; AI hand

@@ -39,7 +39,10 @@ Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `Ga
 | `web/src/types.ts` | TypeScript 视图类型和文案 | 规则判断 |
 | `web/src/wasm.ts` | 延迟加载浏览器模块 | 备用规则引擎 |
 | `web/src/styles.css` | 视觉系统和响应式布局 | 游戏状态 |
-| `server/src/main.rs` | 房间权威、TTL、按 token 隔离快照、REST 轮询 | 持久化身份/数据库 |
+| `server/src/main.rs` | 进程生命周期、监听器、调度线程 | 房间规则或 HTTP 解析 |
+| `server/src/room.rs` | 房间权威、TTL、按 token 隔离快照、AI 调度、订阅广播 | socket 帧或 DOM |
+| `server/src/http.rs` | 请求解析、CORS、REST 路由、WebSocket 升级分发 | 游戏规则或房间变更 |
+| `server/src/websocket.rs` | RFC 6455 握手、帧和订阅生命周期 | 房间规则或网页 UI |
 
 ## 状态流
 
@@ -52,8 +55,11 @@ Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `Ga
    确定性完成。
 7. 终局快照以 `status: "Won"` 和 `winner` 标识获胜者。
 
-联机模式在同一份 `GameState` 外增加会话边界：房间负责玩家 token、AI 席位、过期和回合
-倒计时；每个请求都按查看者生成快照。第一版使用内存和轮询，不能推断服务重启后可以重连。
+联机模式在同一份 `GameState` 外增加会话边界：房间负责玩家 token、AI 席位、过期、回合
+倒计时和订阅通道；REST 请求与 WebSocket 广播都按查看者生成快照。WebSocket 是网页主
+通道，断线使用有界退避重连，REST 保留给命令和有限降级刷新。开局后离席会保留原席位并切换
+为 AI；人类超时会合法出牌或摸牌。快照权威发布 `current_player`、`next_player` 和
+`direction`，不让客户端自行猜测顺序。第一版使用内存，不能推断服务重启后数据持久。
 
 ## 确定性
 

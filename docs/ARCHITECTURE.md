@@ -40,7 +40,10 @@ own. This keeps native tests and browser behavior on the same implementation.
 | `web/src/types.ts` | TypeScript view types and labels | rule decisions |
 | `web/src/wasm.ts` | lazy browser module loading | fallback rule engine |
 | `web/src/styles.css` | visual language and responsive layout | game state |
-| `server/src/main.rs` | room authority, TTL, token-scoped snapshots, REST polling | durable identity/database |
+| `server/src/main.rs` | process lifecycle, listener, scheduler thread | room rules or HTTP parsing |
+| `server/src/room.rs` | room authority, TTL, token-scoped snapshots, AI scheduler, subscriber broadcast | socket framing or DOM |
+| `server/src/http.rs` | request parsing, CORS, REST routing, WebSocket upgrade dispatch | game rules or room mutation |
+| `server/src/websocket.rs` | RFC 6455 handshake, frames, subscriber lifecycle | room rules or browser UI |
 
 ## State flow
 
@@ -60,9 +63,14 @@ own. This keeps native tests and browser behavior on the same implementation.
 7. A terminal snapshot reports `status: "Won"` and `winner`.
 
 Online adds a session boundary around the same `GameState`: the room owns human
-tokens, AI seats, expiry, and turn deadlines; each request asks the domain for a
-snapshot scoped to its viewer. The first deployment is intentionally in-memory
-and polling-based, so restart/reconnect durability is not implied.
+tokens, AI seats, expiry, turn deadlines, and subscriber channels; each REST
+request or WebSocket broadcast asks the domain for a snapshot scoped to its
+viewer. WebSocket is the primary browser transport, with bounded-backoff
+reconnect and REST retained for commands/fallback refresh. A started-game leave
+keeps the seat in the ring and changes its control to AI; expired human turns
+choose a legal move or draw. Snapshots publish `current_player`, `next_player`,
+and `direction` as authoritative order data. The first deployment is
+intentionally in-memory, so restart durability is not implied.
 
 ## Determinism
 

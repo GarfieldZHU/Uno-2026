@@ -200,6 +200,30 @@ mod tests {
     }
 
     #[test]
+    fn snapshot_exposes_the_next_seat_and_timeout_is_deterministic() {
+        let mut game = GameState::new(17, AiProfile::Garfield1993AiSimple);
+        let initial: Snapshot = serde_json::from_str(&game.snapshot_json()).unwrap();
+        assert_eq!(initial.current_player, 0);
+        assert_eq!(initial.next_player, 1);
+
+        let timed_out: Snapshot = serde_json::from_str(&game.timeout_step(0)).unwrap();
+        assert!(timed_out.last_action.starts_with("player-0-"));
+        assert!(timed_out.turn_number >= initial.turn_number);
+    }
+
+    #[test]
+    fn a_replaced_seat_becomes_ai_without_leaking_uno_state() {
+        let mut game = GameState::new(18, AiProfile::Garfield1993AiSimple);
+        assert!(game.replace_player_with_ai(1, AiProfile::Uno2026AiEasy));
+        assert!(matches!(
+            game.players()[1].kind,
+            PlayerKind::Ai(AiProfile::Uno2026AiEasy)
+        ));
+        assert!(!game.players()[1].uno_called);
+        assert!(!game.replace_player_with_ai(99, AiProfile::Garfield1993AiHard));
+    }
+
+    #[test]
     fn wasm_config_and_restart_preserve_the_selected_player_count() {
         let mut game = UnoGame::new_with_config(3, "garfield1993-ai-hard", 8);
         let initial: Snapshot = serde_json::from_str(&game.snapshot()).unwrap();

@@ -42,8 +42,10 @@ while a draw penalty is pending are rejected with a JSON error response.
 | WildDrawFour | Choose color; next player draws four |
 
 The current table uses a non-stacking penalty: the player facing `+2` or `+4`
-draws the pending number of cards. Stacking can be added later as an explicit
-ruleset rather than silently changing this behavior.
+draws the pending number of cards. The UI presents the pending count as a
+chain-style badge and animates the forced draw; that is presentation only and
+does not change the authoritative non-stacking rules. Stacking can be added later
+as an explicit ruleset rather than silently changing this behavior.
 
 ## Drawing
 

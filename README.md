@@ -35,9 +35,11 @@ The current vertical slice includes:
   and 5–30 second human turn deadlines;
 - Vercel configuration for the static Vite client.
 
-Online rooms now expose a first REST/polling slice. The service is an in-memory
-demo boundary: restart closes active rooms, and production deployment still needs
-TLS, rate limiting, durable identity, and reconnect policy. See
+Online rooms now expose a modular REST + WebSocket slice. A started-game leave
+keeps the seat in the turn ring and hands it to AI; expired human turns choose a
+legal move or draw deterministically. The service is still in-memory: restart
+closes active rooms, and public deployment still needs TLS, rate limiting, and
+durable identity. See
 [`docs/SERVER_PROTOCOL.md`](docs/SERVER_PROTOCOL.md).
 
 ## Run it locally
@@ -94,14 +96,13 @@ not inspected. See [the provenance note](docs/ORIGINAL_REPOSITORY.md).
 
 ## Project status
 
-The offline table is implemented and covered by Rust, TypeScript, production-build,
-and Playwright smoke checks in the local checkout. The public repository is
-[GarfieldZHU/Uno-2026](https://github.com/GarfieldZHU/Uno-2026), and the verified
-production client is available at
-[uno-2026-garfieldzhus-projects.vercel.app](https://uno-2026-garfieldzhus-projects.vercel.app/).
-The live page reaches the offline table and ships the online lobby/table client;
-the separate Rust room origin must be configured with `VITE_ONLINE_API_URL` before
-public online rooms can be used.
+The local checkout is covered by Rust, TypeScript, production-build, and
+Playwright smoke checks. The public repository is
+[GarfieldZHU/Uno-2026](https://github.com/GarfieldZHU/Uno-2026). `vercel.json`
+contains the Vercel build contract, but a live READY deployment and custom DNS
+must be verified in the GarfieldZHU Vercel team before a public URL is claimed.
+The separate Rust room origin must be configured with `VITE_ONLINE_API_URL`
+before public online rooms can be used.
 
 ## License and attribution
 

@@ -1,18 +1,22 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function playFirstAvailableHumanCard(page: Page) {
-  const card = page.locator('.hand-fan .card-art:not(:disabled):not([data-card-asset*="/wild"])').first();
-  if (!(await card.isVisible().catch(() => false))) {
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    await expect(page.locator(".table-scene-badge")).toContainText("你的回合", { timeout: 8_000 });
+    const legal = page.locator('.hand-fan .card-art.is-playable:not(:disabled)');
+    if (await legal.count()) {
+      const nonWild = page.locator('.hand-fan .card-art.is-playable:not(:disabled):not([data-card-asset*="/wild"])');
+      await (await nonWild.count() ? nonWild.first() : legal.first()).dblclick();
+      const dialog = page.getByRole("dialog");
+      if (await dialog.isVisible().catch(() => false)) await dialog.getByRole("button").first().click();
+      return;
+    }
     const drawButton = page.getByRole("button", { name: "从摸牌堆摸牌" });
     await expect(drawButton).toBeEnabled({ timeout: 5_000 });
     await drawButton.click();
-    await expect(card).toBeVisible({ timeout: 5_000 });
+    await page.waitForTimeout(80);
   }
-  await card.click();
-  const dialog = page.getByRole("dialog");
-  if (await dialog.isVisible().catch(() => false)) {
-    await dialog.getByRole("button").first().click();
-  }
+  throw new Error("no legal human card became available");
 }
 
 test("中文主菜单是默认界面，并可切换到英文", async ({ page }) => {
@@ -66,6 +70,8 @@ test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
   await expect(page.locator(".seat-card-fan img")).toHaveCount(14);
   await expect(page.locator('img[src="/assets/cards/reference/card-back.svg"]')).toHaveCount(15);
   await expect(page.locator('.hand-fan .card-art img').first()).toHaveAttribute('src', /\/assets\/cards\/reference\//);
+  await expect(page.locator('.hand-fan .card-art img').first()).toHaveCSS('object-fit', 'fill');
+  await expect(page.locator('.hand-fan .card-art').first()).toHaveCSS('overflow', 'visible');
   await expect.poll(async () => page.locator('.hand-fan .card-art img').first().evaluate((image) => ({ complete: image.complete, width: image.naturalWidth, height: image.naturalHeight }))).toMatchObject({ complete: true });
   await expect.poll(async () => page.locator('.hand-fan .card-art img').first().evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
   await expect.poll(async () => page.locator('img[src*="/assets/cards/reference/"]').evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
@@ -95,6 +101,28 @@ test("摸牌会显示对应的短暂动画状态", async ({ page }) => {
 
   await page.getByRole("button", { name: "从摸牌堆摸牌" }).click();
   await expect(page.locator(".felt-table")).toHaveAttribute("data-animation", "draw");
+});
+
+test("牌桌显示出牌方向并支持一键整理手牌", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByTestId("direction-indicator")).toHaveAttribute("data-direction", "clockwise");
+  await expect(page.getByTestId("direction-indicator")).toHaveAttribute("aria-label", "顺时针出牌");
+  const hand = page.getByTestId("hand-rail");
+  const before = await hand.locator("[data-card-id]").evaluateAll((cards) => cards.map((card) => card.getAttribute("data-card-id")));
+  await page.getByTestId("sort-hand").click();
+  const after = await hand.locator("[data-card-id]").evaluateAll((cards) => cards.map((card) => card.getAttribute("data-card-id")));
+  expect(after).toHaveLength(before.length);
+  expect(new Set(after)).toEqual(new Set(before));
+  await page.screenshot({ path: "test-results/offline-hand-sort-direction.png", fullPage: true });
+});
+
+test("当前玩家高亮和出牌特效节点随回合存在", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.locator('.seat-player.is-active')).toHaveCount(1);
+  await expect(page.locator('.seat-player.is-active .seat-turn-pip')).toBeVisible();
+  await expect(page.getByTestId("direction-indicator")).toBeVisible();
 });
 
 test("牌桌语言切换不会改变牌局，八席窄屏仍可读", async ({ page }) => {
@@ -172,7 +200,8 @@ test("手牌可以拖到牌桌出牌", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
   await expect(page.getByText("轮到你出牌。")).toBeVisible();
-  const card = page.locator(".hand-fan .card-art:not(:disabled)").first();
+  await expect(page.locator(".table-scene-badge")).toContainText("你的回合", { timeout: 8_000 });
+  const card = page.locator(".hand-fan .card-art.is-playable:not(:disabled)").first();
   await expect(card).toBeVisible();
   await card.dragTo(page.locator('[data-drop-target="table"]'));
   await expect(page.getByTestId("play-flight")).toBeAttached();
@@ -185,6 +214,8 @@ test("万能牌选色显示在牌面上方", async ({ page }) => {
   await expect(page.getByText("轮到你出牌。")).toBeVisible();
   const wild = page.locator('.hand-fan .card-art[data-card-asset*="/wild.svg"]:not(:disabled)').first();
   if (await wild.count()) {
+    await wild.click();
+    await expect(wild).toHaveClass(/is-lifted/);
     await wild.click();
     await expect(page.locator(".wild-picker")).toBeVisible();
     await expect(page.locator(".modal-scrim")).toHaveCount(0);
@@ -241,9 +272,9 @@ test("离线牌局可以完整轮转并显示结算", async ({ page }) => {
     }
     const badge = await page.locator(".table-scene-badge").textContent().catch(() => "");
     if (badge?.includes("你的回合")) {
-      const playable = page.locator('.hand-fan .card-art:not(:disabled)').first();
+      const playable = page.locator('.hand-fan .card-art.is-playable:not(:disabled)').first();
       if (await playable.isVisible().catch(() => false)) {
-        await playable.click({ force: true });
+        await playable.dblclick({ force: true });
       } else {
         await page.getByRole("button", { name: "从摸牌堆摸牌" }).click({ force: true });
       }

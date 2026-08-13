@@ -6,9 +6,9 @@ async function playIfItIsThisClientTurn(page: Page) {
   const badge = await table.locator(".table-scene-badge").textContent().catch(() => "");
   if (!badge?.includes("你的回合")) return false;
 
-  const playable = table.locator('.hand-fan .card-art:not(:disabled)').first();
+  const playable = table.locator('.hand-fan .card-art.is-playable:not(:disabled)').first();
   if (await playable.isVisible().catch(() => false)) {
-    await playable.evaluate((element) => (element as HTMLButtonElement).click());
+    await playable.dblclick();
     const picker = table.locator(".wild-picker");
     if (await picker.isVisible().catch(() => false)) {
       await picker.locator(".wild-picker-option").first().evaluate((element) => (element as HTMLButtonElement).click());
@@ -57,6 +57,13 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
     await expect(host.locator(".online-table-shell")).toBeVisible({ timeout: 10_000 });
     await expect(guestOne.locator(".online-table-shell")).toBeVisible({ timeout: 10_000 });
     await expect(guestTwo.locator(".online-table-shell")).toBeVisible({ timeout: 10_000 });
+    for (const page of pages) {
+      await expect(page.locator(".online-table-shell")).toHaveAttribute("data-sync-transport", "websocket", { timeout: 10_000 });
+      await expect(page.locator(".online-table-shell")).toHaveAttribute("data-sync-state", "connected", { timeout: 10_000 });
+    }
+
+    const guestInitialAction = await guestOne.locator(".status-code").textContent();
+    await expect.poll(() => guestOne.locator(".status-code").textContent(), { timeout: 8_000 }).not.toBe(guestInitialAction);
 
     for (const page of pages) {
       await expect.poll(async () => page.locator('.online-table-shell img[src*="/assets/cards/reference/"]').evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);

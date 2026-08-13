@@ -36,6 +36,7 @@ export type Player = {
 export type Snapshot = {
   players: Player[];
   current_player: number;
+  next_player: number;
   direction: number;
   active_color: Color;
   top_card: Card;

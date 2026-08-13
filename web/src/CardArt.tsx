@@ -1,4 +1,4 @@
-import type { CSSProperties, DragEventHandler, PointerEventHandler } from "react";
+import type { CSSProperties, DragEventHandler, MouseEventHandler, PointerEventHandler } from "react";
 import { translateCardLabel, translateColor, type Language } from "./i18n";
 import type { Card } from "./types";
 
@@ -8,7 +8,9 @@ type CardArtProps = {
   compact?: boolean;
   className?: string;
   disabled?: boolean;
+  ariaDisabled?: boolean;
   onClick?: () => void;
+  onDoubleClick?: MouseEventHandler<HTMLElement>;
   style?: CSSProperties;
   draggable?: boolean;
   onDragStart?: DragEventHandler<HTMLElement>;
@@ -42,7 +44,9 @@ export function CardArt({
   compact = false,
   className = "",
   disabled = false,
+  ariaDisabled = false,
   onClick,
+  onDoubleClick,
   style,
   draggable = false,
   onDragStart,
@@ -63,12 +67,16 @@ export function CardArt({
   ].filter(Boolean).join(" ");
   const asset = cardAssetFor(card);
 
+  // Keep an illegal card draggable/reorderable during the human turn; the
+  // click/drag handlers still reject it as a play.
   return (
     <Tag
       className={classes}
       type={onClick ? "button" : undefined}
       disabled={onClick ? disabled : undefined}
+      aria-disabled={ariaDisabled || undefined}
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
