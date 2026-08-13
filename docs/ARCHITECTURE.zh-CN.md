@@ -14,7 +14,7 @@ wasm-bindgen 门面（UnoGame）
 crates/uno-core
   cards → state → 规则/效果 → AI → 快照
 
-server/  未来传输边界（当前不启用）
+server/  Rust 权威内存房间传输层
 ```
 
 Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `GameState`；UI 的每个
@@ -39,7 +39,7 @@ Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `Ga
 | `web/src/types.ts` | TypeScript 视图类型和文案 | 规则判断 |
 | `web/src/wasm.ts` | 延迟加载浏览器模块 | 备用规则引擎 |
 | `web/src/styles.css` | 视觉系统和响应式布局 | 游戏状态 |
-| `server/src/main.rs` | 健康检查/协议占位 | 已启用的联机权威 |
+| `server/src/main.rs` | 房间权威、TTL、按 token 隔离快照、REST 轮询 | 持久化身份/数据库 |
 
 ## 状态流
 
@@ -51,6 +51,9 @@ Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `Ga
 6. AI 回合通过 `ai_step` 推进，UI 只添加设置好的展示停顿以便看清动作；选择本身在 Rust 中
    确定性完成。
 7. 终局快照以 `status: "Won"` 和 `winner` 标识获胜者。
+
+联机模式在同一份 `GameState` 外增加会话边界：房间负责玩家 token、AI 席位、过期和回合
+倒计时；每个请求都按查看者生成快照。第一版使用内存和轮询，不能推断服务重启后可以重连。
 
 ## 确定性
 

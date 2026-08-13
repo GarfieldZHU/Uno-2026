@@ -7,7 +7,7 @@ wasm-bindgen UnoGame
         ↓
 Rust uno-core: cards → state → effects → AI
 
-server/: future transport boundary, disabled today
+server/: Rust authoritative in-memory room transport, REST/polling today
 ```
 
 Rust owns truth. `SettingsDrawer` selects the offline seat count and presentation

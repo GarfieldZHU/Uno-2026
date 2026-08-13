@@ -139,6 +139,11 @@ dependencies = [
 [[package]]
 name = "uno-server"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "uno-core",
+]
 
 [[package]]
 name = "wasm-bindgen"

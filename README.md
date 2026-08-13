@@ -30,12 +30,15 @@ The current vertical slice includes:
   SVG card fronts/backs, perimeter seats, fan-shaped hands, deal/draw/play/shuffle motion,
   and a clickable discard history;
 - an English toggle available from the menu, settings drawer, and table HUD;
-- a Rust server scaffold with `/health` and an explicitly disabled room endpoint;
+- a Rust room service with four-character codes, 15-minute expiry, 3–8 seats,
+  configurable AI seats, host-owned start/close semantics, viewer-safe hands,
+  and 5–30 second human turn deadlines;
 - Vercel configuration for the static Vite client.
 
-Online rooms are intentionally not exposed yet. A protocol boundary exists in
-`server/`, but identity, reconnect, room authority, and transport semantics still
-need to be designed and tested before enabling it.
+Online rooms now expose a first REST/polling slice. The service is an in-memory
+demo boundary: restart closes active rooms, and production deployment still needs
+TLS, rate limiting, durable identity, and reconnect policy. See
+[`docs/SERVER_PROTOCOL.md`](docs/SERVER_PROTOCOL.md).
 
 ## Run it locally
 
@@ -64,7 +67,7 @@ npm run test:browser
 ```text
 crates/uno-core/    deterministic rules, snapshots, AI, wasm-bindgen export
 web/                React + TypeScript table and HUD
-server/             deliberately disabled multiplayer protocol scaffold
+server/             Rust room authority and REST/polling protocol
 docs/               bilingual project documentation
 wiki/               bilingual GitHub Wiki mirror
 scripts/            reproducible WASM artifact build helper
@@ -96,8 +99,9 @@ and Playwright smoke checks in the local checkout. The public repository is
 [GarfieldZHU/Uno-2026](https://github.com/GarfieldZHU/Uno-2026), and the verified
 production client is available at
 [uno-2026-garfieldzhus-projects.vercel.app](https://uno-2026-garfieldzhus-projects.vercel.app/).
-The live page reaches the offline table, loads the Rust/WASM HUD, and keeps online
-rooms locked as designed.
+The live page reaches the offline table and ships the online lobby/table client;
+the separate Rust room origin must be configured with `VITE_ONLINE_API_URL` before
+public online rooms can be used.
 
 ## License and attribution
 

@@ -3,6 +3,9 @@ import { AboutPanel } from "./AboutPanel";
 import { CardArt } from "./CardArt";
 import { DiscardHistory } from "./DiscardHistory";
 import { MainMenuScreen } from "./MainMenuScreen";
+import { OnlineLobby } from "./OnlineLobby";
+import { OnlineTable } from "./OnlineTable";
+import { createOnlineApi, type OnlineRoom } from "./online";
 import { PlayFlight } from "./PlayFlight";
 import { SettingsDrawer } from "./SettingsDrawer";
 import { createDefaultSetup, type SetupConfig } from "./SetupScreen";
@@ -11,7 +14,7 @@ import { createWasmGame, type WasmGame } from "./wasm";
 import { COLORS, type Card, type Color, type PlayFlightEvent, type PlayFlightSource, type Snapshot } from "./types";
 
 const HUMAN_ID = 0;
-type Screen = "menu" | "table";
+type Screen = "menu" | "table" | "online-lobby" | "online-table";
 type TableAnimation = "deal" | "draw" | "play" | "shuffle" | null;
 
 function seedFromClock() {
@@ -96,6 +99,8 @@ export function App() {
   const [setupConfig, setSetupConfig] = useState<SetupConfig>(() => createDefaultSetup());
   const [activeConfig, setActiveConfig] = useState<SetupConfig | null>(null);
   const [screen, setScreen] = useState<Screen>("menu");
+  const [onlineRoom, setOnlineRoom] = useState<OnlineRoom | null>(null);
+  const onlineApi = useMemo(() => createOnlineApi(), []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -188,6 +193,7 @@ export function App() {
     setPlayFlight(null);
     setWasmError(null);
     setScreen("menu");
+    setOnlineRoom(null);
   }, []);
 
   const applyRaw = useCallback((raw: string, nextAnimation?: Exclude<TableAnimation, null>) => {
@@ -287,7 +293,12 @@ export function App() {
     const card = human?.hand.find((candidate) => candidate.id === cardId);
     draggingCardRef.current = null;
     setDraggingCardId(null);
-    if (card) handlePlay(card);
+    if (card) {
+      // A drag is a physical move toward the table. Wild cards still need a
+      // color choice, but show the same hand-to-table flight before the picker.
+      if (card.color === "Wild" && snapshot) showPlayFlight(card, HUMAN_ID, snapshot.players.length);
+      handlePlay(card);
+    }
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLElement>, card: Card) {
@@ -316,7 +327,10 @@ export function App() {
       setDraggingCardId(null);
       if (overTable) {
         const card = human?.hand.find((candidate) => candidate.id === drag.cardId);
-        if (card) handlePlay(card);
+        if (card) {
+          if (card.color === "Wild" && snapshot) showPlayFlight(card, HUMAN_ID, snapshot.players.length);
+          handlePlay(card);
+        }
       }
     }
 
@@ -355,11 +369,19 @@ export function App() {
   if (screen === "menu") {
     return (
       <>
-        <MainMenuScreen language={language} onLanguageChange={setLanguage} onStart={() => void startGame(setupConfig)} onOpenSettings={() => setSettingsOpen(true)} onOpenAbout={() => setAboutOpen(true)} error={wasmError} />
+        <MainMenuScreen language={language} onLanguageChange={setLanguage} onStart={() => void startGame(setupConfig)} onOpenOnline={() => { setWasmError(null); setScreen("online-lobby"); }} onOpenSettings={() => setSettingsOpen(true)} onOpenAbout={() => setAboutOpen(true)} error={wasmError} />
         <SettingsDrawer initialConfig={setupConfig} language={language} open={settingsOpen} onClose={() => setSettingsOpen(false)} onApply={(config) => { setSetupConfig(config); setSettingsOpen(false); }} onLanguageChange={setLanguage} />
         <AboutPanel language={language} open={aboutOpen} onClose={() => setAboutOpen(false)} />
       </>
     );
+  }
+
+  if (screen === "online-lobby") {
+    return <div className="online-lobby-screen"><OnlineLobby language={language} api={onlineApi} onClose={openMenu} onStarted={(room) => { setOnlineRoom(room); setScreen("online-table"); }} /></div>;
+  }
+
+  if (screen === "online-table" && onlineRoom) {
+    return <OnlineTable language={language} room={onlineRoom} api={onlineApi} onLanguageChange={setLanguage} onLeave={openMenu} />;
   }
 
   if (!snapshot || !game || !activeConfig) return null;

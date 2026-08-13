@@ -1,0 +1,42 @@
+name: uno-2026-server-deploy
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: uno-server-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Add a protected GitHub Environment named `production` before enabling this.
+    environment: production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release -p uno-server
+      - name: Install SSH key and known hosts
+        env:
+          DEPLOY_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_PRIVATE_KEY" > ~/.ssh/uno_deploy
+          chmod 600 ~/.ssh/uno_deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Upload release
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          scp -i ~/.ssh/uno_deploy -P "${DEPLOY_PORT:-22}" target/release/uno-server "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/uno-server-${GITHUB_SHA}"
+      - name: Activate release
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          ssh -i ~/.ssh/uno_deploy -p "${DEPLOY_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "install -m 755 /tmp/uno-server-${GITHUB_SHA} /opt/uno-2026/uno-server && sudo systemctl restart uno-2026 && curl --fail --silent http://127.0.0.1:8787/health"

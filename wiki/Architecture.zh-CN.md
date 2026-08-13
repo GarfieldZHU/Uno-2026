@@ -7,7 +7,7 @@ wasm-bindgen UnoGame
         ↓
 Rust uno-core：cards → state → 效果 → AI
 
-server/：未来传输边界，当前关闭
+server/：Rust 权威内存房间传输层，当前提供 REST/轮询首版
 ```
 
 Rust 持有事实来源。`SettingsDrawer` 选择离线席位和展示停顿，`CardArt` 渲染卡牌，`DiscardHistory` 渲染快照中的有序

@@ -23,7 +23,7 @@ source link and the unverified parity boundary are recorded in
 | AI | `garfield1993-ai-simple`, `garfield1993-ai-hard`, plus two `uno-2026` profiles |
 | UI | Chinese-first main menu (Start game/Settings/About), settings drawer, responsive React table, SVG cards, deal/draw/play/shuffle motion, discard history, English toggle |
 | Offline setup | One human plus AI seats; each AI pause is 1–30 seconds, default three |
-| Multiplayer | Scaffold only; UI remains locked and room endpoint returns 503 |
+| Multiplayer | REST/polling room slice: create/join/leave, host start, AI seats, four-character 15-minute codes, and human deadlines |
 | Deployment | `vercel.json` is present; live deployment must be verified separately |
 
 ## Start locally
@@ -52,8 +52,9 @@ settings drawer, and table HUD to English. Open Settings to choose 3–8 players
 (four is the default), select an AI profile, and tune each AI seat's pause
 independently. Click the discard pile during a match to inspect played cards in
 chronological order.
-Online remains a deliberately locked future mode; its eventual room model can
-contain multiple human players and any number of AI seats.
+Online now has a first REST/polling room slice. The Rust service is still an
+in-memory demo and must be deployed behind TLS with `VITE_ONLINE_API_URL` before
+public play.
 
 ## Documentation map
 
@@ -61,7 +62,7 @@ contain multiple human players and any number of AI seats.
 - [Rules and state](RULES_AND_STATE.md) — deck, legal moves, effects, snapshots.
 - [AI profiles](AI_PROFILES.md) — compatibility names and strategy differences.
 - [WASM/frontend contract](WASM_FRONTEND_CONTRACT.md) — exported methods and JSON.
-- [Server protocol](SERVER_PROTOCOL.md) — intentionally disabled multiplayer surface.
+- [Server protocol](SERVER_PROTOCOL.md) — room routes, tokens, deadlines, and deployment limits.
 - [Development](DEVELOPMENT.md) — toolchain, commands, and directory rules.
 - [Testing](TESTING.md) — unit, build, and browser evidence.
 - [Deployment](DEPLOYMENT.md) — Vercel configuration and honest status reporting.

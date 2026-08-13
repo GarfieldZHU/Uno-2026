@@ -4,12 +4,13 @@ type MainMenuScreenProps = {
   language: Language;
   onLanguageChange: (language: Language) => void;
   onStart: () => void;
+  onOpenOnline: () => void;
   onOpenSettings: () => void;
   onOpenAbout: () => void;
   error?: string | null;
 };
 
-export function MainMenuScreen({ language, onLanguageChange, onStart, onOpenSettings, onOpenAbout, error }: MainMenuScreenProps) {
+export function MainMenuScreen({ language, onLanguageChange, onStart, onOpenOnline, onOpenSettings, onOpenAbout, error }: MainMenuScreenProps) {
   const text = copy(language);
   const titleLines = text.menuTitle.split("\\n");
 
@@ -32,6 +33,7 @@ export function MainMenuScreen({ language, onLanguageChange, onStart, onOpenSett
         <p className="menu-subtitle">{text.menuSubtitle}</p>
         <div className="menu-actions">
           <button className="menu-action menu-action-primary" type="button" onClick={onStart}><span>{text.startGame}</span><b>→</b></button>
+          <button className="menu-action menu-action-online" type="button" onClick={onOpenOnline}><span>{text.online}</span><b>↗</b></button>
           <button className="menu-action" type="button" onClick={onOpenSettings}><span>{text.settings}</span><b>⌘</b></button>
           <button className="menu-action" type="button" onClick={onOpenAbout}><span>{text.about}</span><b>i</b></button>
         </div>

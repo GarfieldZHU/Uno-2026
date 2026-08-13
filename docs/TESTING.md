@@ -5,14 +5,16 @@
 ## Layers
 
 1. `cargo fmt --all -- --check` catches formatting drift.
-2. `cargo test -p uno-core` tests deck shape, 3–8 seat construction, legality,
+2. `cargo test --workspace` tests deck shape, 3–8 seat construction, legality,
    WildDrawFour restriction, AI legality, UNO calls, and snapshot privacy.
 3. `npm run typecheck` checks the WASM facade and React contract.
 4. `npm run build` proves the release artifact and Vite bundle can be produced.
 5. `npm run test:browser` boots Vite on port 1411 and checks the Chinese-first
    main menu, settings drawer defaults, three-seat and eight-seat starts,
    responsive table layout, discard-history open/close, draw animation state,
-   the English toggle, and the locked online control.
+   the English toggle, online entry, and offline table behavior.
+6. A local integration check starts `uno-server` and exercises `/health`, room
+   creation, join/start/leave, TTL configuration, and viewer-safe hands.
 
 ## Evidence discipline
 

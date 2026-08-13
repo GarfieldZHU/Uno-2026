@@ -4,8 +4,8 @@
 
 Maintain an auditable, offline-first UNO table. Rust is the only authority for
 rules, state transitions, AI decisions, and serialized snapshots. React/TypeScript
-is a view/controller. The server is a disabled protocol scaffold until multiplayer
-semantics are designed and tested.
+is a view/controller. The server owns the first in-memory online room slice;
+durable identity and persistence remain future work.
 
 ## Read first
 
@@ -23,14 +23,14 @@ semantics are designed and tested.
   card art; use generated raster art only for atmosphere, never as the rules source.
 - `web/src/DiscardHistory.tsx`: renders Rust's ordered `discard_cards` snapshot field;
   never reconstruct played-card history from DOM or CSS.
-- `server`: `/health` and disabled room placeholder only.
+- `server`: Rust room authority, REST/polling routes, token-scoped snapshots, and TTL cleanup.
 - `web/public/wasm`: generated release artifact; rebuild after Rust changes.
 - `wiki`: reviewed GitHub Wiki mirror; update English and Chinese pages together.
 
 ## Required workflow
 
 For behavior changes, write a failing native test first, then implement the smallest
-Rust change, run the test, rebuild WASM, update the frontend contract, and run the
+Rust change, run the test, rebuild WASM when the domain schema changes, update the frontend contract, and run the
 browser smoke test. For docs-only changes, still run `git diff --check` (or the
 equivalent whitespace check available in the environment).
 

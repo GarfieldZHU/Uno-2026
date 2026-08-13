@@ -5,12 +5,14 @@
 ## 分层验证
 
 1. `cargo fmt --all -- --check` 检查格式漂移；
-2. `cargo test -p uno-core` 覆盖牌堆形状、3–8 席位构造、合法性、`WildDrawFour` 限制、
+2. `cargo test --workspace` 覆盖牌堆形状、3–8 席位构造、合法性、`WildDrawFour` 限制、
    AI 合法性、UNO 喊牌和快照隐私；
 3. `npm run typecheck` 检查 WASM 门面和 React 契约；
 4. `npm run build` 证明 release 产物和 Vite 包可以生成；
 5. `npm run test:browser` 在 1411 端口启动 Vite，检查中文主菜单、设置抽屉默认值、英文切换、
-   三人/八人启动、响应式牌桌、弃牌历史开关、摸牌动画状态和锁定的联机控件。
+   三人/八人启动、响应式牌桌、弃牌历史开关、摸牌动画状态和联机入口。
+6. 本地启动 `uno-server` 后，额外验证 `/health`、创建、加入、开始、退出、TTL 和按玩家
+   隔离手牌的集成流程。
 
 ## 证据边界
 

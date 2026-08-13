@@ -4,7 +4,7 @@ mod state;
 
 pub use ai::{AiDecision, AiProfile};
 pub use cards::{Card, CardKind, Color};
-pub use state::{CommandResponse, GameState, GameStatus, Snapshot};
+pub use state::{CommandResponse, GameState, GameStatus, Player, PlayerKind, Snapshot};
 
 use wasm_bindgen::prelude::*;
 

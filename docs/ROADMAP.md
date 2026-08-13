@@ -14,10 +14,10 @@
 - audit the historical C++ repository when a checkout is available;
 - make rule variants explicit instead of embedding them in `GameState`;
 - add deterministic replay/export for bug reports;
-- define a versioned command/snapshot schema shared by native, WASM, and server.
+- define a versioned command/snapshot schema shared by native, WASM, and server;
+- add durable identity/reconnect and persistent room storage after the in-memory slice.
 
 ## Later
 
-- implement authenticated rooms and authoritative hidden hands;
 - add reconnect and spectator semantics;
-- enable the online switch only after end-to-end transport tests.
+- move online transport to WebSocket or long-polling when concurrent traffic warrants it.

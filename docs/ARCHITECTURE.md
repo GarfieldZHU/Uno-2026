@@ -14,7 +14,7 @@ wasm-bindgen facade (UnoGame)
 crates/uno-core
   cards → state → rules/effects → AI → snapshot
 
-server/  future transport boundary only
+server/  authoritative in-memory room transport
 ```
 
 The Rust domain is the source of truth. A browser `UnoGame` owns one
@@ -40,7 +40,7 @@ own. This keeps native tests and browser behavior on the same implementation.
 | `web/src/types.ts` | TypeScript view types and labels | rule decisions |
 | `web/src/wasm.ts` | lazy browser module loading | fallback rule engine |
 | `web/src/styles.css` | visual language and responsive layout | game state |
-| `server/src/main.rs` | health/protocol placeholder | enabled multiplayer authority |
+| `server/src/main.rs` | room authority, TTL, token-scoped snapshots, REST polling | durable identity/database |
 
 ## State flow
 
@@ -58,6 +58,11 @@ own. This keeps native tests and browser behavior on the same implementation.
 6. AI turns call `ai_step` with the configured UI delay. The delay is presentation only;
    the choice is deterministic inside Rust.
 7. A terminal snapshot reports `status: "Won"` and `winner`.
+
+Online adds a session boundary around the same `GameState`: the room owns human
+tokens, AI seats, expiry, and turn deadlines; each request asks the domain for a
+snapshot scoped to its viewer. The first deployment is intentionally in-memory
+and polling-based, so restart/reconnect durability is not implied.
 
 ## Determinism
 

@@ -337,19 +337,30 @@ impl GameState {
     }
 
     pub fn snapshot_json(&self) -> String {
-        serde_json::to_string(&self.snapshot()).expect("snapshot serialization cannot fail")
+        self.snapshot_json_for(0)
+    }
+
+    /// Serialize a snapshot for a specific viewer. Only that viewer's hand is
+    /// included; every other hand remains count-only for online play.
+    pub fn snapshot_json_for(&self, viewer_id: usize) -> String {
+        serde_json::to_string(&self.snapshot_for(viewer_id))
+            .expect("snapshot serialization cannot fail")
     }
 
     pub fn error_json(&self, error: String) -> String {
+        self.error_json_for(0, error)
+    }
+
+    pub fn error_json_for(&self, viewer_id: usize, error: String) -> String {
         serde_json::to_string(&CommandResponse {
             ok: false,
             error: Some(error),
-            snapshot: self.snapshot(),
+            snapshot: self.snapshot_for(viewer_id),
         })
         .expect("error serialization cannot fail")
     }
 
-    fn snapshot(&self) -> Snapshot {
+    fn snapshot_for(&self, viewer_id: usize) -> Snapshot {
         Snapshot {
             players: self
                 .players
@@ -362,7 +373,7 @@ impl GameState {
                         PlayerKind::Ai(profile) => profile.wire().to_string(),
                     },
                     hand_count: player.hand.len(),
-                    hand: if player.id == 0 {
+                    hand: if player.id == viewer_id {
                         player.hand.iter().map(SnapshotCard::from).collect()
                     } else {
                         Vec::new()
