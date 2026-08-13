@@ -354,6 +354,45 @@ body { background: radial-gradient(circle at 50% -16%, #254b46 0, #0b1c1d 44%, #
 .table-seats .seat-player.is-active { border-color: rgba(245, 201, 107, .86); background: rgba(37, 59, 42, .82); }
 .table-seats .seat-north { top: 6%; left: 50%; transform: translateX(-50%); }.table-seats .seat-north-west { top: 15%; left: 10%; }.table-seats .seat-north-east { top: 15%; right: 10%; }.table-seats .seat-east { top: 44%; right: 4%; }.table-seats .seat-west { top: 44%; left: 4%; }.table-seats .seat-south-east { right: 12%; bottom: 16%; }.table-seats .seat-south-west { bottom: 16%; left: 12%; }.table-seats .seat-south { bottom: 5%; left: 50%; transform: translateX(-50%); }
 
+/* The table controls are contextual: the information bar is hidden until requested. */
+.topbar-toggle { position: fixed; z-index: 32; top: 14px; right: 18px; display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid rgba(229, 235, 210, .2); border-radius: 50%; color: var(--ink); background: rgba(4, 22, 21, .82); box-shadow: 0 8px 20px rgba(0, 0, 0, .26); cursor: pointer; font-size: 15px; line-height: 1; backdrop-filter: blur(8px); }
+.topbar-toggle:hover { border-color: rgba(245, 201, 107, .7); color: var(--yellow); }
+.app-shell.topbar-is-hidden { padding-top: 0; }
+.app-shell.topbar-is-hidden .topbar { height: 0; min-height: 0; overflow: hidden; opacity: 0; border-bottom-color: transparent; transform: translateY(-100%); pointer-events: none; }
+.app-shell.topbar-is-open .topbar { transition: height .24s ease, opacity .18s ease, transform .24s ease; }
+.app-shell.topbar-is-hidden .topbar { transition: height .24s ease, opacity .18s ease, transform .24s ease; }
+
+/* Event-driven card flight: source -> center -> weighted felt landing. */
+.play-flight { --flight-start-x: 0px; --flight-start-y: 420px; --flight-mid-x: 0px; --flight-mid-y: 176px; --flight-approach-x: 14px; --flight-approach-y: 34px; --flight-start-rotate: -12deg; position: absolute; z-index: 12; inset: 0; overflow: visible; pointer-events: none; perspective: 900px; }
+.play-flight-card { position: absolute; top: 50%; left: 50%; width: 102px; height: 142px; transform-style: preserve-3d; transform-origin: 50% 90%; animation: card-flight 1.05s cubic-bezier(.18,.72,.2,1) both; }
+.play-flight-face { position: absolute; inset: 0; display: block; width: 100%; height: 100%; transform-style: preserve-3d; animation: card-flight-flip .36s cubic-bezier(.32,.06,.32,1) .27s both; }
+.play-flight-back, .play-flight-front { position: absolute; inset: 0; display: block; width: 100%; height: 100%; backface-visibility: hidden; }
+.play-flight-back { object-fit: cover; border-radius: 15px; box-shadow: 0 20px 28px rgba(0, 0, 0, .42); transform: rotateY(0deg); }
+.play-flight-front { transform: rotateY(180deg); }.play-flight-front .card-art { width: 100%; height: 100%; filter: drop-shadow(0 20px 26px rgba(0,0,0,.42)); }
+.play-flight.is-human .play-flight-back { opacity: 0; }.play-flight.is-human .play-flight-face { animation: none; }.play-flight.is-human .play-flight-front { transform: rotateY(0deg); }
+.play-flight-trail { position: absolute; top: 50%; left: 50%; width: 154px; height: 34px; border-radius: 50%; background: linear-gradient(90deg, transparent, rgba(245, 201, 107, .42), rgba(129, 230, 211, .26), transparent); filter: blur(10px); opacity: 0; transform: translate(-50%, -50%) rotate(-18deg); animation: card-flight-trail 1.05s ease-out both; }
+.play-flight-shadow { position: absolute; top: 50%; left: 50%; width: 128px; height: 32px; border-radius: 50%; background: rgba(0, 10, 9, .48); filter: blur(9px); opacity: 0; transform: translate(-50%, 50px) scale(.44); animation: card-flight-shadow 1.05s cubic-bezier(.18,.72,.2,1) both; }
+.play-flight-ripple { position: absolute; top: 50%; left: 50%; width: 154px; height: 75px; border: 2px solid rgba(245, 201, 107, .52); border-radius: 50%; opacity: 0; transform: translate(-50%, -50%) scale(.34); animation: card-flight-ripple 1.05s ease-out .66s both; }
+@keyframes card-flight { 0% { opacity: 0; transform: translate(calc(-50% + var(--flight-start-x)), calc(-50% + var(--flight-start-y))) rotate(var(--flight-start-rotate)) scale(.68); } 14% { opacity: 1; transform: translate(calc(-50% + var(--flight-mid-x)), calc(-50% + var(--flight-mid-y))) rotate(calc(var(--flight-start-rotate) * .55)) scale(.84); } 54% { opacity: 1; transform: translate(calc(-50% + var(--flight-approach-x)), calc(-50% + var(--flight-approach-y))) rotate(calc(var(--flight-start-rotate) * -.5)) scale(1.04); } 76% { transform: translate(-50%, -50%) rotate(-3deg) scale(1.03, .95); } 84% { transform: translate(-50%, -50%) rotate(2deg) scale(.98, 1.04); } 100% { opacity: 0; transform: translate(-50%, -50%) rotate(0deg) scale(1); } }
+@keyframes card-flight-flip { 0%, 40% { transform: rotateY(0deg); } 100% { transform: rotateY(180deg); } }
+@keyframes card-flight-trail { 0% { opacity: 0; transform: translate(calc(-50% + var(--flight-start-x) * .6), calc(-50% + var(--flight-start-y) * .6)) rotate(-18deg) scale(.6); } 24% { opacity: .72; } 70% { opacity: .34; transform: translate(calc(-50% + var(--flight-approach-x) * .7), calc(-50% + var(--flight-approach-y) * .7)) rotate(-18deg) scale(1); } 100% { opacity: 0; transform: translate(-50%, -62%) rotate(-18deg) scale(.62); } }
+@keyframes card-flight-shadow { 0% { opacity: 0; transform: translate(-50%, 160px) scale(.25); } 40% { opacity: .2; } 76% { opacity: .72; transform: translate(-50%, 52px) scale(.95); } 84% { opacity: .55; transform: translate(-50%, 55px) scale(1.08, .64); } 100% { opacity: 0; transform: translate(-50%, 57px) scale(1.14, .5); } }
+@keyframes card-flight-ripple { 0%, 55% { opacity: 0; transform: translate(-50%, -50%) scale(.32); } 70% { opacity: .7; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.18); } }
+@media (prefers-reduced-motion: reduce) {
+  .play-flight-card, .play-flight-trail, .play-flight-shadow, .play-flight-ripple { animation-duration: .01ms !important; animation-delay: 0ms !important; }
+  .play-flight-card { opacity: 1 !important; transform: translate(-50%, -50%) scale(1) !important; }
+  .play-flight-trail, .play-flight-shadow, .play-flight-ripple { opacity: 0 !important; }
+}
+
+.play-flight-human { --flight-start-x: 0px; --flight-start-y: 420px; --flight-mid-x: 0px; --flight-mid-y: 176px; --flight-approach-x: 14px; --flight-approach-y: 34px; --flight-start-rotate: -12deg; }
+.play-flight-north { --flight-start-x: 0px; --flight-start-y: -260px; --flight-mid-x: -22px; --flight-mid-y: -150px; --flight-approach-x: -16px; --flight-approach-y: -34px; --flight-start-rotate: 12deg; }
+.play-flight-north-west { --flight-start-x: -340px; --flight-start-y: -190px; --flight-mid-x: -235px; --flight-mid-y: -118px; --flight-approach-x: -42px; --flight-approach-y: -18px; --flight-start-rotate: -18deg; }
+.play-flight-north-east { --flight-start-x: 340px; --flight-start-y: -190px; --flight-mid-x: 235px; --flight-mid-y: -118px; --flight-approach-x: 42px; --flight-approach-y: -18px; --flight-start-rotate: 18deg; }
+.play-flight-east { --flight-start-x: 360px; --flight-start-y: 0px; --flight-mid-x: 245px; --flight-mid-y: 38px; --flight-approach-x: 42px; --flight-approach-y: 16px; --flight-start-rotate: 20deg; }
+.play-flight-west { --flight-start-x: -360px; --flight-start-y: 0px; --flight-mid-x: -245px; --flight-mid-y: -38px; --flight-approach-x: -42px; --flight-approach-y: -16px; --flight-start-rotate: -20deg; }
+.play-flight-south-east { --flight-start-x: 305px; --flight-start-y: 195px; --flight-mid-x: 220px; --flight-mid-y: 130px; --flight-approach-x: 40px; --flight-approach-y: 25px; --flight-start-rotate: 16deg; }
+.play-flight-south-west { --flight-start-x: -305px; --flight-start-y: 195px; --flight-mid-x: -220px; --flight-mid-y: 130px; --flight-approach-x: -40px; --flight-approach-y: 25px; --flight-start-rotate: -16deg; }
+
 @media (max-width: 900px) {
   .setup-shell { padding: 0 22px 32px; }.setup-layout { grid-template-columns: 1fr; gap: 38px; padding-top: 58px; }.setup-intro { max-width: 620px; }.setup-intro h1 { font-size: clamp(48px, 10vw, 72px); }.setup-lede { margin-top: 20px; }.setup-card { max-width: 680px; justify-self: center; }
 }

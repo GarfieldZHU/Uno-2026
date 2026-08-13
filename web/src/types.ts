@@ -7,6 +7,23 @@ export type Card = {
   label: string;
 };
 
+export type PlayFlightSource =
+  | "human"
+  | "north"
+  | "north-west"
+  | "north-east"
+  | "east"
+  | "west"
+  | "south-east"
+  | "south-west";
+
+export type PlayFlightEvent = {
+  id: string;
+  card: Card;
+  playerId: number;
+  source: PlayFlightSource;
+};
+
 export type Player = {
   id: number;
   name: string;

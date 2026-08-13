@@ -1,4 +1,19 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function playFirstAvailableHumanCard(page: Page) {
+  const card = page.locator(".hand-fan .card-art:not(:disabled)").first();
+  if (!(await card.isVisible().catch(() => false))) {
+    const drawButton = page.getByRole("button", { name: "从摸牌堆摸牌" });
+    await expect(drawButton).toBeEnabled({ timeout: 5_000 });
+    await drawButton.click();
+    await expect(card).toBeVisible({ timeout: 5_000 });
+  }
+  await card.click();
+  const dialog = page.getByRole("dialog");
+  if (await dialog.isVisible().catch(() => false)) {
+    await dialog.getByRole("button").first().click();
+  }
+}
 
 test("中文主菜单是默认界面，并可切换到英文", async ({ page }) => {
   await page.goto("/");
@@ -37,6 +52,7 @@ test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
   await expect(page.locator(".table-players-rail")).toHaveCount(0);
   await expect(page.locator('img[src="/assets/cards/card-back-v2.svg"]')).toHaveCount(7);
   await expect(page.locator(".hand-fan")).toBeVisible();
+  await expect(page.getByRole("button", { name: "显示顶部信息栏" })).toBeVisible();
   await page.screenshot({ path: "test-results/offline-table-desktop-zh.png", fullPage: true });
 });
 
@@ -73,6 +89,7 @@ test("牌桌语言切换不会改变牌局，八席窄屏仍可读", async ({ pa
   await expect(page.getByText(/牌局 \/ 001 · 8 席/)).toBeVisible();
   await expect(page.locator(".player-row")).toHaveCount(8);
 
+  await page.getByRole("button", { name: "显示顶部信息栏" }).click();
   await page.getByRole("button", { name: "切换到英文" }).click();
   await expect(page.getByText("Make your move.")).toBeVisible();
   await page.getByRole("button", { name: "Switch to Chinese" }).click();
@@ -81,4 +98,77 @@ test("牌桌语言切换不会改变牌局，八席窄屏仍可读", async ({ pa
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByText("你的手牌")).toBeVisible();
   await page.screenshot({ path: "test-results/offline-table-eight-seat-mobile-zh.png", fullPage: true });
+});
+
+test("人类出牌会从手牌飞向弃牌堆", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByText("轮到你出牌。")).toBeVisible();
+
+  await playFirstAvailableHumanCard(page);
+  const flight = page.getByTestId("play-flight");
+  await expect(flight).toBeAttached();
+  await expect(flight).toHaveAttribute("data-source", "human");
+  await expect(flight).toHaveAttribute("data-player-id", "0");
+  await expect(flight.locator(".play-flight-trail")).toBeAttached();
+  await expect(flight.locator(".play-flight-ripple")).toBeAttached();
+  await page.screenshot({ path: "test-results/offline-human-play-flight.png", fullPage: true });
+});
+
+test("AI 出牌会先展示牌背再翻到牌面", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "设置" }).click();
+  await page.getByLabel("AI 默认停顿").fill("1");
+  await page.getByRole("button", { name: "保存设置" }).click();
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByText("轮到你出牌。")).toBeVisible();
+
+  await playFirstAvailableHumanCard(page);
+  const flight = page.locator('.play-flight.is-opponent');
+  await expect(flight).toBeAttached({ timeout: 7_000 });
+  await expect(flight).toHaveAttribute("data-source", /north|east|west/);
+  await expect(flight.locator(".play-flight-back")).toBeAttached();
+  await expect(flight.locator(".play-flight-front")).toBeAttached();
+  await expect(flight.locator(".play-flight-card")).toHaveCSS("animation-name", "card-flight");
+  await page.screenshot({ path: "test-results/offline-ai-play-flight.png", fullPage: true });
+});
+
+test("减弱动效偏好保留出牌状态但缩短飞行动画", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByText("轮到你出牌。")).toBeVisible();
+
+  await playFirstAvailableHumanCard(page);
+  const flightCard = page.getByTestId("play-flight").locator(".play-flight-card");
+  await expect(flightCard).toBeAttached();
+  await expect.poll(async () => page.getByTestId("play-flight").count()).toBe(1);
+  const animationDurationSeconds = await flightCard.evaluate((element) => {
+    const value = getComputedStyle(element).animationDuration;
+    return value.endsWith("ms") ? Number.parseFloat(value) / 1_000 : Number.parseFloat(value);
+  });
+  expect(animationDurationSeconds).toBeLessThan(0.001);
+});
+
+test("移动端牌桌保留人类出牌飞行层", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByText("轮到你出牌。")).toBeVisible();
+
+  await playFirstAvailableHumanCard(page);
+  const flightCard = page.getByTestId("play-flight").locator(".play-flight-card");
+  await expect(flightCard).toBeAttached();
+  await page.waitForTimeout(230);
+  const bounds = await flightCard.evaluate((element) => {
+    const card = element.getBoundingClientRect();
+    const table = element.closest(".table-scene")?.getBoundingClientRect();
+    if (!table) return { visible: false, contained: false };
+    const visible = card.width > 0 && card.height > 0;
+    const contained = card.left < table.right && card.right > table.left && card.top < table.bottom && card.bottom > table.top;
+    return { visible, contained };
+  });
+  expect(bounds.visible).toBe(true);
+  expect(bounds.contained).toBe(true);
+  await page.screenshot({ path: "test-results/offline-human-play-flight-mobile.png", fullPage: true });
 });

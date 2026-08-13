@@ -3,11 +3,12 @@ import { AboutPanel } from "./AboutPanel";
 import { CardArt } from "./CardArt";
 import { DiscardHistory } from "./DiscardHistory";
 import { MainMenuScreen } from "./MainMenuScreen";
+import { PlayFlight } from "./PlayFlight";
 import { SettingsDrawer } from "./SettingsDrawer";
 import { createDefaultSetup, type SetupConfig } from "./SetupScreen";
 import { copy, localizeEngineMessage, profileLabel, translateColor, type Language } from "./i18n";
 import { createWasmGame, type WasmGame } from "./wasm";
-import { COLORS, type Card, type Color, type Snapshot } from "./types";
+import { COLORS, type Card, type Color, type PlayFlightEvent, type PlayFlightSource, type Snapshot } from "./types";
 
 const HUMAN_ID = 0;
 type Screen = "menu" | "table";
@@ -29,6 +30,16 @@ function delay(ms: number) {
 
 function colorClass(color: Color) {
   return color.toLowerCase();
+}
+
+function sourceForPlayer(playerId: number, playerCount: number): PlayFlightSource {
+  if (playerId === HUMAN_ID) return "human";
+  return SEAT_LAYOUTS[playerCount]?.[playerId - 1] as PlayFlightSource ?? "north";
+}
+
+function playedPlayerId(lastAction: string): number | null {
+  const match = /^player-(\d+)-played-/.exec(lastAction);
+  return match ? Number(match[1]) : null;
 }
 
 function BackStack({ count, language, onDraw, disabled }: { count: number; language: Language; onDraw: () => void; disabled: boolean }) {
@@ -96,10 +107,12 @@ export function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [wildCardId, setWildCardId] = useState<number | null>(null);
   const [animation, setAnimation] = useState<TableAnimation>(null);
+  const [playFlight, setPlayFlight] = useState<PlayFlightEvent | null>(null);
   const aiBusy = useRef(false);
   const gameRef = useRef<WasmGame | null>(null);
   const runTokenRef = useRef(0);
   const animationTimerRef = useRef<number | null>(null);
+  const flightTimerRef = useRef<number | null>(null);
   const text = copy(language);
 
   const triggerAnimation = useCallback((next: Exclude<TableAnimation, null>) => {
@@ -109,6 +122,15 @@ export function App() {
       setAnimation(null);
       animationTimerRef.current = null;
     }, 760);
+  }, []);
+
+  const showPlayFlight = useCallback((card: Card, playerId: number, playerCount: number) => {
+    if (flightTimerRef.current !== null) window.clearTimeout(flightTimerRef.current);
+    setPlayFlight({ id: `${playerId}-${card.id}-${Date.now()}`, card, playerId, source: sourceForPlayer(playerId, playerCount) });
+    flightTimerRef.current = window.setTimeout(() => {
+      setPlayFlight(null);
+      flightTimerRef.current = null;
+    }, 1_050);
   }, []);
 
   const startGame = useCallback(async (nextConfig: SetupConfig, nextSeed = seedFromClock()) => {
@@ -121,6 +143,7 @@ export function App() {
     setWildCardId(null);
     setHistoryOpen(false);
     setTopbarOpen(false);
+    setPlayFlight(null);
     try {
       const nextGame = await createWasmGame(nextSeed, nextConfig.profile, nextConfig.playerCount);
       if (runToken !== runTokenRef.current) return;
@@ -145,6 +168,7 @@ export function App() {
   useEffect(() => () => {
     runTokenRef.current += 1;
     if (animationTimerRef.current !== null) window.clearTimeout(animationTimerRef.current);
+    if (flightTimerRef.current !== null) window.clearTimeout(flightTimerRef.current);
   }, []);
 
   const openMenu = useCallback(() => {
@@ -157,6 +181,7 @@ export function App() {
     setNotice(null);
     setWildCardId(null);
     setHistoryOpen(false);
+    setPlayFlight(null);
     setWasmError(null);
     setScreen("menu");
   }, []);
@@ -185,15 +210,17 @@ export function App() {
         if (runToken !== runTokenRef.current || !gameRef.current) break;
         const result = parseSnapshot(gameRef.current.ai_step());
         current = result.snapshot;
+        const aiPlayerId = playedPlayerId(result.snapshot.last_action);
+        if (aiPlayerId !== null) showPlayFlight(result.snapshot.top_card, aiPlayerId, result.snapshot.players.length);
         setSnapshot(result.snapshot);
-        triggerAnimation("play");
+        triggerAnimation(aiPlayerId === null ? "draw" : "play");
         if (result.error) setNotice(result.error);
         if (result.snapshot.status === "Won" || result.snapshot.current_player === HUMAN_ID) break;
       }
     } finally {
       aiBusy.current = false;
     }
-  }, [activeConfig, snapshot, triggerAnimation]);
+  }, [activeConfig, showPlayFlight, snapshot, triggerAnimation]);
 
   useEffect(() => {
     if (screen === "table" && snapshot && snapshot.current_player !== HUMAN_ID && snapshot.status === "Playing") void runAiTurns();
@@ -213,11 +240,14 @@ export function App() {
       setWildCardId(card.id);
       return;
     }
+    showPlayFlight(card, HUMAN_ID, snapshot.players.length);
     applyRaw(game.play_card(card.id, ""), "play");
   }
 
   function handleWildColor(color: Color) {
     if (!game || wildCardId === null) return;
+    const card = human?.hand.find((candidate) => candidate.id === wildCardId);
+    if (card && snapshot) showPlayFlight(card, HUMAN_ID, snapshot.players.length);
     applyRaw(game.play_card(wildCardId, color.toLowerCase()), "play");
     setWildCardId(null);
   }
@@ -278,6 +308,7 @@ export function App() {
             </div>
             <div className="table-scene-status"><span>{localizeEngineMessage(language, snapshot.message)}</span><span className="status-code">{snapshot.last_action}</span></div>
             <div className="table-scene-footnote"><span>{text.drawPile} {snapshot.draw_count}</span><span>{text.discard} {snapshot.discard_count}</span><span>{text.ruleset}</span></div>
+            {playFlight && <PlayFlight flight={playFlight} language={language} />}
           </div>
         </section>
 
