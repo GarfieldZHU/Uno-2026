@@ -11,6 +11,7 @@ import { SettingsDrawer } from "./SettingsDrawer";
 import { createDefaultSetup, type SetupConfig } from "./SetupScreen";
 import { copy, localizeEngineMessage, profileLabel, translateColor, type Language } from "./i18n";
 import { createWasmGame, type WasmGame } from "./wasm";
+import { preloadTableAssets, TABLE_ASSET_URLS, type AssetProgress } from "./tableAssets";
 import { COLORS, type Card, type Color, type PlayFlightEvent, type PlayFlightSource, type Snapshot } from "./types";
 
 const HUMAN_ID = 0;
@@ -43,6 +44,24 @@ function sourceForPlayer(playerId: number, playerCount: number): PlayFlightSourc
 function playedPlayerId(lastAction: string): number | null {
   const match = /^player-(\d+)-played-/.exec(lastAction);
   return match ? Number(match[1]) : null;
+}
+
+function AssetLoadingScreen({ language, progress }: { language: Language; progress: AssetProgress }) {
+  const text = copy(language);
+  const percentage = progress.total > 0 ? Math.round((progress.loaded / progress.total) * 100) : 0;
+  return (
+    <div className="loading-screen asset-loading-screen" data-testid="asset-loading" role="status" aria-live="polite" aria-busy="true">
+      <div className="asset-loading-card">
+        <div className="loading-mark">UNO<small>2026</small></div>
+        <span className="asset-loading-orbit" aria-hidden="true" />
+        <p>{text.loadingAssets}</p>
+        <div className="asset-loading-track" role="progressbar" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.loaded} aria-label={text.loadingAssets}>
+          <span style={{ width: `${percentage}%` }} />
+        </div>
+        <small className="asset-loading-detail">{text.loadingAssetsDetail(progress.loaded, progress.total)}</small>
+      </div>
+    </div>
+  );
 }
 
 function BackStack({ count, language, onDraw, disabled }: { count: number; language: Language; onDraw: () => void; disabled: boolean }) {
@@ -117,6 +136,7 @@ export function App() {
   const [game, setGame] = useState<WasmGame | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(false);
+  const [assetProgress, setAssetProgress] = useState<AssetProgress>({ loaded: 0, total: TABLE_ASSET_URLS.length });
   const [wasmError, setWasmError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [wildCardId, setWildCardId] = useState<number | null>(null);
@@ -162,8 +182,14 @@ export function App() {
     setHistoryOpen(false);
     setTopbarOpen(false);
     setPlayFlight(null);
+    setAssetProgress({ loaded: 0, total: TABLE_ASSET_URLS.length });
     try {
-      const nextGame = await createWasmGame(nextSeed, nextConfig.profile, nextConfig.playerCount);
+      const [nextGame] = await Promise.all([
+        createWasmGame(nextSeed, nextConfig.profile, nextConfig.playerCount),
+        preloadTableAssets((progress) => {
+          if (runToken === runTokenRef.current) setAssetProgress(progress);
+        }),
+      ]);
       if (runToken !== runTokenRef.current) return;
       gameRef.current = nextGame;
       const nextSnapshot = parseSnapshot(nextGame.snapshot()).snapshot;
@@ -182,6 +208,29 @@ export function App() {
       if (runToken === runTokenRef.current) setLoading(false);
     }
   }, [triggerAnimation]);
+
+  const enterOnlineTable = useCallback(async (room: OnlineRoom) => {
+    const runToken = runTokenRef.current + 1;
+    runTokenRef.current = runToken;
+    setLoading(true);
+    setWasmError(null);
+    setAssetProgress({ loaded: 0, total: TABLE_ASSET_URLS.length });
+    try {
+      await preloadTableAssets((progress) => {
+        if (runToken === runTokenRef.current) setAssetProgress(progress);
+      });
+      if (runToken !== runTokenRef.current) return;
+      setOnlineRoom(room);
+      setScreen("online-table");
+    } catch (error) {
+      if (runToken === runTokenRef.current) {
+        setWasmError(error instanceof Error ? error.message : "Table assets failed to load.");
+        setScreen("menu");
+      }
+    } finally {
+      if (runToken === runTokenRef.current) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => () => {
     runTokenRef.current += 1;
@@ -377,7 +426,7 @@ export function App() {
   }
 
   if (loading) {
-    return <div className="loading-screen"><div className="loading-mark">UNO<small>2026</small></div><p>{text.loading}</p></div>;
+    return <AssetLoadingScreen language={language} progress={assetProgress} />;
   }
 
   if (screen === "menu") {
@@ -391,7 +440,7 @@ export function App() {
   }
 
   if (screen === "online-lobby") {
-    return <div className="online-lobby-screen"><OnlineLobby language={language} api={onlineApi} onClose={openMenu} onStarted={(room) => { setOnlineRoom(room); setScreen("online-table"); }} /></div>;
+    return <div className="online-lobby-screen"><OnlineLobby language={language} api={onlineApi} onClose={openMenu} onStarted={(room) => { void enterOnlineTable(room); }} /></div>;
   }
 
   if (screen === "online-table" && onlineRoom) {

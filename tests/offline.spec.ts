@@ -32,6 +32,19 @@ test("中文主菜单是默认界面，并可切换到英文", async ({ page }) 
   await page.screenshot({ path: "test-results/offline-menu-en.png", fullPage: true });
 });
 
+test("开始牌局会先等待所有牌桌资源加载完成", async ({ page }) => {
+  await page.goto("/");
+  await page.route("**/assets/cards/reference/*.svg", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByTestId("asset-loading")).toBeVisible();
+  await expect(page.getByTestId("asset-loading")).toBeHidden({ timeout: 15_000 });
+  await expect(page.locator(".table-scene")).toBeVisible();
+  await expect.poll(async () => page.locator(".table-scene img").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
+});
+
 test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "设置" }).click();

@@ -308,6 +308,15 @@ h1, h2, p { margin-top: 0; }
 body { background: radial-gradient(circle at 50% -16%, #254b46 0, #0b1c1d 44%, #071115 100%); }
 .loading-screen { background: #081719; }
 .loading-mark small, .brand-mark small { color: var(--coral); }
+.asset-loading-screen { background: radial-gradient(circle at 50% 44%, rgba(25, 91, 68, .34), transparent 37%), #071918; }
+.asset-loading-card { position: relative; display: grid; justify-items: center; gap: 14px; width: min(360px, calc(100% - 40px)); padding: 34px 32px 28px; border: 1px solid rgba(245, 201, 107, .25); border-radius: 22px; background: linear-gradient(145deg, rgba(18, 52, 44, .92), rgba(5, 23, 23, .96)); box-shadow: 0 25px 80px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255, 255, 255, .07); overflow: hidden; }
+.asset-loading-card::before { content: ""; position: absolute; inset: 10px; border: 1px solid rgba(255, 244, 199, .08); border-radius: 15px; pointer-events: none; }
+.asset-loading-card p { margin: 2px 0 0; color: var(--ink); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+.asset-loading-orbit { position: absolute; top: 65px; width: 76px; height: 29px; border: 1px solid rgba(129, 230, 211, .28); border-radius: 50%; transform: rotate(-22deg); animation: loading-orbit 1.6s ease-in-out infinite; pointer-events: none; }
+.asset-loading-track { position: relative; z-index: 1; width: min(260px, 100%); height: 5px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, .1); }
+.asset-loading-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--yellow)); box-shadow: 0 0 16px rgba(129, 230, 211, .46); transition: width .2s ease; }
+.asset-loading-detail { color: var(--muted); font-size: 9px; letter-spacing: .08em; }
+@keyframes loading-orbit { 0%, 100% { opacity: .45; transform: rotate(-22deg) scale(.92); } 50% { opacity: 1; transform: rotate(22deg) scale(1.08); } }
 .primary-button { color: #10211f; background: var(--yellow); }
 .primary-button:hover:not(:disabled) { background: #ffe09a; }
 

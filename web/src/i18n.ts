@@ -91,6 +91,8 @@ type UiCopy = {
   tableUnavailable: string;
   retryTable: string;
   loading: string;
+  loadingAssets: string;
+  loadingAssetsDetail: (loaded: number, total: number) => string;
   ai: string;
   human: string;
   basePause: (seconds: number) => string;
@@ -187,6 +189,8 @@ const COPY: Record<Language, UiCopy> = {
     tableUnavailable: "牌桌暂时不可用",
     retryTable: "重试牌桌",
     loading: "正在洗牌…",
+    loadingAssets: "正在加载牌桌资源…",
+    loadingAssetsDetail: (loaded, total) => `牌面与桌景 ${loaded}/${total}`,
     ai: "AI",
     human: "人类",
     basePause: (seconds) => `${seconds} 秒基础停顿`,
@@ -281,6 +285,8 @@ const COPY: Record<Language, UiCopy> = {
     tableUnavailable: "Table unavailable",
     retryTable: "Retry table",
     loading: "Shuffling the Rust table…",
+    loadingAssets: "Loading table assets…",
+    loadingAssetsDetail: (loaded, total) => `Cards and table ${loaded}/${total}`,
     ai: "AI",
     human: "HUMAN",
     basePause: (seconds) => `${seconds}s BASE PAUSE`,
