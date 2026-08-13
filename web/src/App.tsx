@@ -108,8 +108,9 @@ function SeatPlayer({ player, language, active, next = false, slot, human = fals
       <SeatAvatarWithTurn player={player} language={language} active={active} />
       <div className="seat-player-info">
         <strong>{player.name}</strong>
-        <span>{human ? text.youHuman : text.cards(player.hand_count, player.uno_called)}</span>
+        <span>{active ? (language === "zh" ? "当前回合" : "CURRENT TURN") : human ? text.youHuman : text.cards(player.hand_count, player.uno_called)}</span>
       </div>
+      {active && <span className="seat-turn-label">{language === "zh" ? "出牌中" : "TURN"}</span>}
       {!human && <CardBackFan count={player.hand_count} />}
       {next && <span className="seat-next-marker" aria-label={language === "zh" ? "你的下家" : "your next player"}>↗</span>}
     </div>
@@ -565,13 +566,14 @@ export function App() {
               {human && <SeatPlayer player={human} language={language} active={human.id === snapshot.current_player} next={human.id === nextId} slot="south" human />}
             </div>
             <div className="table-center">
+              <div className="table-direction-chip" data-testid="table-direction-indicator" data-direction={snapshot.direction === 1 ? "clockwise" : "counter-clockwise"} aria-label={snapshot.direction === 1 ? (language === "zh" ? "顺时针出牌" : "Clockwise play") : (language === "zh" ? "逆时针出牌" : "Counter-clockwise play")}><b>{snapshot.direction === 1 ? "↻" : "↺"}</b><span>{snapshot.direction === 1 ? (language === "zh" ? "顺时针" : "CLOCKWISE") : (language === "zh" ? "逆时针" : "COUNTER-CLOCKWISE")}</span></div>
               <div className="piles">
                 <BackStack count={snapshot.draw_count} language={language} onDraw={handleDraw} disabled={snapshot.current_player !== HUMAN_ID || aiBusy.current || snapshot.status === "Won"} />
                 <div className="pile-separator" />
                 <button className="discard-stack" onClick={() => setHistoryOpen(true)} aria-label={text.viewDiscardHistory} type="button"><span className="discard-shadow" /><CardArt card={snapshot.top_card} language={language} compact /></button>
               </div>
               <div className="active-color"><span className={`color-swatch swatch-${colorClass(snapshot.active_color)}`} />{text.activeColor} <strong>{translateColor(language, snapshot.active_color)}</strong></div>
-              {snapshot.pending_draw > 0 && <div className="pending-draw-badge" data-testid="pending-draw" aria-live="assertive">+{snapshot.pending_draw} {language === "zh" ? "连击抽牌" : "PENALTY DRAW"}</div>}
+              {snapshot.pending_draw > 0 && <div key={`pending-${snapshot.pending_draw}`} className="pending-draw-badge" data-testid="pending-draw" data-count={snapshot.pending_draw} aria-live="assertive">+{snapshot.pending_draw} {language === "zh" ? "连击抽牌" : "PENALTY DRAW"}</div>}
             </div>
             <div className="table-scene-status" aria-live="polite"><span className={`status-pulse ${snapshot.status === "Won" ? "is-won" : ""}`} aria-label={localizeEngineMessage(language, snapshot.message)} /><span className="sr-only">{localizeEngineMessage(language, snapshot.message)}</span><span className="status-code sr-only">{snapshot.last_action}</span></div>
             <div className="table-scene-footnote table-metrics" aria-label={`${text.drawPile} ${snapshot.draw_count}, ${text.discard} ${snapshot.discard_count}`}><span className="table-metric" title={text.drawPile}><span aria-hidden="true">▤</span><b>{snapshot.draw_count}</b></span><span className="table-metric" title={text.discard}><span aria-hidden="true">◈</span><b>{snapshot.discard_count}</b></span><span className="table-metric metric-ruleset" title={text.ruleset}>UNO</span></div>

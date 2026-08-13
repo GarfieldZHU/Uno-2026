@@ -108,6 +108,8 @@ test("牌桌显示出牌方向并支持一键整理手牌", async ({ page }) => 
   await page.getByRole("button", { name: "开始游戏" }).click();
   await expect(page.getByTestId("direction-indicator")).toHaveAttribute("data-direction", "clockwise");
   await expect(page.getByTestId("direction-indicator")).toHaveAttribute("aria-label", "顺时针出牌");
+  await expect(page.getByTestId("table-direction-indicator")).toHaveAttribute("data-direction", "clockwise");
+  await expect(page.getByTestId("table-direction-indicator")).toContainText("顺时针");
   const hand = page.getByTestId("hand-rail");
   const before = await hand.locator("[data-card-id]").evaluateAll((cards) => cards.map((card) => card.getAttribute("data-card-id")));
   await page.getByTestId("sort-hand").click();
@@ -122,6 +124,7 @@ test("当前玩家高亮和出牌特效节点随回合存在", async ({ page }) 
   await page.getByRole("button", { name: "开始游戏" }).click();
   await expect(page.locator('.seat-player.is-active')).toHaveCount(1);
   await expect(page.locator('.seat-player.is-active .seat-turn-pip')).toBeVisible();
+  await expect(page.locator('.seat-player.is-active .seat-turn-label')).toBeVisible();
   await expect(page.getByTestId("direction-indicator")).toBeVisible();
 });
 

@@ -15,7 +15,8 @@
    the English toggle, online entry, card asset loading, first-click lift/
    second-click or double-click play, drag/drop, hand sorting, wild-color
    selection, direction/current-turn/next-player markers, AI back-to-front
-   flight, action effects, and offline settlement.
+   flight, action effects, the in-table direction chip and active-turn label,
+   and offline settlement.
 6. With `uno-server` listening on `127.0.0.1:8787`, the same command also runs
    `tests/online.spec.ts`: three isolated browser contexts create/join one
    six-seat room with three AI seats, verify viewer-safe hands and SVG assets,
