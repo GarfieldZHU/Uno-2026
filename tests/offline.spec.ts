@@ -50,7 +50,8 @@ test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
   await expect(page.locator(".table-scene")).toBeVisible();
   await expect(page.locator(".seat-player")).toHaveCount(3);
   await expect(page.locator(".table-players-rail")).toHaveCount(0);
-  await expect(page.locator('img[src="/assets/cards/reference/card-back.svg"]')).toHaveCount(7);
+  await expect(page.locator(".seat-card-fan img")).toHaveCount(14);
+  await expect(page.locator('img[src="/assets/cards/reference/card-back.svg"]')).toHaveCount(15);
   await expect(page.locator('.hand-fan .card-art img').first()).toHaveAttribute('src', /\/assets\/cards\/reference\//);
   await expect.poll(async () => page.locator('.hand-fan .card-art img').first().evaluate((image) => ({ complete: image.complete, width: image.naturalWidth, height: image.naturalHeight }))).toMatchObject({ complete: true });
   await expect.poll(async () => page.locator('.hand-fan .card-art img').first().evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);

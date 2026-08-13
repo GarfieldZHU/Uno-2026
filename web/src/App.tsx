@@ -70,11 +70,21 @@ function SeatAvatar({ player, language }: { player: Snapshot["players"][number];
 }
 
 function CardBackFan({ count }: { count: number }) {
-  const visible = Math.min(3, Math.max(1, count));
+  const visible = Math.min(8, Math.max(0, count));
+  const center = visible > 0 ? (visible - 1) / 2 : 0;
   return (
-    <span className="seat-card-fan" aria-hidden="true">
+    <span className="seat-card-fan" aria-hidden="true" style={{ "--fan-total": visible, "--fan-center": center } as CSSProperties}>
       {Array.from({ length: visible }, (_, index) => <img key={index} src="/assets/cards/reference/card-back.svg" alt="" style={{ "--fan-index": index } as CSSProperties} />)}
       <b>{count}</b>
+    </span>
+  );
+}
+
+function SeatAvatarWithTurn({ player, language, active }: { player: Snapshot["players"][number]; language: Language; active: boolean }) {
+  return (
+    <span className="seat-avatar-wrap">
+      <SeatAvatar player={player} language={language} />
+      {active && <span className="seat-turn-pip" aria-label={language === "zh" ? "当前回合" : "current turn"} />}
     </span>
   );
 }
@@ -83,13 +93,12 @@ function SeatPlayer({ player, language, active, slot, human = false }: { player:
   const text = copy(language);
   return (
     <div className={`seat-player player-row seat-${slot} ${human ? "seat-human" : ""} ${active ? "is-active" : ""}`} data-seat={slot}>
-      <SeatAvatar player={player} language={language} />
+      <SeatAvatarWithTurn player={player} language={language} active={active} />
       <div className="seat-player-info">
         <strong>{player.name}</strong>
         <span>{human ? text.youHuman : text.cards(player.hand_count, player.uno_called)}</span>
       </div>
       {!human && <CardBackFan count={player.hand_count} />}
-      {active && <span className="seat-turn-pip" aria-label={language === "zh" ? "当前回合" : "current turn"} />}
     </div>
   );
 }
@@ -419,8 +428,8 @@ export function App() {
               </div>
               <div className="active-color"><span className={`color-swatch swatch-${colorClass(snapshot.active_color)}`} />{text.activeColor} <strong>{translateColor(language, snapshot.active_color)}</strong></div>
             </div>
-            <div className="table-scene-status"><span>{localizeEngineMessage(language, snapshot.message)}</span><span className="status-code">{snapshot.last_action}</span></div>
-            <div className="table-scene-footnote"><span>{text.drawPile} {snapshot.draw_count}</span><span>{text.discard} {snapshot.discard_count}</span><span>{text.ruleset}</span></div>
+            <div className="table-scene-status" aria-live="polite"><span className={`status-pulse ${snapshot.status === "Won" ? "is-won" : ""}`} aria-label={localizeEngineMessage(language, snapshot.message)} /><span className="sr-only">{localizeEngineMessage(language, snapshot.message)}</span><span className="status-code sr-only">{snapshot.last_action}</span></div>
+            <div className="table-scene-footnote table-metrics" aria-label={`${text.drawPile} ${snapshot.draw_count}, ${text.discard} ${snapshot.discard_count}`}><span className="table-metric" title={text.drawPile}><span aria-hidden="true">▤</span><b>{snapshot.draw_count}</b></span><span className="table-metric" title={text.discard}><span aria-hidden="true">◈</span><b>{snapshot.discard_count}</b></span><span className="table-metric metric-ruleset" title={text.ruleset}>UNO</span></div>
             {playFlight && <PlayFlight flight={playFlight} language={language} />}
           </div>
         </section>
@@ -431,7 +440,7 @@ export function App() {
             <CardArt card={card} language={language} className="hand-card" style={{ "--hand-index": index, "--hand-total": human.hand.length } as CSSProperties} disabled={snapshot.current_player !== HUMAN_ID || !playableIds.has(card.id) || snapshot.status === "Won"} draggable={snapshot.current_player === HUMAN_ID && playableIds.has(card.id) && snapshot.status !== "Won"} onClick={() => handlePlay(card)} onDragStart={(event) => handleDragStart(event, card)} onDragEnd={handleDragEnd} onPointerDown={(event) => handlePointerDown(event, card)} />
             {wildCardId === card.id && <div className="wild-picker" role="dialog" aria-modal="false" aria-labelledby="color-title"><span className="wild-picker-stem" /><p className="eyebrow">{text.wildCard}</p><strong id="color-title">{text.chooseColor}</strong><div className="wild-picker-options">{COLORS.map((color) => <button key={color.name} className={`wild-picker-option color-option-${color.className}`} onClick={() => handleWildColor(color.name)} aria-label={translateColor(language, color.name)} type="button"><span className={`color-swatch swatch-${color.className}`} /></button>)}</div><button className="wild-picker-cancel" onClick={() => setWildCardId(null)} type="button">×</button></div>}
           </div>)}</div>
-          <div className="hand-help"><span><kbd>{language === "zh" ? "拖拽" : "DRAG"}</kbd> {language === "zh" ? "将亮起的牌拖到桌面出牌" : "drag a lit card to the table"}</span><span><kbd>{language === "zh" ? "摸牌" : "DRAW"}</kbd> {text.drawHint}</span><span className="help-right">{notice ? <strong className="notice">{localizeEngineMessage(language, notice)}</strong> : text.playableHint}</span></div>
+          <div className="hand-help compact-help" aria-label={language === "zh" ? "牌桌操作提示" : "Table controls"}><span className="help-action" title={language === "zh" ? "拖拽亮起的牌到牌桌出牌" : "Drag a lit card to the table"}><kbd>↕</kbd><span className="sr-only">{language === "zh" ? "拖拽亮起的牌到牌桌出牌" : "Drag a lit card to the table"}</span></span><span className="help-action" title={text.drawHint}><kbd>＋</kbd><span className="sr-only">{text.drawHint}</span></span><span className={`help-state ${notice ? "is-alert" : "is-ready"}`} title={notice ? localizeEngineMessage(language, notice) : text.playableHint}><span className="status-pulse" /><span className="sr-only">{notice ? localizeEngineMessage(language, notice) : text.playableHint}</span></span></div>
         </section>
       </main>
 
