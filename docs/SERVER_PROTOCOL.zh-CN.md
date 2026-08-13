@@ -44,5 +44,10 @@ curl http://127.0.0.1:8787/health
 人类席位。服务只把当前 token 对应玩家的手牌返回给该玩家，其他玩家只返回数量。AI 会
 在轮询时自动行动，人类倒计时结束会自动摸牌。
 
+网页客户端会明确以 snake_case 发送 `max_players`、`ai_count`、
+`countdown_seconds` 和 `ai_profile`。本地 Vite 开发服务器把 `/api` 代理到
+`127.0.0.1:8787`；部署后的客户端应把 `VITE_ONLINE_API_URL` 设置为 Rust 房间服务的
+HTTPS 地址。
+
 第一版使用小型 HTTP 实现，公开部署前必须放在 TLS 和反向代理后。不要把房间 token、部署
 凭据或服务器密码提交到仓库。

@@ -83,7 +83,12 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
 
   const playableIds = useMemo(() => {
     if (!snapshot || snapshot.current_player !== humanId || snapshot.pending_draw > 0 || snapshot.status === "Won") return new Set<number>();
-    return new Set(human?.hand.filter((card) => card.color === "Wild" || card.color === snapshot.active_color || card.kind === snapshot.top_card.kind).map((card) => card.id) ?? []);
+    return new Set(human?.hand.filter((card) => {
+      if (card.kind === "wild-draw-four") {
+        return !human.hand.some((candidate) => candidate.color === snapshot.active_color && candidate.color !== "Wild");
+      }
+      return card.color === "Wild" || card.color === snapshot.active_color || card.kind === snapshot.top_card.kind;
+    }).map((card) => card.id) ?? []);
   }, [human, humanId, snapshot]);
 
   async function dispatch(action: "play" | "draw" | "call_uno", card?: Card, chosenColor?: Color) {

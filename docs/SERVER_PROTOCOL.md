@@ -48,6 +48,11 @@ zero, but must leave at least one human seat. Human hands are returned only to
 the token's viewer; opponent hands are count-only. AI seats automatically step
 on room polling, while an expired human deadline draws for that player.
 
+The web client sends `max_players`, `ai_count`, `countdown_seconds`, and
+`ai_profile` explicitly in snake_case. The Vite dev server proxies `/api` to
+`127.0.0.1:8787`; a deployed client must instead set `VITE_ONLINE_API_URL` to
+the HTTPS room-service origin.
+
 The service uses a deliberately small HTTP implementation for the first slice;
 put it behind TLS and a reverse proxy before exposing it to the public internet.
 Do not commit room tokens, deployment credentials, or server passwords.

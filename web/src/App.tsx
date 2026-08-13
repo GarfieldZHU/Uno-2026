@@ -241,7 +241,12 @@ export function App() {
   const playableIds = useMemo(() => {
     if (!snapshot || snapshot.current_player !== HUMAN_ID || snapshot.pending_draw > 0) return new Set<number>();
     const top = snapshot.top_card;
-    return new Set(human?.hand.filter((card) => card.color === "Wild" || card.color === snapshot.active_color || card.kind === top.kind).map((card) => card.id) ?? []);
+    return new Set(human?.hand.filter((card) => {
+      if (card.kind === "wild-draw-four") {
+        return !human.hand.some((candidate) => candidate.color === snapshot.active_color && candidate.color !== "Wild");
+      }
+      return card.color === "Wild" || card.color === snapshot.active_color || card.kind === top.kind;
+    }).map((card) => card.id) ?? []);
   }, [human, snapshot]);
 
   function handlePlay(card: Card) {

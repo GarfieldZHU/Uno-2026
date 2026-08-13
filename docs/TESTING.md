@@ -12,9 +12,12 @@
 5. `npm run test:browser` boots Vite on port 1411 and checks the Chinese-first
    main menu, settings drawer defaults, three-seat and eight-seat starts,
    responsive table layout, discard-history open/close, draw animation state,
-   the English toggle, online entry, and offline table behavior.
-6. A local integration check starts `uno-server` and exercises `/health`, room
-   creation, join/start/leave, TTL configuration, and viewer-safe hands.
+   the English toggle, online entry, card asset loading, drag/drop, wild-color
+   selection, AI back-to-front flight, and offline settlement.
+6. With `uno-server` listening on `127.0.0.1:8787`, the same command also runs
+   `tests/online.spec.ts`: three isolated browser contexts create/join one
+   six-seat room with three AI seats, verify viewer-safe hands and SVG assets,
+   and drive the room to a `Won` snapshot in every window.
 
 ## Evidence discipline
 

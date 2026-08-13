@@ -199,3 +199,47 @@ test("移动端牌桌保留人类出牌飞行层", async ({ page }) => {
   expect(bounds.contained).toBe(true);
   await page.screenshot({ path: "test-results/offline-human-play-flight-mobile.png", fullPage: true });
 });
+
+test("离线牌局可以完整轮转并显示结算", async ({ page }) => {
+  test.setTimeout(60_000);
+  // Keep the same player-facing flow while shortening only the configured AI
+  // pauses so a deterministic browser smoke test can reach a terminal table.
+  await page.addInitScript(() => {
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) =>
+      nativeSetTimeout(handler, Math.min(timeout ?? 0, 8), ...args)) as typeof window.setTimeout;
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "设置" }).click();
+  await page.getByLabel("玩家").selectOption("3");
+  await page.getByLabel("AI 默认停顿").fill("1");
+  await page.getByRole("button", { name: "保存设置" }).click();
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByText(/牌局 \/ 001 · 3 席/)).toBeVisible();
+
+  for (let step = 0; step < 900; step += 1) {
+    if (await page.getByText("牌局结束").isVisible().catch(() => false)) break;
+    const openPicker = page.locator(".wild-picker");
+    if (await openPicker.isVisible().catch(() => false)) {
+      await openPicker.locator(".wild-picker-option").first().evaluate((element) => (element as HTMLButtonElement).click());
+      await page.waitForTimeout(12);
+      continue;
+    }
+    const badge = await page.locator(".table-scene-badge").textContent().catch(() => "");
+    if (badge?.includes("你的回合")) {
+      const playable = page.locator('.hand-fan .card-art:not(:disabled)').first();
+      if (await playable.isVisible().catch(() => false)) {
+        await playable.click({ force: true });
+      } else {
+        await page.getByRole("button", { name: "从摸牌堆摸牌" }).click({ force: true });
+      }
+    } else {
+      await page.waitForTimeout(12);
+    }
+  }
+
+  await expect(page.getByText("牌局结束")).toBeVisible({ timeout: 5_000 });
+  await expect(page.locator(".status-code")).toContainText("player-");
+  await expect(page.getByRole("button", { name: "从摸牌堆摸牌" })).toBeDisabled();
+  await page.screenshot({ path: "test-results/offline-settlement-zh.png", fullPage: true });
+});

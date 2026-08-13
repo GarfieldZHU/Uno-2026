@@ -25,6 +25,7 @@ jobs:
       - run: cargo test --workspace
       - run: npm run typecheck
       - run: npm run build
+      - run: npm run test:browser
 
   server-image:
     runs-on: ubuntu-latest

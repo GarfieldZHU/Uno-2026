@@ -112,7 +112,19 @@ export function createOnlineApi(baseUrl = import.meta.env.VITE_ONLINE_API_URL ??
 
   return {
     async createRoom(body) {
-      const payload = await request<WireRoom>("/api/v1/rooms", { method: "POST", body: JSON.stringify(body) });
+      // The browser contract is camelCase; keep the Rust HTTP wire contract
+      // explicit so configured seats, AI count, and deadline are not silently
+      // replaced by server defaults.
+      const payload = await request<WireRoom>("/api/v1/rooms", {
+        method: "POST",
+        body: JSON.stringify({
+          name: body.name,
+          max_players: body.maxPlayers,
+          ai_count: body.aiCount,
+          countdown_seconds: body.countdownSeconds,
+          ai_profile: body.aiProfile,
+        }),
+      });
       return refresh(mergeSession(payload));
     },
     async joinRoom({ code, ...body }) {
