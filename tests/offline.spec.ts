@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function playFirstAvailableHumanCard(page: Page) {
-  const card = page.locator(".hand-fan .card-art:not(:disabled)").first();
+  const card = page.locator('.hand-fan .card-art:not(:disabled):not([data-card-asset*="/wild"])').first();
   if (!(await card.isVisible().catch(() => false))) {
     const drawButton = page.getByRole("button", { name: "从摸牌堆摸牌" });
     await expect(drawButton).toBeEnabled({ timeout: 5_000 });
@@ -50,7 +50,8 @@ test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
   await expect(page.locator(".table-scene")).toBeVisible();
   await expect(page.locator(".seat-player")).toHaveCount(3);
   await expect(page.locator(".table-players-rail")).toHaveCount(0);
-  await expect(page.locator('img[src="/assets/cards/card-back-v2.svg"]')).toHaveCount(7);
+  await expect(page.locator('img[src="/assets/cards/reference/card-back.svg"]')).toHaveCount(7);
+  await expect(page.locator('.hand-fan .card-art img').first()).toHaveAttribute('src', /\/assets\/cards\/reference\//);
   await expect(page.locator(".hand-fan")).toBeVisible();
   await expect(page.getByRole("button", { name: "显示顶部信息栏" })).toBeVisible();
   await page.screenshot({ path: "test-results/offline-table-desktop-zh.png", fullPage: true });
@@ -148,6 +149,29 @@ test("减弱动效偏好保留出牌状态但缩短飞行动画", async ({ page 
     return value.endsWith("ms") ? Number.parseFloat(value) / 1_000 : Number.parseFloat(value);
   });
   expect(animationDurationSeconds).toBeLessThan(0.001);
+});
+
+test("手牌可以拖到牌桌出牌", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByText("轮到你出牌。")).toBeVisible();
+  const card = page.locator(".hand-fan .card-art:not(:disabled)").first();
+  await expect(card).toBeVisible();
+  await card.dragTo(page.locator('[data-drop-target="table"]'));
+  await expect(page.getByTestId("play-flight")).toBeAttached();
+  await expect(page.locator('[data-drop-target="table"]')).not.toHaveClass(/is-card-drop-target/);
+});
+
+test("万能牌选色显示在牌面上方", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByText("轮到你出牌。")).toBeVisible();
+  const wild = page.locator('.hand-fan .card-art[data-card-asset*="/wild.svg"]:not(:disabled)').first();
+  if (await wild.count()) {
+    await wild.click();
+    await expect(page.locator(".wild-picker")).toBeVisible();
+    await expect(page.locator(".modal-scrim")).toHaveCount(0);
+  }
 });
 
 test("移动端牌桌保留人类出牌飞行层", async ({ page }) => {

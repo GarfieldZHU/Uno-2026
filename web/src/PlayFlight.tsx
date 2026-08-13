@@ -20,7 +20,7 @@ export function PlayFlight({ flight, language }: PlayFlightProps) {
       <span className="play-flight-trail" />
       <span className="play-flight-card">
         <span className="play-flight-face">
-          <img className="play-flight-back" src="/assets/cards/card-back-v2.svg" alt="" />
+          <img className="play-flight-back" src="/assets/cards/reference/card-back.svg" alt="" />
           <span className="play-flight-front"><CardArt card={flight.card} language={language} compact /></span>
         </span>
       </span>

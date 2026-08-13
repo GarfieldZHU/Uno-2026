@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { AboutPanel } from "./AboutPanel";
 import { CardArt } from "./CardArt";
 import { DiscardHistory } from "./DiscardHistory";
@@ -47,7 +47,7 @@ function BackStack({ count, language, onDraw, disabled }: { count: number; langu
     <button className="draw-stack" onClick={onDraw} disabled={disabled} aria-label={language === "zh" ? "从摸牌堆摸牌" : "Draw from the deck"} type="button">
       <span className="stack-offset stack-offset-one" />
       <span className="stack-offset stack-offset-two" />
-      <img className="card-back-image" src="/assets/cards/card-back-v2.svg" alt="" />
+      <img className="card-back-image" src="/assets/cards/reference/card-back.svg" alt="" />
       <span className="pile-count">{count}</span>
     </button>
   );
@@ -70,7 +70,7 @@ function CardBackFan({ count }: { count: number }) {
   const visible = Math.min(3, Math.max(1, count));
   return (
     <span className="seat-card-fan" aria-hidden="true">
-      {Array.from({ length: visible }, (_, index) => <img key={index} src="/assets/cards/card-back-v2.svg" alt="" style={{ "--fan-index": index } as CSSProperties} />)}
+      {Array.from({ length: visible }, (_, index) => <img key={index} src="/assets/cards/reference/card-back.svg" alt="" style={{ "--fan-index": index } as CSSProperties} />)}
       <b>{count}</b>
     </span>
   );
@@ -106,10 +106,14 @@ export function App() {
   const [wasmError, setWasmError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [wildCardId, setWildCardId] = useState<number | null>(null);
+  const [draggingCardId, setDraggingCardId] = useState<number | null>(null);
   const [animation, setAnimation] = useState<TableAnimation>(null);
   const [playFlight, setPlayFlight] = useState<PlayFlightEvent | null>(null);
   const aiBusy = useRef(false);
   const gameRef = useRef<WasmGame | null>(null);
+  const draggingCardRef = useRef<number | null>(null);
+  const pointerDragRef = useRef<{ cardId: number; startX: number; startY: number; active: boolean } | null>(null);
+  const tableDropRef = useRef<HTMLDivElement | null>(null);
   const runTokenRef = useRef(0);
   const animationTimerRef = useRef<number | null>(null);
   const flightTimerRef = useRef<number | null>(null);
@@ -244,6 +248,88 @@ export function App() {
     applyRaw(game.play_card(card.id, ""), "play");
   }
 
+  function handleDragStart(event: DragEvent<HTMLElement>, card: Card) {
+    if (!game || !snapshot || snapshot.current_player !== HUMAN_ID || !playableIds.has(card.id) || snapshot.status === "Won") {
+      event.preventDefault();
+      return;
+    }
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(card.id));
+    draggingCardRef.current = card.id;
+    setDraggingCardId(card.id);
+  }
+
+  function handleDragEnd() {
+    setDraggingCardId(null);
+    const cardId = draggingCardRef.current;
+    if (cardId !== null) {
+      window.setTimeout(() => {
+        if (draggingCardRef.current === cardId) draggingCardRef.current = null;
+      }, 0);
+    }
+  }
+
+  function handleTableDragOver(event: DragEvent<HTMLElement>) {
+    if (draggingCardRef.current !== null || draggingCardId !== null || event.dataTransfer.types.includes("text/plain")) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    }
+  }
+
+  function handleTableDragEnter(event: DragEvent<HTMLElement>) {
+    if (draggingCardRef.current !== null || event.dataTransfer.types.includes("text/plain")) event.preventDefault();
+  }
+
+  function handleTableDrop(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    const transferredId = Number(event.dataTransfer.getData("text/plain"));
+    const cardId = Number.isFinite(transferredId) && transferredId > 0 ? transferredId : draggingCardRef.current;
+    const card = human?.hand.find((candidate) => candidate.id === cardId);
+    draggingCardRef.current = null;
+    setDraggingCardId(null);
+    if (card) handlePlay(card);
+  }
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLElement>, card: Card) {
+    if (event.button !== 0 || !game || !snapshot || snapshot.current_player !== HUMAN_ID || !playableIds.has(card.id) || snapshot.status === "Won") return;
+    pointerDragRef.current = { cardId: card.id, startX: event.clientX, startY: event.clientY, active: false };
+  }
+
+  useEffect(() => {
+    function onPointerMove(event: PointerEvent) {
+      const drag = pointerDragRef.current;
+      if (!drag) return;
+      if (!drag.active && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 8) drag.active = true;
+      if (drag.active) {
+        event.preventDefault();
+        setDraggingCardId(drag.cardId);
+      }
+    }
+
+    function onPointerUp(event: PointerEvent) {
+      const drag = pointerDragRef.current;
+      if (!drag) return;
+      pointerDragRef.current = null;
+      if (!drag.active) return;
+      const table = tableDropRef.current?.getBoundingClientRect();
+      const overTable = table && event.clientX >= table.left && event.clientX <= table.right && event.clientY >= table.top && event.clientY <= table.bottom;
+      setDraggingCardId(null);
+      if (overTable) {
+        const card = human?.hand.find((candidate) => candidate.id === drag.cardId);
+        if (card) handlePlay(card);
+      }
+    }
+
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, [human, playableIds, snapshot, game]);
+
   function handleWildColor(color: Color) {
     if (!game || wildCardId === null) return;
     const card = human?.hand.find((candidate) => candidate.id === wildCardId);
@@ -291,7 +377,7 @@ export function App() {
       <main className="game-layout">
         <section className="table-column">
           <div className="table-heading"><div><p className="eyebrow">{text.match} / 001 · {text.seats(snapshot.players.length)}</p><h1>{text.makeYourMove}</h1></div><div className="round-meta"><span>{text.turn} {String(snapshot.turn_number).padStart(2, "0")}</span><span className="direction-mark">{snapshot.direction === 1 ? "↻" : "↺"}</span></div></div>
-          <div className="felt-table table-scene" data-animation={animation ?? undefined}>
+          <div ref={tableDropRef} className={`felt-table table-scene ${draggingCardId !== null ? "is-card-drop-target" : ""}`} data-animation={animation ?? undefined} data-drop-target="table" onDragEnter={handleTableDragEnter} onDragOver={handleTableDragOver} onDrop={handleTableDrop}>
             <div className="table-grid-lines" />
             <div className="table-scene-badge"><span className="live-pip" />{snapshot.status === "Won" ? text.tableComplete : currentPlayer?.name === "You" ? text.yourMove : text.thinking(currentPlayer?.name ?? "AI")}</div>
             <div className="table-seats">
@@ -314,13 +400,15 @@ export function App() {
 
         <section className="hand-column">
           <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human?.hand_count ?? 0).padStart(2, "0")}</p><h2>{human?.hand_count === 1 ? text.oneCardLeft : text.keepRhythm}</h2></div><div className="hand-actions"><button className="ghost-button" onClick={handleUno} disabled={human?.hand_count !== 1 || snapshot.status === "Won"} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={handleDraw} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
-          <div className="hand-rail hand-fan">{human?.hand.map((card, index) => <CardArt key={card.id} card={card} language={language} className="hand-card" style={{ "--hand-index": index, "--hand-total": human.hand.length } as CSSProperties} disabled={snapshot.current_player !== HUMAN_ID || !playableIds.has(card.id) || snapshot.status === "Won"} onClick={() => handlePlay(card)} />)}</div>
-          <div className="hand-help"><span><kbd>{language === "zh" ? "点击" : "CLICK"}</kbd> {text.clickHint}</span><span><kbd>{language === "zh" ? "摸牌" : "DRAW"}</kbd> {text.drawHint}</span><span className="help-right">{notice ? <strong className="notice">{localizeEngineMessage(language, notice)}</strong> : text.playableHint}</span></div>
+          <div className="hand-rail hand-fan">{human?.hand.map((card, index) => <div className={`hand-card-slot ${draggingCardId === card.id ? "is-dragging" : ""}`} key={card.id}>
+            <CardArt card={card} language={language} className="hand-card" style={{ "--hand-index": index, "--hand-total": human.hand.length } as CSSProperties} disabled={snapshot.current_player !== HUMAN_ID || !playableIds.has(card.id) || snapshot.status === "Won"} draggable={snapshot.current_player === HUMAN_ID && playableIds.has(card.id) && snapshot.status !== "Won"} onClick={() => handlePlay(card)} onDragStart={(event) => handleDragStart(event, card)} onDragEnd={handleDragEnd} onPointerDown={(event) => handlePointerDown(event, card)} />
+            {wildCardId === card.id && <div className="wild-picker" role="dialog" aria-modal="false" aria-labelledby="color-title"><span className="wild-picker-stem" /><p className="eyebrow">{text.wildCard}</p><strong id="color-title">{text.chooseColor}</strong><div className="wild-picker-options">{COLORS.map((color) => <button key={color.name} className={`wild-picker-option color-option-${color.className}`} onClick={() => handleWildColor(color.name)} aria-label={translateColor(language, color.name)} type="button"><span className={`color-swatch swatch-${color.className}`} /></button>)}</div><button className="wild-picker-cancel" onClick={() => setWildCardId(null)} type="button">×</button></div>}
+          </div>)}</div>
+          <div className="hand-help"><span><kbd>{language === "zh" ? "拖拽" : "DRAG"}</kbd> {language === "zh" ? "将亮起的牌拖到桌面出牌" : "drag a lit card to the table"}</span><span><kbd>{language === "zh" ? "摸牌" : "DRAW"}</kbd> {text.drawHint}</span><span className="help-right">{notice ? <strong className="notice">{localizeEngineMessage(language, notice)}</strong> : text.playableHint}</span></div>
         </section>
       </main>
 
       <DiscardHistory cards={discardCards} language={language} open={historyOpen} onClose={() => setHistoryOpen(false)} />
-      {wildCardId !== null && <div className="modal-scrim" role="presentation"><div className="color-modal" role="dialog" aria-modal="true" aria-labelledby="color-title"><p className="eyebrow">{text.wildCard}</p><h2 id="color-title">{text.chooseColor}</h2><p>{text.wildExplanation}</p><div className="color-options">{COLORS.map((color) => <button key={color.name} className={`color-option color-option-${color.className}`} onClick={() => handleWildColor(color.name)} type="button"><span className={`color-swatch swatch-${color.className}`} />{translateColor(language, color.name)}</button>)}</div><button className="cancel-button" onClick={() => setWildCardId(null)} type="button">{text.cancel}</button></div></div>}
     </div>
   );
 }
