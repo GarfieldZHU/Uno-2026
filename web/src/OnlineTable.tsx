@@ -5,6 +5,8 @@ import { PlayFlight } from "./PlayFlight";
 import { ActionEffectOverlay, PenaltyDrawFlight } from "./PenaltyDrawFlight";
 import { copy, localizeEngineMessage, translateColor, type Language } from "./i18n";
 import { connectOnlineRoom, type OnlineApi, type OnlineRoom, type OnlineSyncStatus } from "./online";
+import { DealSequenceOverlay, SettlementOverlay, type TablePhase } from "./TableOverlays";
+import { TableDirectionArrows } from "./TableDirectionArrows";
 import { drawInfoForAction, effectForAction, type TableEffect } from "./tableEffects";
 import { COLORS, type Card, type Color, type PlayFlightEvent, type PlayFlightSource, type Snapshot } from "./types";
 import { nextPlayerId, orderedOpponents, seatSlotForPlayer, sourceForPlayer } from "./tableSeats";
@@ -12,6 +14,8 @@ import { nextPlayerId, orderedOpponents, seatSlotForPlayer, sourceForPlayer } fr
 type Props = { language: Language; room: OnlineRoom; api: OnlineApi; onLeave: () => void; onLanguageChange: (language: Language) => void };
 
 const HUMAN_ID_FALLBACK = 0;
+const DEAL_DURATION_MS = 3_800;
+const START_CALLOUT_MS = 1_600;
 function parsePlayedPlayer(lastAction: string) {
   const match = /^player-(\d+)-played-/.exec(lastAction);
   return match ? Number(match[1]) : null;
@@ -31,11 +35,14 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   const [liftedCardId, setLiftedCardId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [animation, setAnimation] = useState<"play" | "draw" | null>(null);
+  const [dealPhase, setDealPhase] = useState<TablePhase>(initialRoom.snapshot ? "dealing" : null);
+  const [startingPlayerId, setStartingPlayerId] = useState<number | null>(initialRoom.snapshot?.current_player ?? null);
   const [flight, setFlight] = useState<PlayFlightEvent | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(room.countdownSeconds);
   const [topbarOpen, setTopbarOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState<OnlineSyncStatus>("connecting");
   const syncStatusRef = useRef<OnlineSyncStatus>("connecting");
+  const dealStartedRef = useRef(false);
   const [tableEffect, setTableEffect] = useState<TableEffect>(null);
   const [penaltyDraw, setPenaltyDraw] = useState<{ playerId: number; count: number; source: PlayFlightSource } | null>(null);
   const roomRef = useRef(room);
@@ -121,18 +128,41 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
     return () => window.clearInterval(timer);
   }, [room.turnDeadlineEpochMs, room.countdownSeconds]);
 
+  useEffect(() => {
+    if (!room.snapshot || dealStartedRef.current) return;
+    dealStartedRef.current = true;
+    setStartingPlayerId(room.snapshot.current_player);
+    setDealPhase("dealing");
+    let startTimer: number | null = null;
+    const dealTimer = window.setTimeout(() => {
+      setDealPhase("starting");
+      startTimer = window.setTimeout(() => setDealPhase(null), START_CALLOUT_MS);
+    }, DEAL_DURATION_MS);
+    return () => {
+      window.clearTimeout(dealTimer);
+      if (startTimer !== null) window.clearTimeout(startTimer);
+      // React StrictMode intentionally replays effects in development. If
+      // that replay cancels this timer, allow the second setup to schedule it
+      // again instead of leaving the table stuck in the dealing phase.
+      dealStartedRef.current = false;
+    };
+  // Snapshot objects are replaced by every WebSocket/REST update. Depend on
+  // the readiness transition, not the object identity, so a pushed update
+  // cannot cancel the one-shot dealing timer and leave the table stuck.
+  }, [room.code, Boolean(room.snapshot)]);
+
   const playableIds = useMemo(() => {
-    if (!snapshot || snapshot.current_player !== humanId || snapshot.pending_draw > 0 || snapshot.status === "Won") return new Set<number>();
+    if (dealPhase !== null || !snapshot || snapshot.current_player !== humanId || snapshot.pending_draw > 0 || snapshot.status === "Won") return new Set<number>();
     return new Set(human?.hand.filter((card) => {
       if (card.kind === "wild-draw-four") {
         return !human.hand.some((candidate) => candidate.color === snapshot.active_color && candidate.color !== "Wild");
       }
       return card.color === "Wild" || card.color === snapshot.active_color || card.kind === snapshot.top_card.kind;
     }).map((card) => card.id) ?? []);
-  }, [human, humanId, snapshot]);
+  }, [dealPhase, human, humanId, snapshot]);
 
   async function dispatch(action: "play" | "draw" | "call_uno", card?: Card, chosenColor?: Color) {
-    if (!room.session || !snapshot) return;
+    if (dealPhase !== null || !room.session || !snapshot) return;
     setNotice(null);
     try {
       const next = await api.action(room, { action, cardId: card?.id, chosenColor: chosenColor?.toLowerCase() });
@@ -152,7 +182,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   }
 
   function play(card: Card) {
-    if (!playableIds.has(card.id)) return;
+    if (dealPhase !== null || !playableIds.has(card.id)) return;
     liftedCardRef.current = null;
     setLiftedCardId(null);
     if (card.color === "Wild") {
@@ -163,7 +193,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   }
 
   function handleCardClick(card: Card) {
-    if (!playableIds.has(card.id)) return;
+    if (dealPhase !== null || !playableIds.has(card.id)) return;
     if (suppressClickRef.current) {
       suppressClickRef.current = false;
       return;
@@ -190,7 +220,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   }
 
   function handleCardDoubleClick(card: Card) {
-    if (!playableIds.has(card.id)) return;
+    if (dealPhase !== null || !playableIds.has(card.id)) return;
     if (suppressDoubleClickRef.current) {
       suppressDoubleClickRef.current = false;
       return;
@@ -213,6 +243,10 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   }
 
   function handleHandDragStart(event: DragEvent<HTMLElement>, card: Card) {
+    if (dealPhase !== null || !snapshot || snapshot.current_player !== humanId || snapshot.status === "Won") {
+      event.preventDefault();
+      return;
+    }
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", String(card.id));
     setDraggingCardId(card.id);
@@ -227,7 +261,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLElement>, card: Card) {
-    if (event.button !== 0 || snapshot?.current_player !== humanId || snapshot.status === "Won") return;
+    if (event.button !== 0 || dealPhase !== null || snapshot?.current_player !== humanId || snapshot.status === "Won") return;
     pointerDragRef.current = { cardId: card.id, startX: event.clientX, startY: event.clientY, active: false };
   }
 
@@ -269,12 +303,14 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [human, playableIds, snapshot]);
+  }, [dealPhase, human, playableIds, snapshot]);
 
   if (!snapshot || !human) {
     return <div className="loading-screen"><div className="loading-mark">UNO<small>2026</small></div><p>{language === "zh" ? "正在同步线上牌桌…" : "Syncing the online table…"}</p></div>;
   }
   const discardCards = snapshot.discard_cards?.length ? snapshot.discard_cards : [snapshot.top_card];
+  const startingPlayer = startingPlayerId === null ? undefined : snapshot.players.find((player) => player.id === startingPlayerId);
+  const winner = snapshot.winner === null ? undefined : snapshot.players.find((player) => player.id === snapshot.winner);
   return <div className={`app-shell online-table-shell ${topbarOpen ? "topbar-is-open" : "topbar-is-hidden"}`} data-sync-transport={syncStatus === "connected" ? "websocket" : "rest-fallback"} data-sync-state={syncStatus}>
     <button className="topbar-toggle" type="button" onClick={() => setTopbarOpen((open) => !open)} aria-expanded={topbarOpen} aria-label={topbarOpen ? (language === "zh" ? "隐藏顶部信息栏" : "Hide top information bar") : (language === "zh" ? "显示顶部信息栏" : "Show top information bar")}>{topbarOpen ? "−" : "☰"}</button>
     <header className="topbar">
@@ -284,11 +320,12 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
     </header>
     <main className="game-layout">
       <section className="table-column"><div className="table-heading"><div><p className="eyebrow">{language === "zh" ? "房间" : "ROOM"} / {room.code} · {text.seats(snapshot.players.length)}</p><h1>{snapshot.status === "Won" ? text.tableComplete : currentPlayer?.id === humanId ? text.makeYourMove : text.thinking(currentPlayer?.name ?? "AI")}</h1></div><div className="round-meta"><span>{text.turn} {String(snapshot.turn_number).padStart(2, "0")}</span><span className="direction-mark" data-testid="direction-indicator" data-direction={snapshot.direction === 1 ? "clockwise" : "counter-clockwise"} aria-label={snapshot.direction === 1 ? (language === "zh" ? "顺时针出牌" : "Clockwise play") : (language === "zh" ? "逆时针出牌" : "Counter-clockwise play")}><b>{snapshot.direction === 1 ? "↻" : "↺"}</b><small>{snapshot.direction === 1 ? (language === "zh" ? "顺时针" : "CW") : (language === "zh" ? "逆时针" : "CCW")}</small></span></div></div>
-        <div ref={tableDropRef} className={`felt-table table-scene ${animation ? `is-online-${animation}` : ""} ${draggingCardId !== null ? "is-card-drop-target" : ""}`} data-animation={animation ?? undefined} data-drop-target="table" onDragOver={(event) => event.preventDefault()} onDrop={handleTableDrop}>
+        <div ref={tableDropRef} className={`felt-table table-scene ${animation ? `is-online-${animation}` : ""} ${draggingCardId !== null ? "is-card-drop-target" : ""}`} data-animation={animation ?? undefined} data-deal-phase={dealPhase ?? "ready"} data-drop-target="table" onDragOver={(event) => event.preventDefault()} onDrop={handleTableDrop}>
           <div className="table-grid-lines" />
+          <TableDirectionArrows direction={snapshot.direction} language={language} />
           <div className="table-scene-badge">
             <span className="live-pip" />
-            {snapshot.current_player === humanId ? text.yourMove : text.thinking(currentPlayer?.name ?? "AI")}
+            {snapshot.status === "Won" ? text.tableComplete : snapshot.current_player === humanId ? text.yourMove : text.thinking(currentPlayer?.name ?? "AI")}
           </div>
           <div className="turn-countdown-chip" data-testid="turn-countdown" data-expired={secondsLeft === 0 ? "true" : undefined}>
             <span aria-hidden="true">◷</span>
@@ -316,15 +353,17 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
               {human.id === nextId && <><span className="seat-next-label">{language === "zh" ? "下家" : "NEXT"}</span><span className="seat-next-marker" aria-label={language === "zh" ? "你的下家" : "your next player"}>↗</span></>}
             </div>
           </div>
-          <div className="table-center"><div className="table-direction-chip" data-testid="table-direction-indicator" data-direction={snapshot.direction === 1 ? "clockwise" : "counter-clockwise"} aria-label={snapshot.direction === 1 ? (language === "zh" ? "顺时针出牌" : "Clockwise play") : (language === "zh" ? "逆时针出牌" : "Counter-clockwise play")}><b>{snapshot.direction === 1 ? "↻" : "↺"}</b><span>{snapshot.direction === 1 ? (language === "zh" ? "顺时针" : "CLOCKWISE") : (language === "zh" ? "逆时针" : "COUNTER-CLOCKWISE")}</span></div><div className="piles"><OnlineBackStack count={snapshot.draw_count} language={language} disabled={snapshot.current_player !== humanId || snapshot.status === "Won"} onDraw={() => void dispatch("draw")} /><div className="pile-separator" /><button className="discard-stack" onClick={() => setHistoryOpen(true)} type="button" aria-label={text.viewDiscardHistory}><span className="discard-shadow" /><CardArt card={snapshot.top_card} language={language} compact /></button></div><div className="active-color"><span className={`color-swatch swatch-${snapshot.active_color.toLowerCase()}`} />{text.activeColor} <strong>{translateColor(language, snapshot.active_color)}</strong></div>{snapshot.pending_draw > 0 && <div key={`pending-${snapshot.pending_draw}`} className="pending-draw-badge" data-testid="pending-draw" data-count={snapshot.pending_draw} aria-live="assertive">+{snapshot.pending_draw} {language === "zh" ? "连击抽牌" : "PENALTY DRAW"}</div>}</div>
+          <div className="table-center"><div className="piles"><OnlineBackStack count={snapshot.draw_count} language={language} disabled={dealPhase !== null || snapshot.current_player !== humanId || snapshot.status === "Won"} onDraw={() => void dispatch("draw")} /><div className="pile-separator" /><button className="discard-stack" onClick={() => setHistoryOpen(true)} type="button" aria-label={text.viewDiscardHistory}><span className="discard-shadow" /><CardArt card={snapshot.top_card} language={language} compact /></button></div><div className="active-color"><span className={`color-swatch swatch-${snapshot.active_color.toLowerCase()}`} />{text.activeColor} <strong>{translateColor(language, snapshot.active_color)}</strong></div>{snapshot.pending_draw > 0 && <div key={`pending-${snapshot.pending_draw}`} className="pending-draw-badge" data-testid="pending-draw" data-count={snapshot.pending_draw} aria-live="assertive">+{snapshot.pending_draw} {language === "zh" ? "连击抽牌" : "PENALTY DRAW"}</div>}</div>
           <div className="table-scene-status" aria-live="polite"><span className={`status-pulse ${snapshot.status === "Won" ? "is-won" : ""}`} aria-label={localizeEngineMessage(language, snapshot.message)} /><span className="sr-only">{localizeEngineMessage(language, snapshot.message)}</span><span className="status-code sr-only">{snapshot.last_action}</span></div><div className="table-scene-footnote table-metrics" aria-label={`${text.drawPile} ${snapshot.draw_count}, ${text.discard} ${snapshot.discard_count}`}><span className="table-metric" title={text.drawPile}><span aria-hidden="true">▤</span><b>{snapshot.draw_count}</b></span><span className="table-metric" title={text.discard}><span aria-hidden="true">◈</span><b>{snapshot.discard_count}</b></span><span className="table-metric metric-ruleset" title={language === "zh" ? "房间有效期" : "Room TTL"}>{room.expiresInSeconds}s</span></div>{flight && <PlayFlight flight={flight} language={language} />}{tableEffect && <ActionEffectOverlay effect={tableEffect} language={language} />}{penaltyDraw && <PenaltyDrawFlight count={penaltyDraw.count} playerId={penaltyDraw.playerId} source={penaltyDraw.source} language={language} />}
+          {dealPhase && <DealSequenceOverlay phase={dealPhase} language={language} playerCount={snapshot.players.length} startingPlayer={startingPlayer} />}
+          {snapshot.status === "Won" && <SettlementOverlay language={language} winner={winner} isWinner={snapshot.winner === humanId} />}
         </div>
       </section>
       <section className="hand-column">
-        <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human.hand_count).padStart(2, "0")}</p>{human.hand_count === 1 && <h2 className="hand-alert">{text.oneCardLeft}</h2>}</div><div className="hand-actions"><button className="ghost-button" data-testid="sort-hand" onClick={() => setHandOrder([...human.hand].sort((a, b) => a.color.localeCompare(b.color) || a.kind.localeCompare(b.kind)).map((card) => card.id))} type="button">{language === "zh" ? "整理手牌" : "SORT"}</button><button className="ghost-button" onClick={() => void dispatch("call_uno")} disabled={human.hand_count !== 1 || snapshot.current_player !== humanId} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={() => void dispatch("draw")} disabled={snapshot.current_player !== humanId || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
+        <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human.hand_count).padStart(2, "0")}</p>{human.hand_count === 1 && <h2 className="hand-alert">{text.oneCardLeft}</h2>}</div><div className="hand-actions"><button className="ghost-button" data-testid="sort-hand" disabled={dealPhase !== null || snapshot.status === "Won"} onClick={() => setHandOrder([...human.hand].sort((a, b) => a.color.localeCompare(b.color) || a.kind.localeCompare(b.kind)).map((card) => card.id))} type="button">{language === "zh" ? "整理手牌" : "SORT"}</button><button className="ghost-button" onClick={() => void dispatch("call_uno")} disabled={dealPhase !== null || human.hand_count !== 1 || snapshot.current_player !== humanId} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={() => void dispatch("draw")} disabled={dealPhase !== null || snapshot.current_player !== humanId || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
         <div className="hand-rail hand-fan" data-testid="hand-rail">
           {orderedHand.map((card, index) => <div className={`hand-card-slot ${draggingCardId === card.id ? "is-dragging" : ""}`} key={card.id} data-card-id={card.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const source = Number(event.dataTransfer.getData("text/plain")); if (source) reorderHand(source, card.id); }}>
-            <CardArt card={card} language={language} className={`hand-card ${playableIds.has(card.id) ? "is-playable" : "is-unplayable"} ${liftedCardId === card.id ? "is-lifted" : ""}`} style={{ "--hand-index": index, "--hand-total": human.hand.length } as CSSProperties} disabled={snapshot.current_player !== humanId || snapshot.status === "Won"} ariaDisabled={!playableIds.has(card.id)} draggable={snapshot.current_player === humanId && snapshot.status !== "Won"} onClick={() => handleCardClick(card)} onDoubleClick={() => handleCardDoubleClick(card)} onPointerDown={(event) => handlePointerDown(event, card)} onDragStart={(event) => handleHandDragStart(event, card)} onDragEnd={() => setDraggingCardId(null)} />
+            <CardArt card={card} language={language} className={`hand-card ${playableIds.has(card.id) ? "is-playable" : "is-unplayable"} ${liftedCardId === card.id ? "is-lifted" : ""}`} style={{ "--hand-index": index, "--hand-total": human.hand.length } as CSSProperties} disabled={dealPhase !== null || snapshot.current_player !== humanId || snapshot.status === "Won"} ariaDisabled={!playableIds.has(card.id)} draggable={dealPhase === null && snapshot.current_player === humanId && snapshot.status !== "Won"} onClick={() => handleCardClick(card)} onDoubleClick={() => handleCardDoubleClick(card)} onPointerDown={(event) => handlePointerDown(event, card)} onDragStart={(event) => handleHandDragStart(event, card)} onDragEnd={() => setDraggingCardId(null)} />
             {wildCardId === card.id && <div className="wild-picker" role="dialog" aria-modal="false"><span className="wild-picker-stem" /><p className="eyebrow">{text.wildCard}</p><strong>{text.chooseColor}</strong><div className="wild-picker-options">{COLORS.map((color) => <button key={color.name} className={`wild-picker-option color-option-${color.className}`} onClick={() => { setWildCardId(null); void dispatch("play", card, color.name); }} aria-label={translateColor(language, color.name)} type="button"><span className={`color-swatch swatch-${color.className}`} /></button>)}</div><button className="wild-picker-cancel" onClick={() => setWildCardId(null)} type="button">×</button></div>}
           </div>)}
         </div>

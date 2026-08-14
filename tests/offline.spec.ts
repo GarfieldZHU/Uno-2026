@@ -12,11 +12,18 @@ async function playFirstAvailableHumanCard(page: Page) {
       return;
     }
     const drawButton = page.getByRole("button", { name: "从摸牌堆摸牌" });
-    await expect(drawButton).toBeEnabled({ timeout: 5_000 });
+    if (!(await drawButton.isEnabled().catch(() => false))) {
+      await page.waitForTimeout(120);
+      continue;
+    }
     await drawButton.click();
     await page.waitForTimeout(80);
   }
   throw new Error("no legal human card became available");
+}
+
+async function waitForInitialDeal(page: Page) {
+  await expect(page.locator(".table-scene")).toHaveAttribute("data-deal-phase", "ready", { timeout: 10_000 });
 }
 
 test("中文主菜单是默认界面，并可切换到英文", async ({ page }) => {
@@ -48,6 +55,7 @@ test("开始牌局会先等待所有牌桌资源加载完成", async ({ page }) 
   await expect(page.getByTestId("asset-loading")).toBeVisible();
   await expect(page.getByTestId("asset-loading")).toBeHidden({ timeout: 15_000 });
   await expect(page.locator(".table-scene")).toBeVisible();
+  await waitForInitialDeal(page);
   await expect.poll(async () => page.locator(".table-scene img").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
 });
 
@@ -63,6 +71,7 @@ test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
   await page.getByRole("button", { name: "保存设置" }).click();
   await expect(page.getByTestId("settings-drawer")).toBeHidden();
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
 
   await expect(page.getByText(/牌局 \/ 001 · 3 席/)).toBeVisible();
   await expect(page.locator(".player-row")).toHaveCount(3);
@@ -87,6 +96,7 @@ test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
 test("点击弃牌堆可以查看已打出的牌", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByText("轮到你出牌。")).toBeVisible();
 
   await page.getByRole("button", { name: "查看已打出的牌" }).click();
@@ -101,15 +111,31 @@ test("点击弃牌堆可以查看已打出的牌", async ({ page }) => {
 test("摸牌会显示对应的短暂动画状态", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByRole("button", { name: "从摸牌堆摸牌" })).toBeEnabled();
 
   await page.getByRole("button", { name: "从摸牌堆摸牌" }).click();
   await expect(page.locator(".felt-table")).toHaveAttribute("data-animation", "draw");
 });
 
+test("初始发牌结束后会短暂标示起始玩家", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await expect(page.getByTestId("initial-deal")).toBeVisible();
+  await expect(page.getByTestId("initial-deal")).toHaveAttribute("data-phase", "dealing");
+  await expect(page.getByTestId("initial-deal")).toBeHidden({ timeout: 8_000 });
+  await expect(page.getByTestId("starting-player-callout")).toBeHidden();
+  await expect(page.getByTestId("table-direction-indicator")).toBeVisible();
+  await expect(page.getByTestId("table-direction-indicator")).toHaveAttribute("data-direction", "clockwise");
+  await expect(page.getByTestId("table-direction-indicator")).toContainText("顺时针");
+  await expect(page.locator(".table-direction-arrows .direction-arrow-line")).toHaveCount(8);
+  await expect(page.locator(".table-center .table-direction-chip")).toHaveCount(0);
+});
+
 test("牌桌显示出牌方向并支持一键整理手牌", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByTestId("direction-indicator")).toHaveAttribute("data-direction", "clockwise");
   await expect(page.getByTestId("direction-indicator")).toHaveAttribute("aria-label", "顺时针出牌");
   await expect(page.getByTestId("table-direction-indicator")).toHaveAttribute("data-direction", "clockwise");
@@ -129,6 +155,7 @@ test("牌桌显示出牌方向并支持一键整理手牌", async ({ page }) => 
 test("当前玩家高亮和出牌特效节点随回合存在", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.locator('.seat-player.is-active')).toHaveCount(1);
   await expect(page.locator('.seat-player.is-active .seat-turn-pip')).toBeVisible();
   await expect(page.locator('.seat-player.is-active .seat-turn-label')).toBeVisible();
@@ -143,6 +170,7 @@ test("牌桌语言切换不会改变牌局，八席窄屏仍可读", async ({ pa
   await page.getByLabel("AI 默认停顿").fill("1");
   await page.getByRole("button", { name: "保存设置" }).click();
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByText(/牌局 \/ 001 · 8 席/)).toBeVisible();
   await expect(page.locator(".player-row")).toHaveCount(8);
 
@@ -160,6 +188,7 @@ test("牌桌语言切换不会改变牌局，八席窄屏仍可读", async ({ pa
 test("人类出牌会从手牌飞向弃牌堆", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByText("轮到你出牌。")).toBeVisible();
 
   await playFirstAvailableHumanCard(page);
@@ -178,6 +207,7 @@ test("AI 出牌会先展示牌背再翻到牌面", async ({ page }) => {
   await page.getByLabel("AI 默认停顿").fill("1");
   await page.getByRole("button", { name: "保存设置" }).click();
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByText("轮到你出牌。")).toBeVisible();
 
   await playFirstAvailableHumanCard(page);
@@ -194,6 +224,7 @@ test("减弱动效偏好保留出牌状态但缩短飞行动画", async ({ page 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByText("轮到你出牌。")).toBeVisible();
 
   await playFirstAvailableHumanCard(page);
@@ -210,6 +241,7 @@ test("减弱动效偏好保留出牌状态但缩短飞行动画", async ({ page 
 test("手牌可以拖到牌桌出牌", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByText("轮到你出牌。")).toBeVisible();
   await expect(page.locator(".table-scene-badge")).toContainText("你的回合", { timeout: 8_000 });
   const card = page.locator(".hand-fan .card-art.is-playable:not(:disabled)").first();
@@ -224,6 +256,7 @@ test("手牌可以拖到牌桌出牌", async ({ page }) => {
 test("万能牌选色显示在牌面上方", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByText("轮到你出牌。")).toBeVisible();
   const wild = page.locator('.hand-fan .card-art[data-card-asset*="/wild.svg"]:not(:disabled)').first();
   if (await wild.count()) {
@@ -239,6 +272,7 @@ test("移动端牌桌保留人类出牌飞行层", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByText("轮到你出牌。")).toBeVisible();
 
   await playFirstAvailableHumanCard(page);
@@ -273,10 +307,11 @@ test("离线牌局可以完整轮转并显示结算", async ({ page }) => {
   await page.getByLabel("AI 默认停顿").fill("1");
   await page.getByRole("button", { name: "保存设置" }).click();
   await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
   await expect(page.getByText(/牌局 \/ 001 · 3 席/)).toBeVisible();
 
   for (let step = 0; step < 900; step += 1) {
-    if (await page.getByText("牌局结束").isVisible().catch(() => false)) break;
+    if (await page.locator(".table-scene-badge").filter({ hasText: "牌局结束" }).isVisible().catch(() => false)) break;
     const openPicker = page.locator(".wild-picker");
     if (await openPicker.isVisible().catch(() => false)) {
       await openPicker.locator(".wild-picker-option").first().evaluate((element) => (element as HTMLButtonElement).click());
@@ -296,7 +331,9 @@ test("离线牌局可以完整轮转并显示结算", async ({ page }) => {
     }
   }
 
-  await expect(page.getByText("牌局结束")).toBeVisible({ timeout: 5_000 });
+  await expect(page.locator(".table-scene-badge")).toHaveText("牌局结束", { timeout: 5_000 });
+  await expect(page.getByTestId("settlement-overlay")).toBeVisible();
+  await expect(page.getByTestId("settlement-overlay")).toHaveAttribute("data-result", /win|lose/);
   await expect(page.locator(".status-code")).toContainText("player-");
   await expect(page.getByRole("button", { name: "从摸牌堆摸牌" })).toBeDisabled();
   await page.screenshot({ path: "test-results/offline-settlement-zh.png", fullPage: true });

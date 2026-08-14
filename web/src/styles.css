@@ -667,3 +667,65 @@ body { background: radial-gradient(circle at 50% -16%, #254b46 0, #0b1c1d 44%, #
 @media (prefers-reduced-motion: reduce) {
   .table-direction-chip, .seat-turn-label { animation: none !important; }
 }
+
+/* The direction is part of the felt now: a low-contrast path joins the
+   perimeter seats, while a wider invisible stroke keeps each segment easy to
+   discover and brightens it on hover. */
+.table-direction-arrows { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: visible; color: rgba(245, 201, 107, .92); opacity: .5; pointer-events: none; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .28)); transition: opacity .2s ease, filter .2s ease; }
+.table-direction-arrows:hover { opacity: .84; filter: drop-shadow(0 3px 7px rgba(245, 201, 107, .25)); }
+.direction-arrow-ring, .direction-arrow-segment { pointer-events: all; }
+.direction-arrow-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; vector-effect: non-scaling-stroke; }
+.direction-arrow-line { fill: none; stroke: currentColor; stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; opacity: .62; pointer-events: none; vector-effect: non-scaling-stroke; transition: opacity .16s ease, stroke-width .16s ease, filter .16s ease; }
+.direction-arrow-segment:hover .direction-arrow-line { opacity: 1; stroke-width: 2.7; filter: drop-shadow(0 0 4px rgba(245, 201, 107, .86)); }
+.direction-arrow-segment:focus-visible .direction-arrow-line { opacity: 1; stroke-width: 2.7; }
+.table-center > .table-direction-chip { display: none; }
+
+/* Initial deal: the table is already fully loaded underneath this layer, so
+   the player can read the hand while the backs travel into place. */
+.deal-sequence-layer { position: absolute; z-index: 42; inset: 0; display: grid; place-items: center; overflow: hidden; border-radius: inherit; color: #fff7dc; pointer-events: auto; }
+.deal-sequence-vignette { position: absolute; inset: 0; background: radial-gradient(circle at 50% 48%, rgba(4, 20, 18, .24), rgba(2, 13, 13, .76) 78%); backdrop-filter: blur(1.5px); }
+.deal-sequence-layer.is-starting .deal-sequence-vignette { background: radial-gradient(circle at 50% 48%, rgba(20, 75, 52, .18), rgba(2, 13, 13, .34) 80%); backdrop-filter: blur(.5px); }
+.deal-sequence-stack { position: relative; z-index: 1; width: 120px; height: 152px; transform: translateY(-28px); }
+.deal-sequence-stack img { position: absolute; top: 50%; left: 50%; width: 82px; height: 115px; border: 1px solid rgba(255, 247, 218, .74); border-radius: 11px; object-fit: fill; box-shadow: 0 15px 28px rgba(0, 0, 0, .46); opacity: 0; transform: translate(-50%, -50%); animation: deal-sequence-card 1.25s cubic-bezier(.18, .78, .2, 1) both; animation-delay: calc(var(--deal-index) * 180ms); }
+.deal-sequence-layer.is-starting .deal-sequence-stack img { opacity: .42; animation: deal-sequence-breathe 1.2s ease-in-out infinite; animation-delay: calc(var(--deal-index) * 60ms); }
+.deal-sequence-copy { position: absolute; z-index: 2; top: calc(50% + 82px); left: 50%; display: grid; justify-items: center; gap: 8px; width: min(330px, calc(100% - 38px)); text-align: center; transform: translateX(-50%); }
+.deal-sequence-kicker, .starting-player-kicker { color: rgba(255, 244, 197, .62); font-size: 9px; font-weight: 950; letter-spacing: .22em; }
+.deal-sequence-copy > strong { color: #fff5d6; font-size: clamp(20px, 3vw, 30px); letter-spacing: .12em; text-shadow: 0 5px 20px rgba(0, 0, 0, .48); }
+.deal-sequence-copy > small, .starting-player-callout small { color: rgba(255, 247, 218, .7); font-size: 10px; }
+.deal-sequence-dots { display: flex; gap: 6px; margin-top: 2px; }
+.deal-sequence-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 12px rgba(245, 201, 107, .62); animation: deal-dot 1.05s ease-in-out infinite; }
+.deal-sequence-dots i:nth-child(2) { animation-delay: 150ms; }.deal-sequence-dots i:nth-child(3) { animation-delay: 300ms; }
+.starting-player-callout { display: grid; justify-items: center; gap: 9px; padding: 17px 24px 15px; border: 1px solid rgba(129, 230, 211, .62); border-radius: 17px; background: rgba(4, 40, 32, .78); box-shadow: 0 0 0 5px rgba(129, 230, 211, .08), 0 16px 36px rgba(0, 0, 0, .35); animation: starting-callout-in .65s cubic-bezier(.18, .8, .2, 1) both; }
+.starting-player-callout strong { color: #e4fff5; font-size: clamp(18px, 3vw, 26px); letter-spacing: .04em; }
+.starting-player-kicker { color: var(--cyan); }
+@keyframes deal-sequence-card { 0% { opacity: 0; transform: translate(calc(-50% + var(--deal-index) * -38px), calc(-50% + 120px)) rotate(calc((var(--deal-index) - 3) * -13deg)) scale(.7); } 30% { opacity: 1; } 72% { transform: translate(calc(-50% + (var(--deal-index) - 3) * 13px), calc(-50% + (var(--deal-index) - 3) * -7px)) rotate(calc((var(--deal-index) - 3) * 4deg)) scale(1); } 100% { opacity: 1; transform: translate(calc(-50% + (var(--deal-index) - 3) * 5px), calc(-50% + (var(--deal-index) - 3) * -3px)) rotate(calc((var(--deal-index) - 3) * 2deg)) scale(.96); } }
+@keyframes deal-sequence-breathe { 0%, 100% { transform: translate(calc(-50% + (var(--deal-index) - 3) * 5px), calc(-50% + (var(--deal-index) - 3) * -3px)) rotate(calc((var(--deal-index) - 3) * 2deg)) scale(.96); } 50% { transform: translate(calc(-50% + (var(--deal-index) - 3) * 5px), calc(-50% + (var(--deal-index) - 3) * -9px)) rotate(calc((var(--deal-index) - 3) * 2deg)) scale(1); } }
+@keyframes deal-dot { 0%, 100% { opacity: .35; transform: scale(.72); } 50% { opacity: 1; transform: scale(1.16); } }
+@keyframes starting-callout-in { 0% { opacity: 0; transform: translateY(16px) scale(.86); } 70% { opacity: 1; transform: translateY(-2px) scale(1.04); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Settlement is intentionally a full-felt layer: the result cannot be
+   mistaken for a transient action effect and remains readable on mobile. */
+.settlement-layer { position: absolute; z-index: 80; inset: 0; display: grid; place-items: center; overflow: hidden; border-radius: inherit; background: radial-gradient(circle at 50% 42%, rgba(32, 82, 56, .7), rgba(2, 13, 13, .88) 72%); backdrop-filter: blur(3px); animation: settlement-in .55s ease both; }
+.settlement-panel { position: relative; z-index: 2; display: grid; justify-items: center; gap: 9px; width: min(390px, calc(100% - 36px)); padding: 28px 24px 25px; border: 1px solid rgba(245, 201, 107, .78); border-radius: 22px; background: linear-gradient(150deg, rgba(22, 61, 45, .96), rgba(4, 24, 22, .96)); box-shadow: 0 0 0 6px rgba(245, 201, 107, .08), 0 24px 70px rgba(0, 0, 0, .54); text-align: center; }
+.settlement-kicker, .settlement-result { color: rgba(255, 244, 197, .64); font-size: 9px; font-weight: 950; letter-spacing: .22em; }
+.settlement-trophy { margin: 2px 0 1px; font-size: 50px; line-height: 1; filter: drop-shadow(0 8px 13px rgba(245, 201, 107, .3)); animation: trophy-bounce 1.2s ease-in-out infinite; }
+.settlement-panel h2 { margin: 0; color: #fff5d6; font-size: clamp(26px, 5vw, 42px); letter-spacing: .02em; }
+.settlement-panel p { max-width: 30ch; margin: 0; color: rgba(255, 247, 218, .76); font-size: 12px; line-height: 1.5; }
+.settlement-winner { color: var(--yellow); font-size: 16px; letter-spacing: .06em; }
+.settlement-sparkles { position: absolute; inset: 0; pointer-events: none; }
+.settlement-sparkles i { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 18px rgba(245, 201, 107, .8); animation: settlement-sparkle 1.8s ease-in-out infinite; }
+.settlement-sparkles i:nth-child(1) { top: 22%; left: 28%; }.settlement-sparkles i:nth-child(2) { top: 31%; right: 24%; animation-delay: .35s; }.settlement-sparkles i:nth-child(3) { bottom: 26%; left: 22%; animation-delay: .8s; }.settlement-sparkles i:nth-child(4) { right: 28%; bottom: 20%; animation-delay: 1.1s; }
+@keyframes settlement-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes trophy-bounce { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(2deg); } }
+@keyframes settlement-sparkle { 0%, 100% { opacity: .25; transform: scale(.55); } 50% { opacity: 1; transform: scale(1.35); } }
+
+@media (max-width: 760px) {
+  .table-direction-arrows { opacity: .38; }
+  .deal-sequence-copy { top: calc(50% + 68px); }
+  .settlement-panel { padding: 24px 18px 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table-direction-arrows, .direction-arrow-line, .deal-sequence-stack img, .deal-sequence-dots i, .starting-player-callout, .settlement-layer, .settlement-trophy, .settlement-sparkles i { animation: none !important; transition: none !important; }
+  .deal-sequence-stack img { opacity: 1; transform: translate(-50%, -50%) scale(.96); }
+}

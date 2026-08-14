@@ -21,7 +21,7 @@ source link and the unverified parity boundary are recorded in
 | Offline game | Playable in the browser through Rust/WASM |
 | Rules | 108 cards, 3–8 offline seats (default four), classic actions, wild colors, UNO penalty |
 | AI | `garfield1993-ai-simple`, `garfield1993-ai-hard`, plus two `uno-2026` profiles |
-| UI | Chinese-first main menu (Start game/Settings/About), settings drawer, responsive React table, SVG cards, deal/draw/play/shuffle motion, discard history, English toggle |
+| UI | Chinese-first main menu (Start game/Settings/About), settings drawer, responsive React table, SVG cards, a 3.8-second deal sequence with starting-player callout, translucent hoverable tabletop direction arrows, draw/play/shuffle motion, settlement result layer, discard history, English toggle |
 | Offline setup | One human plus AI seats; each AI pause is 1–30 seconds, default three |
 | Multiplayer | Rust room service + WebSocket snapshots: create/join/leave, AI takeover after an in-game leave, host start, AI seats, four-character 15-minute codes, deadlines, reconnect, and authoritative next-seat markers |
 | Deployment | `vercel.json` is present; live deployment must be verified separately |
@@ -62,6 +62,12 @@ AI-count, and human-turn deadline controls; the create form never asks for a
 room code because the server generates it.
 The main menu also keeps a small `alohayo.me` link for the project home without
 adding another prominent navigation surface.
+When a table opens, all card assets are already loaded and a 3.8-second dealing
+sequence lets players read their hand before input is enabled. The first seat is
+then called out above the felt. A completed table keeps a result layer visible,
+identifying the winner and whether the local player won or lost; the play
+direction is drawn as translucent connected arrows around the felt and brightens
+on hover instead of occupying the center HUD.
 
 ## Documentation map
 

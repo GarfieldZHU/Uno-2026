@@ -12,8 +12,10 @@ room service is in-memory.
 The main menu keeps only Start game, Settings, and About. Settings supports 3–8
 offline seats (four by default), one human plus AI seats, and an independent
 1–30 second pause for every AI seat (three by default). The felt table uses SVG
-card art, short deal/draw/play/shuffle motion, and an on-demand chronological
-discard history. Online rooms can mix multiple humans with AI seats and expose a
+card art, a 3.8-second initial deal with a starting-player callout, connected
+translucent direction arrows that brighten on hover, short draw/play/shuffle
+motion, a winner/loser settlement layer, and an on-demand chronological discard
+history. Online rooms can mix multiple humans with AI seats and expose a
 5–30 second human turn deadline; an expired human turn chooses a legal move or
 draws deterministically. Configure the Rust origin before public use.
 

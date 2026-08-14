@@ -16,4 +16,10 @@ Interaction rules:
 3. Click a lit hand card to play it; wild cards open the color picker.
 4. The table exposes only high-signal controls; settings and language remain outside the playfield.
 
-Animations are state-driven (`shuffle`, `draw`, `play`) and respect `prefers-reduced-motion`.
+When assets finish loading, the table runs a 3.8-second initial deal and then
+calls out the starting player before enabling input. The play direction is a
+translucent, connected SVG arrow ring over the felt (hover a segment to lift
+its contrast); the old center direction chip is intentionally not rendered.
+Completed games show a persistent win/lose settlement layer with the winner's
+name. Animations are state-driven (`deal`, `shuffle`, `draw`, `play`, settlement)
+and respect `prefers-reduced-motion`.

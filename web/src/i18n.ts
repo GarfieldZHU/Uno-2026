@@ -92,6 +92,13 @@ type UiCopy = {
   loading: string;
   loadingAssets: string;
   loadingAssetsDetail: (loaded: number, total: number) => string;
+  dealingDetail: (playerCount: number) => string;
+  startingWith: (name: string) => string;
+  playBegins: string;
+  youWin: string;
+  youLose: string;
+  winnerSubtitle: (name: string) => string;
+  winnerLabel: string;
   ai: string;
   human: string;
   basePause: (seconds: number) => string;
@@ -189,6 +196,13 @@ const COPY: Record<Language, UiCopy> = {
     loading: "正在洗牌…",
     loadingAssets: "正在加载牌桌资源…",
     loadingAssetsDetail: (loaded, total) => `牌面与桌景 ${loaded}/${total}`,
+    dealingDetail: (playerCount) => `${playerCount} 位玩家 · 手牌已准备，正在发到牌桌`,
+    startingWith: (name) => `从 ${name} 开始`,
+    playBegins: "请留意当前回合。",
+    youWin: "恭喜，你赢了！",
+    youLose: "这局惜败",
+    winnerSubtitle: (name) => `${name} 清空了手牌。下一局再来一把。`,
+    winnerLabel: "本局获胜者",
     ai: "AI",
     human: "人类",
     basePause: (seconds) => `${seconds} 秒基础停顿`,
@@ -284,6 +298,13 @@ const COPY: Record<Language, UiCopy> = {
     loading: "Shuffling the Rust table…",
     loadingAssets: "Loading table assets…",
     loadingAssetsDetail: (loaded, total) => `Cards and table ${loaded}/${total}`,
+    dealingDetail: (playerCount) => `${playerCount} players · hands are moving to the table`,
+    startingWith: (name) => `Starting with ${name}`,
+    playBegins: "Watch the active turn.",
+    youWin: "You win!",
+    youLose: "Not this time",
+    winnerSubtitle: (name) => `${name} emptied their hand. Deal again when you are ready.`,
+    winnerLabel: "WINNER",
     ai: "AI",
     human: "HUMAN",
     basePause: (seconds) => `${seconds}s BASE PAUSE`,

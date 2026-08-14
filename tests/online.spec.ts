@@ -21,6 +21,10 @@ async function playIfItIsThisClientTurn(page: Page) {
   return true;
 }
 
+async function waitForInitialDeal(page: Page) {
+  await expect(page.locator(".table-scene")).toHaveAttribute("data-deal-phase", "ready", { timeout: 10_000 });
+}
+
 test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌局", async ({ browser }) => {
   test.setTimeout(180_000);
   const hostContext = await browser.newContext();
@@ -71,6 +75,7 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
     for (const page of pages) {
       await expect(page.locator(".online-table-shell")).toHaveAttribute("data-sync-transport", "websocket", { timeout: 10_000 });
       await expect(page.locator(".online-table-shell")).toHaveAttribute("data-sync-state", "connected", { timeout: 10_000 });
+      await waitForInitialDeal(page);
       await expect(page.getByTestId("table-direction-indicator")).toBeVisible();
       await expect(page.locator('.seat-player.is-active .seat-turn-label')).toBeVisible();
       await expect(page.locator('.seat-player.is-next .seat-next-label')).toHaveCount(1);
@@ -89,7 +94,7 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
     let settled = false;
     for (let tick = 0; tick < 1_500 && !settled; tick += 1) {
       for (const page of pages) {
-        if (await page.getByText("牌局结束").isVisible().catch(() => false)) {
+        if (await page.locator(".table-scene-badge").filter({ hasText: "牌局结束" }).isVisible().catch(() => false)) {
           settled = true;
           break;
         }
@@ -99,7 +104,9 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
     }
 
     for (const page of pages) {
-      await expect(page.getByText("牌局结束")).toBeVisible({ timeout: 5_000 });
+      await expect(page.locator(".table-scene-badge")).toHaveText("牌局结束", { timeout: 5_000 });
+      await expect(page.getByTestId("settlement-overlay")).toBeVisible();
+      await expect(page.getByTestId("settlement-overlay")).toHaveAttribute("data-result", /win|lose/);
       await expect(page.locator(".status-code")).toContainText("player-");
     }
     await host.screenshot({ path: "test-results/online-settlement-three-windows.png", fullPage: true });
