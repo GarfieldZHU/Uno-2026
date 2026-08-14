@@ -56,6 +56,10 @@ Online now has a Rust room/WebSocket slice. A started-game leave converts that
 seat to AI, expired human turns choose a legal move or draw, and clients reconnect
 with bounded backoff. The Rust service is still an in-memory demo and must be
 deployed behind TLS with `VITE_ONLINE_API_URL` before public play.
+The online lobby opens in Join mode by default and only asks for a nickname and
+four-character room code. Switching to Create mode reveals the host-only seat,
+AI-count, and human-turn deadline controls; the create form never asks for a
+room code because the server generates it.
 
 ## Documentation map
 

@@ -32,6 +32,13 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
     const [host, guestOne, guestTwo] = pages;
     await host.goto("/");
     await host.getByRole("button", { name: "联机" }).click();
+    await expect(host.getByTestId("online-lobby")).toHaveAttribute("data-lobby-mode", "join");
+    await expect(host.getByLabel("总席位")).toHaveCount(0);
+    await expect(host.getByLabel("AI 数量")).toHaveCount(0);
+    await expect(host.getByLabel("人类回合倒计时")).toHaveCount(0);
+    await host.getByRole("tab", { name: "创建房间" }).click();
+    await expect(host.getByTestId("online-lobby")).toHaveAttribute("data-lobby-mode", "create");
+    await expect(host.getByLabel("房间码")).toHaveCount(0);
     await host.getByLabel("你的昵称").fill("Host");
     await host.getByLabel("总席位").fill("6");
     await host.getByLabel("AI 数量").fill("3");
@@ -45,6 +52,10 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
     for (const [page, name] of [[guestOne, "Guest 1"], [guestTwo, "Guest 2"]] as const) {
       await page.goto("/");
       await page.getByRole("button", { name: "联机" }).click();
+      await expect(page.getByTestId("online-lobby")).toHaveAttribute("data-lobby-mode", "join");
+      await expect(page.getByLabel("总席位")).toHaveCount(0);
+      await expect(page.getByLabel("AI 数量")).toHaveCount(0);
+      await expect(page.getByLabel("人类回合倒计时")).toHaveCount(0);
       await page.getByLabel("你的昵称").fill(name);
       await page.getByLabel("房间码").fill(roomCode);
       await page.getByRole("button", { name: "加入房间" }).click();

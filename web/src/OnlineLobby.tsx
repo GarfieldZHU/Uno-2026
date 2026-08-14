@@ -9,11 +9,16 @@ type Props = {
   onClose?: () => void;
 };
 
+type LobbyMode = "join" | "create";
+
 const copy = {
   zh: {
     title: "联机房间",
     create: "创建房间",
     join: "加入房间",
+    modeLabel: "选择联机方式",
+    joinIntro: "输入房间码，快速回到牌桌。",
+    createIntro: "创建房间并配置席位、AI 与人类回合时间。",
     name: "你的昵称",
     code: "房间码",
     seats: "总席位",
@@ -34,6 +39,9 @@ const copy = {
     title: "Online room",
     create: "Create room",
     join: "Join room",
+    modeLabel: "Choose an online mode",
+    joinIntro: "Enter a room code and get back to the table.",
+    createIntro: "Set up seats, AI players, and the human turn deadline.",
     name: "Your name",
     code: "Room code",
     seats: "Total seats",
@@ -55,6 +63,7 @@ const copy = {
 export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarted, onClose }: Props) {
   const t = copy[language];
   const [room, setRoom] = useState<OnlineRoom | null>(null);
+  const [mode, setMode] = useState<LobbyMode>("join");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [maxPlayers, setMaxPlayers] = useState(4);
@@ -124,17 +133,26 @@ export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarte
 
   if (!room) {
     return (
-      <section className="online-lobby-panel" aria-labelledby="online-lobby-title" data-testid="online-lobby">
+      <section className={`online-lobby-panel online-lobby-setup-panel online-lobby-${mode}-mode`} aria-labelledby="online-lobby-title" data-testid="online-lobby" data-lobby-mode={mode}>
         <div className="drawer-heading"><div><p className="eyebrow">1411 / NETWORK</p><h2 id="online-lobby-title">{t.title}</h2></div>{onClose && <button className="drawer-close" onClick={onClose} type="button" aria-label={t.back}>×</button>}</div>
+        <div className="online-lobby-mode-switch" role="tablist" aria-label={t.modeLabel}>
+          <button className={mode === "join" ? "is-selected" : undefined} onClick={() => setMode("join")} type="button" role="tab" aria-selected={mode === "join"} data-testid="online-mode-join">{t.join}<span>{t.joinIntro}</span></button>
+          <button className={mode === "create" ? "is-selected" : undefined} onClick={() => setMode("create")} type="button" role="tab" aria-selected={mode === "create"} data-testid="online-mode-create">{t.create}<span>{t.createIntro}</span></button>
+        </div>
         <div className="online-lobby-fields">
           <label>{t.name}<input value={name} onChange={(event) => setName(event.target.value)} maxLength={24} autoComplete="nickname" /></label>
-          <label>{t.code}<input value={code} onChange={(event) => setCode(event.target.value.replace(/[^a-z0-9]/gi, "").slice(0, 4).toUpperCase())} maxLength={4} placeholder="ABCD" /></label>
-          <label>{t.seats}<input type="number" min={3} max={8} value={maxPlayers} onChange={(event) => { const next = Math.min(8, Math.max(3, Number(event.target.value))); setMaxPlayers(next); setAiCount((current) => Math.min(current, next - 1)); }} /></label>
-          <label>{t.ai}<input type="number" min={0} max={Math.max(0, maxPlayers - 1)} value={aiCount} onChange={(event) => setAiCount(Math.min(maxPlayers - 1, Math.max(0, Number(event.target.value))))} /></label>
-          <label className="online-range-field">{t.countdown}<output>{countdownSeconds} {t.seconds}</output><input type="range" min={5} max={30} value={countdownSeconds} onChange={(event) => setCountdownSeconds(Number(event.target.value))} /><span className="range-scale"><span>5s</span><span>30s</span></span></label>
+          {mode === "join" ? (
+            <label>{t.code}<input value={code} onChange={(event) => setCode(event.target.value.replace(/[^a-z0-9]/gi, "").slice(0, 4).toUpperCase())} maxLength={4} placeholder="ABCD" /></label>
+          ) : (
+            <>
+              <label>{t.seats}<input type="number" min={3} max={8} value={maxPlayers} onChange={(event) => { const next = Math.min(8, Math.max(3, Number(event.target.value))); setMaxPlayers(next); setAiCount((current) => Math.min(current, next - 1)); }} /></label>
+              <label>{t.ai}<input type="number" min={0} max={Math.max(0, maxPlayers - 1)} value={aiCount} onChange={(event) => setAiCount(Math.min(maxPlayers - 1, Math.max(0, Number(event.target.value))))} /></label>
+              <label className="online-range-field">{t.countdown}<output>{countdownSeconds} {t.seconds}</output><input type="range" min={5} max={30} value={countdownSeconds} onChange={(event) => setCountdownSeconds(Number(event.target.value))} /><span className="range-scale"><span>5s</span><span>30s</span></span></label>
+            </>
+          )}
         </div>
-        <p className="online-lobby-note">{t.minPlayers}<br />{t.onlineHint}</p>
-        <div className="drawer-actions"><button className="primary-button" disabled={busy || !name.trim()} onClick={() => void run(() => api.createRoom({ name: name.trim(), maxPlayers, aiCount, countdownSeconds }))} type="button">{t.create}</button><button className="secondary-button" disabled={busy || !name.trim() || code.length !== 4} onClick={() => void run(() => api.joinRoom({ name: name.trim(), code }))} type="button">{t.join}</button></div>
+        {mode === "create" && <p className="online-lobby-note">{t.minPlayers}<br />{t.onlineHint}</p>}
+        <div className="drawer-actions"><button className="primary-button" disabled={busy || !name.trim() || (mode === "join" && code.length !== 4)} onClick={() => void run(() => mode === "create" ? api.createRoom({ name: name.trim(), maxPlayers, aiCount, countdownSeconds }) : api.joinRoom({ name: name.trim(), code }))} type="button">{mode === "create" ? t.create : t.join}</button></div>
         {error && <p role="alert" className="menu-error">{error}</p>}
       </section>
     );

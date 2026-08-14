@@ -183,7 +183,14 @@ h1, h2, p { margin-top: 0; }
 .drawer-actions { display: flex; align-items: center; gap: 12px; }.drawer-actions .primary-button { min-width: 122px; }
 .online-lobby-screen { min-height: 100vh; display: grid; place-items: center; padding: 28px; background: radial-gradient(circle at 50% 0, #254b46 0, #0b1c1d 48%, #071115 100%); }
 .online-lobby-panel { width: min(560px, 100%); min-height: 480px; padding: clamp(26px, 5vw, 46px); border: 1px solid rgba(214,237,217,.18); border-radius: 24px; background: linear-gradient(145deg, rgba(25,52,47,.97), rgba(9,24,25,.98)); box-shadow: 0 35px 100px var(--shadow), inset 0 1px 0 rgba(255,255,255,.06); }
+.online-lobby-setup-panel { min-height: 0; }
 .online-lobby-panel code { margin-left: 7px; padding: 5px 8px; border: 1px solid rgba(245,201,107,.34); border-radius: 6px; color: var(--yellow); background: rgba(245,201,107,.08); font-size: 16px; letter-spacing: .18em; }
+.online-lobby-mode-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 28px; padding: 5px; border: 1px solid rgba(214,237,217,.12); border-radius: 14px; background: rgba(2,15,16,.38); }
+.online-lobby-mode-switch button { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 13px 11px; border: 1px solid transparent; border-radius: 10px; color: var(--muted); background: transparent; cursor: pointer; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-align: left; transition: border-color .18s ease, background .18s ease, color .18s ease, transform .18s ease; }
+.online-lobby-mode-switch button span { color: var(--faint); font-size: 9px; font-weight: 600; letter-spacing: 0; line-height: 1.45; }
+.online-lobby-mode-switch button:hover { color: var(--ink); background: rgba(255,255,255,.04); transform: translateY(-1px); }
+.online-lobby-mode-switch button.is-selected { border-color: rgba(129,230,211,.45); color: var(--ink); background: linear-gradient(135deg, rgba(24,85,73,.8), rgba(7,40,37,.75)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 10px 22px rgba(1,12,12,.2); }
+.online-lobby-mode-switch button.is-selected span { color: rgba(218,247,229,.72); }
 .online-lobby-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin-top: 28px; }
 .online-lobby-fields label { display: flex; flex-direction: column; gap: 7px; color: var(--muted); font-size: 9px; font-weight: 850; letter-spacing: .12em; }
 .online-lobby-fields input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: rgba(3,16,18,.45); }
