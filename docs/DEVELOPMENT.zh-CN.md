@@ -8,6 +8,8 @@
 - 带 `wasm32-unknown-unknown` target 的 Rust stable；
 - `wasm-pack` 0.13 或更高；
 - 客户端默认使用 pnpm 11，`pnpm-lock.yaml` 是唯一权威的 JavaScript 锁文件。
+- `pnpm-workspace.yaml` 仅显式允许 Vite 所需的 `esbuild` 构建脚本；其他依赖安装脚本继续由
+  pnpm 的供应链安全策略拦截。
 
 ## 常用命令
 

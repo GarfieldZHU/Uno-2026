@@ -8,6 +8,8 @@ English | [中文](DEVELOPMENT.zh-CN.md) · [Documentation index](README.en.md)
 - Rust stable with the `wasm32-unknown-unknown` target.
 - `wasm-pack` 0.13 or newer.
 - pnpm 11 is the default package manager and `pnpm-lock.yaml` is authoritative.
+- `pnpm-workspace.yaml` explicitly allows only the `esbuild` build script required by Vite;
+  other dependency install scripts remain blocked by pnpm's supply-chain guard.
 
 ## Useful commands
 
