@@ -107,12 +107,12 @@ function SeatPlayer({ player, language, active, next = false, slot, human = fals
     <div className={`seat-player player-row seat-${slot} ${human ? "seat-human" : ""} ${active ? "is-active" : ""} ${next ? "is-next" : ""}`} data-seat={slot} data-player-id={player.id}>
       <SeatAvatarWithTurn player={player} language={language} active={active} />
       <div className="seat-player-info">
-        <strong>{player.name}</strong>
+        <strong title={player.name}>{player.name}</strong>
         <span>{active ? (language === "zh" ? "当前回合" : "CURRENT TURN") : human ? text.youHuman : text.cards(player.hand_count, player.uno_called)}</span>
       </div>
       {active && <span className="seat-turn-label">{language === "zh" ? "出牌中" : "TURN"}</span>}
       {!human && <CardBackFan count={player.hand_count} />}
-      {next && <span className="seat-next-marker" aria-label={language === "zh" ? "你的下家" : "your next player"}>↗</span>}
+      {next && <><span className="seat-next-label">{language === "zh" ? "下家" : "NEXT"}</span><span className="seat-next-marker" aria-label={language === "zh" ? "你的下家" : "your next player"}>↗</span></>}
     </div>
   );
 }
@@ -337,7 +337,6 @@ export function App() {
   }, [handOrder, human]);
   const currentPlayer = snapshot?.players[snapshot.current_player];
   const nextId = snapshot ? (snapshot.next_player ?? nextPlayerId(snapshot.players, snapshot.current_player, snapshot.direction)) : null;
-  const nextPlayer = snapshot?.players.find((player) => player.id === nextId);
   const playableIds = useMemo(() => {
     if (!snapshot || snapshot.current_player !== HUMAN_ID || snapshot.pending_draw > 0) return new Set<number>();
     const top = snapshot.top_card;
@@ -560,7 +559,6 @@ export function App() {
           <div ref={tableDropRef} className={`felt-table table-scene ${draggingCardId !== null ? "is-card-drop-target" : ""}`} data-animation={animation ?? undefined} data-drop-target="table" onDragEnter={handleTableDragEnter} onDragOver={handleTableDragOver} onDrop={handleTableDrop}>
             <div className="table-grid-lines" />
             <div className="table-scene-badge"><span className="live-pip" />{snapshot.status === "Won" ? text.tableComplete : currentPlayer?.name === "You" ? text.yourMove : text.thinking(currentPlayer?.name ?? "AI")}</div>
-            {nextPlayer && nextPlayer.id !== HUMAN_ID && <div className="next-player-chip" data-testid="next-player-indicator"><span>↗</span>{language === "zh" ? `你的下家：${nextPlayer.name}` : `Next: ${nextPlayer.name}`}</div>}
             <div className="table-seats">
               {orderedOpponents(snapshot.players, HUMAN_ID).map((player) => <SeatPlayer key={player.id} player={player} language={language} active={player.id === snapshot.current_player} next={player.id === nextId} slot={seatSlotForPlayer(player.id, HUMAN_ID, snapshot.players.length)} />)}
               {human && <SeatPlayer player={human} language={language} active={human.id === snapshot.current_player} next={human.id === nextId} slot="south" human />}
@@ -584,7 +582,7 @@ export function App() {
         </section>
 
         <section className="hand-column">
-          <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human?.hand_count ?? 0).padStart(2, "0")}</p><h2>{human?.hand_count === 1 ? text.oneCardLeft : text.keepRhythm}</h2></div><div className="hand-actions"><button className="ghost-button" data-testid="sort-hand" onClick={() => { if (human) setHandOrder([...human.hand].sort((a, b) => a.color.localeCompare(b.color) || a.kind.localeCompare(b.kind)).map((card) => card.id)); }} type="button">{language === "zh" ? "整理手牌" : "SORT"}</button><button className="ghost-button" onClick={handleUno} disabled={human?.hand_count !== 1 || snapshot.status === "Won"} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={handleDraw} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
+          <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human?.hand_count ?? 0).padStart(2, "0")}</p>{human?.hand_count === 1 && <h2 className="hand-alert">{text.oneCardLeft}</h2>}</div><div className="hand-actions"><button className="ghost-button" data-testid="sort-hand" onClick={() => { if (human) setHandOrder([...human.hand].sort((a, b) => a.color.localeCompare(b.color) || a.kind.localeCompare(b.kind)).map((card) => card.id)); }} type="button">{language === "zh" ? "整理手牌" : "SORT"}</button><button className="ghost-button" onClick={handleUno} disabled={human?.hand_count !== 1 || snapshot.status === "Won"} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={handleDraw} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
           <div className="hand-rail hand-fan" data-testid="hand-rail">{orderedHand.map((card, index) => <div className={`hand-card-slot ${draggingCardId === card.id ? "is-dragging" : ""}`} key={card.id} data-card-id={card.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const source = Number(event.dataTransfer.getData("text/plain")); if (source) reorderHand(source, card.id); }}>
             <CardArt card={card} language={language} className={`hand-card ${playableIds.has(card.id) ? "is-playable" : "is-unplayable"} ${liftedCardId === card.id ? "is-lifted" : ""}`} style={{ "--hand-index": index, "--hand-total": human?.hand.length ?? 0 } as CSSProperties} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} ariaDisabled={!playableIds.has(card.id)} draggable={snapshot.current_player === HUMAN_ID && snapshot.status !== "Won"} onClick={() => handleCardClick(card)} onDoubleClick={() => handleCardDoubleClick(card)} onDragStart={(event) => handleDragStart(event, card)} onDragEnd={handleDragEnd} onPointerDown={(event) => handlePointerDown(event, card)} />
             {wildCardId === card.id && <div className="wild-picker" role="dialog" aria-modal="false" aria-labelledby="color-title"><span className="wild-picker-stem" /><p className="eyebrow">{text.wildCard}</p><strong id="color-title">{text.chooseColor}</strong><div className="wild-picker-options">{COLORS.map((color) => <button key={color.name} className={`wild-picker-option color-option-${color.className}`} onClick={() => handleWildColor(color.name)} aria-label={translateColor(language, color.name)} type="button"><span className={`color-swatch swatch-${color.className}`} /></button>)}</div><button className="wild-picker-cancel" onClick={() => setWildCardId(null)} type="button">×</button></div>}

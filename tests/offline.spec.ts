@@ -72,6 +72,8 @@ test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
   await expect(page.locator('.hand-fan .card-art img').first()).toHaveAttribute('src', /\/assets\/cards\/reference\//);
   await expect(page.locator('.hand-fan .card-art img').first()).toHaveCSS('object-fit', 'fill');
   await expect(page.locator('.hand-fan .card-art').first()).toHaveCSS('overflow', 'visible');
+  await expect(page.locator('.discard-stack .card-art img')).toHaveCSS('border-radius', '0px');
+  await expect.poll(async () => page.locator('.discard-stack .card-art').evaluate((card) => getComputedStyle(card, '::after').borderTopWidth)).toBe('0px');
   await expect.poll(async () => page.locator('.hand-fan .card-art img').first().evaluate((image) => ({ complete: image.complete, width: image.naturalWidth, height: image.naturalHeight }))).toMatchObject({ complete: true });
   await expect.poll(async () => page.locator('.hand-fan .card-art img').first().evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
   await expect.poll(async () => page.locator('img[src*="/assets/cards/reference/"]').evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
@@ -110,6 +112,9 @@ test("牌桌显示出牌方向并支持一键整理手牌", async ({ page }) => 
   await expect(page.getByTestId("direction-indicator")).toHaveAttribute("aria-label", "顺时针出牌");
   await expect(page.getByTestId("table-direction-indicator")).toHaveAttribute("data-direction", "clockwise");
   await expect(page.getByTestId("table-direction-indicator")).toContainText("顺时针");
+  await expect(page.getByText("保持节奏。")).toHaveCount(0);
+  await expect(page.locator('.seat-player.is-next .seat-next-label')).toHaveCount(1);
+  await expect(page.locator('.seat-player.is-next .seat-next-label')).toBeVisible();
   const hand = page.getByTestId("hand-rail");
   const before = await hand.locator("[data-card-id]").evaluateAll((cards) => cards.map((card) => card.getAttribute("data-card-id")));
   await page.getByTestId("sort-hand").click();
@@ -125,6 +130,7 @@ test("当前玩家高亮和出牌特效节点随回合存在", async ({ page }) 
   await expect(page.locator('.seat-player.is-active')).toHaveCount(1);
   await expect(page.locator('.seat-player.is-active .seat-turn-pip')).toBeVisible();
   await expect(page.locator('.seat-player.is-active .seat-turn-label')).toBeVisible();
+  await expect(page.locator('.seat-player.is-next .seat-next-marker')).toBeVisible();
   await expect(page.getByTestId("direction-indicator")).toBeVisible();
 });
 

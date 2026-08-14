@@ -62,6 +62,9 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
       await expect(page.locator(".online-table-shell")).toHaveAttribute("data-sync-state", "connected", { timeout: 10_000 });
       await expect(page.getByTestId("table-direction-indicator")).toBeVisible();
       await expect(page.locator('.seat-player.is-active .seat-turn-label')).toBeVisible();
+      await expect(page.locator('.seat-player.is-next .seat-next-label')).toHaveCount(1);
+      await expect(page.locator('.seat-player.is-next .seat-next-label')).toBeVisible();
+      await expect(page.getByText("保持节奏。")).toHaveCount(0);
     }
 
     const guestInitialAction = await guestOne.locator(".status-code").textContent();

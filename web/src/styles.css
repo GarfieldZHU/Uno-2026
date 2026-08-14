@@ -561,3 +561,97 @@ body { background: radial-gradient(circle at 50% -16%, #254b46 0, #0b1c1d 44%, #
   .metric-ruleset { display: none; }
   .hand-help { padding-right: 2px; padding-left: 2px; }
 }
+
+/* Turn HUD polish: keep the direction and seat state readable at a glance. */
+.table-direction-chip {
+  min-width: 148px;
+  min-height: 50px;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 16px;
+  border: 2px solid rgba(245, 201, 107, .82);
+  border-radius: 999px;
+  box-shadow: 0 0 0 6px rgba(245, 201, 107, .10), 0 12px 28px rgba(0, 0, 0, .30), inset 0 1px 0 rgba(255, 255, 255, .14);
+  font-size: 12px;
+  letter-spacing: .12em;
+  animation: direction-chip-pulse 2.2s ease-in-out infinite;
+}
+.table-direction-chip b { font-size: 29px; }
+.table-direction-chip span { font-size: 10px; letter-spacing: .16em; }
+@keyframes direction-chip-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 6px rgba(245, 201, 107, .10), 0 12px 28px rgba(0, 0, 0, .30), inset 0 1px 0 rgba(255, 255, 255, .14); }
+  50% { transform: scale(1.045); box-shadow: 0 0 0 9px rgba(245, 201, 107, .15), 0 14px 32px rgba(0, 0, 0, .36), 0 0 22px rgba(245, 201, 107, .24), inset 0 1px 0 rgba(255, 255, 255, .18); }
+}
+
+.table-seats .seat-player { width: 218px; min-height: 76px; border-width: 2px; }
+.table-seats .seat-player.is-active {
+  border-color: rgba(255, 224, 133, .98);
+  box-shadow: 0 0 0 5px rgba(245, 201, 107, .20), 0 0 28px rgba(245, 201, 107, .34), 0 14px 30px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+.table-seats .seat-player.is-next {
+  border-color: rgba(129, 230, 211, .96);
+  box-shadow: 0 0 0 5px rgba(129, 230, 211, .20), 0 0 26px rgba(129, 230, 211, .34), 0 12px 28px rgba(0, 0, 0, .32), inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+.seat-player-info { min-width: 64px; }
+.seat-player-info strong { overflow: visible; text-overflow: clip; font-size: 12px; }
+.seat-card-fan { width: 72px; flex-basis: 72px; }
+.seat-turn-label,
+.seat-next-label {
+  position: absolute;
+  top: -17px;
+  left: 50%;
+  z-index: 5;
+  padding: 4px 9px;
+  border-width: 2px;
+  border-radius: 6px;
+  transform: translateX(-50%);
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: .14em;
+  white-space: nowrap;
+}
+.seat-turn-label {
+  border-color: rgba(255, 247, 210, .88);
+  color: #fff8dd;
+  background: #9a3d32;
+  box-shadow: 0 0 0 4px rgba(238, 108, 98, .16), 0 6px 16px rgba(0, 0, 0, .36);
+  animation: active-label-pulse 1.35s ease-in-out infinite;
+}
+.seat-next-label {
+  border: 2px solid rgba(129, 230, 211, .86);
+  color: #dffff5;
+  background: #12665a;
+  box-shadow: 0 0 0 4px rgba(129, 230, 211, .14), 0 6px 16px rgba(0, 0, 0, .34);
+}
+@keyframes active-label-pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.06); }
+}
+.seat-next-marker { top: -14px; right: -14px; width: 30px; height: 30px; font-size: 17px; box-shadow: 0 0 0 4px rgba(129, 230, 211, .22), 0 8px 18px rgba(0, 0, 0, .34); }
+
+/* The source SVG already contains the card's own edge.  A second dark inset
+   frame made the left/right edges read as black bars and clipped corner art. */
+.card-art::before { inset: -1px; }
+.card-art::after { inset: 0; border: 0; border-radius: inherit; box-shadow: none; }
+.card-art img { border-radius: 0; }
+.card-art.is-lifted::before { border-color: rgba(245, 201, 107, .98); box-shadow: 0 0 0 2px rgba(245, 201, 107, .2), 0 0 24px rgba(245, 201, 107, .28); }
+.card-art.is-lifted::after { border: 0; box-shadow: none; }
+.discard-shadow { background: rgba(0, 0, 0, .14); filter: blur(3px); opacity: .72; transform: translate(4px, 5px) rotate(5deg) scale(.94); }
+
+@media (max-width: 760px) {
+  .table-direction-chip { min-width: 128px; min-height: 43px; gap: 8px; margin-bottom: 9px; padding: 6px 12px; }
+  .table-direction-chip b { font-size: 24px; }
+  .table-direction-chip span { font-size: 8px; }
+  .table-seats .seat-player { width: 164px; min-height: 61px; }
+  .table-seats .seat-human { width: 178px; }
+  .seat-player-info { min-width: 42px; }
+  .seat-card-fan { width: 52px; flex-basis: 52px; }
+  .seat-player-info strong { font-size: 10px; }
+  .seat-turn-label, .seat-next-label { top: -14px; padding: 3px 7px; font-size: 7px; }
+  .seat-next-marker { top: -12px; right: -12px; width: 26px; height: 26px; font-size: 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table-direction-chip, .seat-turn-label { animation: none !important; }
+}
