@@ -33,6 +33,9 @@ The current vertical slice includes:
 - a Rust room service with four-character codes, 15-minute expiry, 3–8 seats,
   configurable AI seats, host-owned start/close semantics, viewer-safe hands,
   and 5–30 second human turn deadlines;
+- a quiet online-lobby/table network-log export that records redacted WebSocket
+  and REST timings, reconnects, browser connection capabilities, and public
+  edge clues without uploading automatically;
 - Vercel configuration for the static Vite client.
 
 Online rooms now expose a modular REST + WebSocket slice. A started-game leave

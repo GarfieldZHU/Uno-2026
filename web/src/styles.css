@@ -729,3 +729,10 @@ body { background: radial-gradient(circle at 50% -16%, #254b46 0, #0b1c1d 44%, #
   .table-direction-arrows, .direction-arrow-line, .deal-sequence-stack img, .deal-sequence-dots i, .starting-player-callout, .settlement-layer, .settlement-trophy, .settlement-sparkles i { animation: none !important; transition: none !important; }
   .deal-sequence-stack img { opacity: 1; transform: translate(-50%, -50%) scale(.96); }
 }
+
+/* The export control is intentionally quiet: it is discoverable by its
+   tooltip/accessible name without competing with the playfield. */
+.network-log-export { position: fixed; z-index: 36; right: 16px; bottom: 14px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid rgba(229, 235, 210, .16); border-radius: 50%; color: rgba(229, 235, 210, .58); background: rgba(4, 22, 21, .62); box-shadow: 0 8px 20px rgba(0, 0, 0, .18); cursor: pointer; font-size: 17px; line-height: 1; opacity: .62; backdrop-filter: blur(8px); transition: color .18s ease, border-color .18s ease, background .18s ease, opacity .18s ease, transform .18s ease; }
+.network-log-export:hover, .network-log-export:focus-visible { border-color: rgba(129, 230, 211, .58); color: var(--cyan); background: rgba(4, 40, 32, .86); opacity: 1; transform: translateY(-1px); outline: none; }
+.network-log-export.is-exported { border-color: rgba(129, 230, 211, .72); color: var(--cyan); opacity: .92; }
+@media (max-width: 760px) { .network-log-export { right: 12px; bottom: 12px; } }

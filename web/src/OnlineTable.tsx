@@ -5,6 +5,7 @@ import { PlayFlight } from "./PlayFlight";
 import { ActionEffectOverlay, PenaltyDrawFlight } from "./PenaltyDrawFlight";
 import { copy, localizeEngineMessage, translateColor, type Language } from "./i18n";
 import { connectOnlineRoom, type OnlineApi, type OnlineRoom, type OnlineSyncStatus } from "./online";
+import { NetworkLogExportButton } from "./NetworkLogExportButton";
 import { DealSequenceOverlay, SettlementOverlay, type TablePhase } from "./TableOverlays";
 import { TableDirectionArrows } from "./TableDirectionArrows";
 import { drawInfoForAction, effectForAction, type TableEffect } from "./tableEffects";
@@ -312,6 +313,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   const startingPlayer = startingPlayerId === null ? undefined : snapshot.players.find((player) => player.id === startingPlayerId);
   const winner = snapshot.winner === null ? undefined : snapshot.players.find((player) => player.id === snapshot.winner);
   return <div className={`app-shell online-table-shell ${topbarOpen ? "topbar-is-open" : "topbar-is-hidden"}`} data-sync-transport={syncStatus === "connected" ? "websocket" : "rest-fallback"} data-sync-state={syncStatus}>
+    <NetworkLogExportButton language={language} />
     <button className="topbar-toggle" type="button" onClick={() => setTopbarOpen((open) => !open)} aria-expanded={topbarOpen} aria-label={topbarOpen ? (language === "zh" ? "隐藏顶部信息栏" : "Hide top information bar") : (language === "zh" ? "显示顶部信息栏" : "Show top information bar")}>{topbarOpen ? "−" : "☰"}</button>
     <header className="topbar">
       <div className="brand-lockup"><div className="brand-mark">UNO<small>2026</small></div><div className="brand-divider" /><div className="brand-context"><span>{language === "zh" ? "联机牌桌" : "ONLINE TABLE"}</span><small>{room.code} · Rust room service</small></div></div>

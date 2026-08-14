@@ -24,6 +24,7 @@ source link and the unverified parity boundary are recorded in
 | UI | Chinese-first main menu (Start game/Settings/About), settings drawer, responsive React table, SVG cards, a 3.8-second deal sequence with starting-player callout, translucent hoverable tabletop direction arrows, draw/play/shuffle motion, settlement result layer, discard history, English toggle |
 | Offline setup | One human plus AI seats; each AI pause is 1–30 seconds, default three |
 | Multiplayer | Rust room service + WebSocket snapshots: create/join/leave, AI takeover after an in-game leave, host start, AI seats, four-character 15-minute codes, deadlines, reconnect, and authoritative next-seat markers |
+| Network diagnostics | A quiet corner export control records local WebSocket/REST timings, reconnects, browser network capabilities, and visible edge headers; room codes, tokens, cards, and request bodies are removed before export |
 | Deployment | `vercel.json` is present; live deployment must be verified separately |
 
 ## Start locally
@@ -60,6 +61,12 @@ The online lobby opens in Join mode by default and only asks for a nickname and
 four-character room code. Switching to Create mode reveals the host-only seat,
 AI-count, and human-turn deadline controls; the create form never asks for a
 room code because the server generates it.
+The quiet `⌁` control in the lobby and table downloads
+`uno-2026-network-*.json` on demand. The log stays local until the player
+chooses the download; it is not uploaded automatically. It is intended for
+WebSocket upgrade/fallback, reconnect backoff, message counts/sizes, handshake
+latency, browser connection capabilities, and navigation timing—not as a game
+replay. See the [network diagnostics guide](NETWORK_DIAGNOSTICS.md).
 The main menu also keeps a small `alohayo.me` link for the project home without
 adding another prominent navigation surface.
 When a table opens, all card assets are already loaded and a 3.8-second dealing
@@ -80,6 +87,7 @@ on hover instead of occupying the center HUD.
 - [Testing](TESTING.md) — unit, build, and browser evidence.
 - [Deployment](DEPLOYMENT.md) — Vercel configuration and honest status reporting.
 - [Table UI reference](TABLE_UI_REFERENCE.md) — generated assets, layout decisions, and interactions.
+- [Network diagnostics](NETWORK_DIAGNOSTICS.md) — fields, redaction boundary, and export workflow.
 - [Original repository](ORIGINAL_REPOSITORY.md) — source link, provenance, and memorial note.
 - [Roadmap](ROADMAP.md) — the next safe increments.
 - [Contributing](CONTRIBUTING.md) — change boundaries and review checklist.

@@ -92,6 +92,9 @@ type UiCopy = {
   loading: string;
   loadingAssets: string;
   loadingAssetsDetail: (loaded: number, total: number) => string;
+  networkLog: string;
+  networkLogDone: string;
+  networkLogHint: string;
   dealingDetail: (playerCount: number) => string;
   startingWith: (name: string) => string;
   playBegins: string;
@@ -196,6 +199,9 @@ const COPY: Record<Language, UiCopy> = {
     loading: "正在洗牌…",
     loadingAssets: "正在加载牌桌资源…",
     loadingAssetsDetail: (loaded, total) => `牌面与桌景 ${loaded}/${total}`,
+    networkLog: "导出网络日志",
+    networkLogDone: "网络日志已导出",
+    networkLogHint: "导出脱敏的 WebSocket 与网络性能日志",
     dealingDetail: (playerCount) => `${playerCount} 位玩家 · 手牌已准备，正在发到牌桌`,
     startingWith: (name) => `从 ${name} 开始`,
     playBegins: "请留意当前回合。",
@@ -298,6 +304,9 @@ const COPY: Record<Language, UiCopy> = {
     loading: "Shuffling the Rust table…",
     loadingAssets: "Loading table assets…",
     loadingAssetsDetail: (loaded, total) => `Cards and table ${loaded}/${total}`,
+    networkLog: "Export network log",
+    networkLogDone: "Network log exported",
+    networkLogHint: "Export redacted WebSocket and network performance logs",
     dealingDetail: (playerCount) => `${playerCount} players · hands are moving to the table`,
     startingWith: (name) => `Starting with ${name}`,
     playBegins: "Watch the active turn.",

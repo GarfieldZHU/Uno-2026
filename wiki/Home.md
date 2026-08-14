@@ -24,6 +24,12 @@ room is a separate host mode; it reveals seat, AI, and deadline settings, while
 the server generates the code.
 The main menu keeps a small `alohayo.me` project-home link as well.
 
+The lobby and table also expose a quiet `⌁` control for a local network
+diagnostics JSON. It records WebSocket/REST timings, reconnects, latency,
+browser connection capabilities, and visible edge markers while removing room
+codes, tokens, card data, and request bodies before export; nothing is uploaded
+automatically.
+
 Chinese is the default interface language. The `EN` control switches the menu,
 settings drawer, and in-game HUD to English without restarting the table.
 

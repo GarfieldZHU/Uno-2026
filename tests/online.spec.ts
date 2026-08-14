@@ -37,6 +37,10 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
     await host.goto("/");
     await host.getByRole("button", { name: "联机" }).click();
     await expect(host.getByTestId("online-lobby")).toHaveAttribute("data-lobby-mode", "join");
+    await expect(host.getByTestId("network-log-export")).toBeVisible();
+    const logDownload = host.waitForEvent("download");
+    await host.getByTestId("network-log-export").click();
+    expect((await logDownload).suggestedFilename()).toMatch(/^uno-2026-network-.*\.json$/);
     await expect(host.getByLabel("总席位")).toHaveCount(0);
     await expect(host.getByLabel("AI 数量")).toHaveCount(0);
     await expect(host.getByLabel("人类回合倒计时")).toHaveCount(0);
@@ -73,6 +77,7 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
     await expect(guestOne.locator(".online-table-shell")).toBeVisible({ timeout: 10_000 });
     await expect(guestTwo.locator(".online-table-shell")).toBeVisible({ timeout: 10_000 });
     for (const page of pages) {
+      await expect(page.getByTestId("network-log-export")).toBeVisible();
       await expect(page.locator(".online-table-shell")).toHaveAttribute("data-sync-transport", "websocket", { timeout: 10_000 });
       await expect(page.locator(".online-table-shell")).toHaveAttribute("data-sync-state", "connected", { timeout: 10_000 });
       await waitForInitialDeal(page);

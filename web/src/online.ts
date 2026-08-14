@@ -1,4 +1,5 @@
 import type { Snapshot } from "./types";
+import { getNetworkDiagnostics, safeWebSocketOrigin, sanitizeRoute } from "./networkDiagnostics";
 
 export type OnlinePlayer = {
   id: number;
@@ -104,6 +105,7 @@ export function connectOnlineRoom(
   onRoom: (room: OnlineRoom) => void,
   onStatus?: (status: OnlineSyncStatus) => void,
 ): OnlineSync {
+  const diagnostics = getNetworkDiagnostics();
   const configuredBase = import.meta.env.VITE_ONLINE_API_URL ?? "";
   const websocketBase = configuredBase
     ? configuredBase.replace(/^http:/, "ws:").replace(/^https:/, "wss:")
@@ -117,10 +119,16 @@ export function connectOnlineRoom(
   let reconnectAttempt = 0;
   let generation = 0;
 
+  const reportStatus = (status: OnlineSyncStatus) => {
+    diagnostics.record("sync.status", { status });
+    onStatus?.(status);
+  };
+
   const scheduleReconnect = () => {
     if (stopped || reconnectTimer !== null) return;
-    onStatus?.("fallback");
     const delay = Math.min(500 * 2 ** reconnectAttempt, 5_000);
+    diagnostics.record("ws.reconnect.scheduled", { attempt: reconnectAttempt + 1, delayMs: delay });
+    reportStatus("fallback");
     reconnectAttempt += 1;
     reconnectTimer = window.setTimeout(() => {
       reconnectTimer = null;
@@ -131,10 +139,14 @@ export function connectOnlineRoom(
   const openSocket = () => {
     if (stopped) return;
     const socketGeneration = ++generation;
-    onStatus?.("connecting");
+    const attempt = reconnectAttempt + 1;
+    const openedAt = performance.now();
+    diagnostics.record("ws.connecting", { attempt, origin: safeWebSocketOrigin(url) });
+    reportStatus("connecting");
     try {
       socket = new WebSocket(url);
     } catch {
+      diagnostics.record("ws.constructor-error", { attempt });
       scheduleReconnect();
       return;
     }
@@ -142,26 +154,33 @@ export function connectOnlineRoom(
     currentSocket.addEventListener("open", () => {
       if (stopped || socketGeneration !== generation) return;
       reconnectAttempt = 0;
-      onStatus?.("connected");
+      diagnostics.record("ws.open", { attempt, handshakeMs: Math.round(performance.now() - openedAt), readyState: currentSocket.readyState });
+      reportStatus("connected");
     });
     currentSocket.addEventListener("message", (event) => {
       if (stopped || socketGeneration !== generation) return;
+      const raw = String(event.data);
+      const bytes = typeof TextEncoder === "undefined" ? raw.length : new TextEncoder().encode(raw).byteLength;
       try {
-        const payload = JSON.parse(String(event.data)) as { type?: string; room?: WireRoom };
+        const payload = JSON.parse(raw) as { type?: string; room?: WireRoom };
+        diagnostics.record("ws.message", { type: payload.type ?? "unknown", bytes, snapshot: Boolean(payload.room?.snapshot) });
         if (payload.type === "room.snapshot" && payload.room) {
           currentRoom = mergeOnlineRoom(payload.room, currentRoom);
           onRoom(currentRoom);
         }
       } catch {
+        diagnostics.record("ws.message.parse-error", { bytes });
         // Ignore malformed messages and keep REST recovery available.
       }
     });
     currentSocket.addEventListener("error", () => {
+      diagnostics.record("ws.error", { readyState: currentSocket.readyState });
       if (!stopped && socketGeneration === generation) scheduleReconnect();
     });
-    currentSocket.addEventListener("close", () => {
+    currentSocket.addEventListener("close", (event) => {
       if (stopped || socketGeneration !== generation) return;
       socket = null;
+      diagnostics.record("ws.close", { code: event.code, clean: event.wasClean, hadReason: Boolean(event.reason) });
       scheduleReconnect();
     });
   };
@@ -173,7 +192,8 @@ export function connectOnlineRoom(
       if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
       reconnectTimer = null;
       generation += 1;
-      onStatus?.("closed");
+      diagnostics.record("ws.closed", { manual: true });
+      reportStatus("closed");
       socket?.close();
       socket = null;
     },
@@ -184,13 +204,32 @@ export function connectOnlineRoom(
  * service is hosted separately; an empty value supports a same-origin proxy. */
 export function createOnlineApi(baseUrl = import.meta.env.VITE_ONLINE_API_URL ?? ""): OnlineApi {
   async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-    const response = await fetch(`${baseUrl}${path}`, {
-      ...init,
-      headers: { "Content-Type": "application/json", ...(init.headers ?? {}) },
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.message || payload.error || `Request failed (${response.status})`);
-    return payload as T;
+    const diagnostics = getNetworkDiagnostics();
+    const method = (init.method ?? "GET").toUpperCase();
+    const route = sanitizeRoute(path);
+    const startedAt = performance.now();
+    diagnostics.record("rest.request", { method, route });
+    try {
+      const response = await fetch(`${baseUrl}${path}`, {
+        ...init,
+        headers: { "Content-Type": "application/json", ...(init.headers ?? {}) },
+      });
+      const payload = await response.json().catch(() => ({}));
+      diagnostics.record("rest.response", {
+        method,
+        route,
+        status: response.status,
+        ok: response.ok,
+        durationMs: Math.round(performance.now() - startedAt),
+        contentLength: response.headers.get("content-length") ?? null,
+        edge: response.headers.get("x-vercel-id") ?? response.headers.get("server") ?? null,
+      });
+      if (!response.ok) throw new Error(payload.message || payload.error || `Request failed (${response.status})`);
+      return payload as T;
+    } catch (error) {
+      diagnostics.record("rest.error", { method, route, durationMs: Math.round(performance.now() - startedAt), name: error instanceof Error ? error.name : "unknown" });
+      throw error;
+    }
   }
 
   function sessionHeaders(room: OnlineRoom): HeadersInit {

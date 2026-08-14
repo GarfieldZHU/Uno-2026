@@ -6,6 +6,8 @@ import { MainMenuScreen } from "./MainMenuScreen";
 import { OnlineLobby } from "./OnlineLobby";
 import { OnlineTable } from "./OnlineTable";
 import { createOnlineApi, type OnlineRoom } from "./online";
+import { NetworkLogExportButton } from "./NetworkLogExportButton";
+import { resetNetworkDiagnostics } from "./networkDiagnostics";
 import { PlayFlight } from "./PlayFlight";
 import { ActionEffectOverlay, PenaltyDrawFlight } from "./PenaltyDrawFlight";
 import { SettingsDrawer } from "./SettingsDrawer";
@@ -558,7 +560,7 @@ export function App() {
   if (screen === "menu") {
     return (
       <>
-        <MainMenuScreen language={language} onLanguageChange={setLanguage} onStart={() => void startGame(setupConfig)} onOpenOnline={() => { setWasmError(null); setScreen("online-lobby"); }} onOpenSettings={() => setSettingsOpen(true)} onOpenAbout={() => setAboutOpen(true)} error={wasmError} />
+        <MainMenuScreen language={language} onLanguageChange={setLanguage} onStart={() => void startGame(setupConfig)} onOpenOnline={() => { resetNetworkDiagnostics(); setWasmError(null); setScreen("online-lobby"); }} onOpenSettings={() => setSettingsOpen(true)} onOpenAbout={() => setAboutOpen(true)} error={wasmError} />
         <SettingsDrawer initialConfig={setupConfig} language={language} open={settingsOpen} onClose={() => setSettingsOpen(false)} onApply={(config) => { setSetupConfig(config); setSettingsOpen(false); }} onLanguageChange={setLanguage} />
         <AboutPanel language={language} open={aboutOpen} onClose={() => setAboutOpen(false)} />
       </>
@@ -566,7 +568,7 @@ export function App() {
   }
 
   if (screen === "online-lobby") {
-    return <div className="online-lobby-screen"><OnlineLobby language={language} api={onlineApi} onClose={openMenu} onStarted={(room) => { void enterOnlineTable(room); }} /></div>;
+    return <div className="online-lobby-screen"><NetworkLogExportButton language={language} /><OnlineLobby language={language} api={onlineApi} onClose={openMenu} onStarted={(room) => { void enterOnlineTable(room); }} /></div>;
   }
 
   if (screen === "online-table" && onlineRoom) {

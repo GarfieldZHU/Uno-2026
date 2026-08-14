@@ -15,6 +15,7 @@ Interaction rules:
 2. Click the discard pile to open the chronological played-card history.
 3. Click a lit hand card to play it; wild cards open the color picker.
 4. The table exposes only high-signal controls; settings and language remain outside the playfield.
+5. The online lobby and table keep a quiet `⌁` control that exports redacted network diagnostics only when clicked; nothing is uploaded.
 
 When assets finish loading, the table runs a 3.8-second initial deal and then
 calls out the starting player before enabling input. The play direction is a
