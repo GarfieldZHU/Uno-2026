@@ -91,7 +91,7 @@ Start a four-seat table, assert the discard pile is a button, click it, assert `
 
 - [ ] **Step 4: Run the new tests and verify they fail**
 
-Run: `npm run test:browser -- tests/offline.spec.ts`
+Run: `pnpm run test:browser -- tests/offline.spec.ts`
 
 Expected: failures because the new screen and test IDs do not exist yet.
 
@@ -133,7 +133,7 @@ Use SVG `<text>` for number/action labels and four color wedges for wild cards. 
 
 - [ ] **Step 5: Inspect the SVGs in the browser**
 
-Run `npm run dev -- --host 127.0.0.1`, open the app, and verify card corners, labels, glyphs, and back contrast at desktop and mobile sizes. Stop the server after inspection.
+Run `pnpm run dev -- --host 127.0.0.1`, open the app, and verify card corners, labels, glyphs, and back contrast at desktop and mobile sizes. Stop the server after inspection.
 
 - [ ] **Step 6: Commit assets**
 
@@ -171,7 +171,7 @@ Add Chinese and English keys for menu actions, drawer labels, about text, memori
 
 - [ ] **Step 4: Run menu/settings browser tests**
 
-Run: `npm run test:browser -- tests/offline.spec.ts -g "menu|settings|language"`
+Run: `pnpm run test:browser -- tests/offline.spec.ts -g "menu|settings|language"`
 
 Expected: those tests pass while discard/animation tests remain pending.
 
@@ -209,7 +209,7 @@ Use `CardArt` for draw, discard, and hand cards. Keep draw as the only clickable
 
 - [ ] **Step 4: Run discard and animation tests**
 
-Run: `npm run test:browser -- tests/offline.spec.ts -g "discard|animation"`
+Run: `pnpm run test:browser -- tests/offline.spec.ts -g "discard|animation"`
 
 Expected: PASS.
 
@@ -254,8 +254,8 @@ At narrow widths, collapse perimeter labels to initials, keep both piles visible
 Run:
 
 ```bash
-npm run typecheck
-npm run build
+pnpm run typecheck
+pnpm run build
 ```
 
 Expected: PASS, with no generated WASM changes unless the build explicitly requires them.
@@ -278,14 +278,14 @@ git commit -m "feat: polish UNO menu and felt tabletop UI"
 ```bash
 cargo fmt --all -- --check
 cargo test -p uno-core
-npm run typecheck
-npm run build
-npm run test:browser
+pnpm run typecheck
+pnpm run build
+pnpm run test:browser
 ```
 
 - [ ] **Step 2: Run the game playtest against the real dev port**
 
-Start `npm run dev -- --host 127.0.0.1` and use Playwright at port `1411` to verify boot, menu actions, settings, start, human play/draw, discard history, language switching, and return-to-menu. Capture desktop 1440×1000 and mobile 390×844 screenshots.
+Start `pnpm run dev -- --host 127.0.0.1` and use Playwright at port `1411` to verify boot, menu actions, settings, start, human play/draw, discard history, language switching, and return-to-menu. Capture desktop 1440×1000 and mobile 390×844 screenshots.
 
 - [ ] **Step 3: Inspect screenshots for quality**
 
@@ -293,7 +293,7 @@ Reject the result if card labels are clipped, the active card is indistinguishab
 
 - [ ] **Step 4: Verify Vercel configuration and GitHub identity**
 
-Confirm `vercel.json` still uses `npm run build` and `web/dist`, `git config user.name` is `GarfieldZHU`, and the final branch commits all show GarfieldZHU as author and committer. Do not use `jiazhu_mstr` in this repository.
+Confirm `vercel.json` still uses `pnpm run build` and `web/dist`, `git config user.name` is `GarfieldZHU`, and the final branch commits all show GarfieldZHU as author and committer. Do not use `jiazhu_mstr` in this repository.
 
 - [ ] **Step 5: Commit final docs/test adjustments and push**
 

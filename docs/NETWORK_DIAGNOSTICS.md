@@ -1,5 +1,7 @@
 # Online network diagnostics
 
+English | [中文](NETWORK_DIAGNOSTICS.zh-CN.md)
+
 The online lobby and table expose a quiet `⌁` control in the lower-right
 corner. Clicking it downloads `uno-2026-network-<timestamp>.json` so a player
 can attach a compact network report when investigating stalls or reconnects.

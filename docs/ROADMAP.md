@@ -1,6 +1,6 @@
 # Roadmap
 
-[中文](ROADMAP.zh-CN.md) · [Original repository](ORIGINAL_REPOSITORY.md)
+English | [中文](ROADMAP.zh-CN.md) · [Original repository](ORIGINAL_REPOSITORY.md)
 
 ## Now
 

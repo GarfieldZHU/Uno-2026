@@ -1,5 +1,7 @@
 # WASM contract
 
+English | [中文](WASM-Contract.zh-CN.md)
+
 The browser creates `UnoGame(seed, profile)` for compatibility or
 `UnoGame.new_with_config(seed, profile, player_count)` for a 3–8 seat table, and calls `snapshot`, `play_card`,
 `draw`, `call_uno`, `ai_step`, and `restart`. Normal results are snapshots;

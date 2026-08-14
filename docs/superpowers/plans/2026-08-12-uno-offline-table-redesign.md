@@ -11,7 +11,7 @@ and old four-player constructor, add a bounded player-count constructor, and
 keep all delay values in React as scheduling configuration. Use the existing
 Vite React app and CSS-rendered cards, with one generated felt texture asset.
 
-**Tech stack:** Rust, wasm-bindgen, React, TypeScript, Vite, Playwright, npm.
+**Tech stack:** Rust, wasm-bindgen, React, TypeScript, Vite, Playwright, pnpm.
 
 ## Task 1: Add variable offline player counts in Rust
 
@@ -32,7 +32,7 @@ Vite React app and CSS-rendered cards, with one generated felt texture asset.
 1. Extend the TypeScript constructor typing with the new WASM constructor and a
    compatibility fallback.
 2. Add typed player-count and AI-delay constants used by setup controls.
-3. Run `npm run typecheck` to catch contract drift before UI work.
+3. Run `pnpm run typecheck` to catch contract drift before UI work.
 
 ## Task 3: Build the setup flow and scheduling model
 

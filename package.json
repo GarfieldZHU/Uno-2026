@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "A Rust + WebAssembly UNO table with a React TypeScript offline client.",
-  "packageManager": "npm@10.9.3",
+  "packageManager": "pnpm@11.15.1",
   "scripts": {
     "dev": "vite --config web/vite.config.ts",
     "build": "node scripts/build-wasm.mjs && vite build --config web/vite.config.ts",
@@ -11,7 +11,7 @@
     "test": "cargo test -p uno-core",
     "test:rust": "cargo test -p uno-core",
     "test:browser": "playwright test",
-    "check": "npm run typecheck && npm run build",
+    "check": "pnpm run typecheck && pnpm run build",
     "preview": "vite preview --config web/vite.config.ts"
   },
   "dependencies": {

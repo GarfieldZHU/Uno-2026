@@ -1,5 +1,7 @@
 # 架构
 
+[English](Architecture.md) | 中文
+
 ```text
 React / TypeScript HUD
         ↓ JSON 命令和快照

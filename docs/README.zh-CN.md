@@ -1,6 +1,6 @@
 # UNO 2026 — 中文项目说明
 
-[English](README.en.md) · [根 README](../README.md)
+[English](README.en.md) | 中文 · [根 README](../README.md)
 
 ## 项目目的
 
@@ -26,22 +26,25 @@ UNO 2026 是一个确定性的、离线优先的 UNO 牌桌。Rust 负责牌、�
 
 ## 本地启动
 
+仓库默认使用 pnpm 11，提交的 `pnpm-lock.yaml` 是唯一权威的 JavaScript 依赖锁文件。
+
 ```bash
-npm install
-npm run dev
+corepack enable
+pnpm install
+pnpm run dev
 ```
 
 打开 `http://localhost:1411`。如需模拟生产构建：
 
 ```bash
-npm run build
-npm run preview
+pnpm run build
+pnpm run preview
 ```
 
 如需强制重新编译 Rust/WASM，而不是使用已提交的浏览器产物：
 
 ```bash
-UNO_REBUILD_WASM=1 npm run build
+UNO_REBUILD_WASM=1 pnpm run build
 ```
 
 首次打开会进入中文主菜单。点击“设置”打开抽屉，可选择 3–8 名玩家（默认四人）、AI 档位，并为每个 AI
@@ -67,6 +70,8 @@ UNO_REBUILD_WASM=1 npm run build
 - [原版仓库](ORIGINAL_REPOSITORY.zh-CN.md) —— 来源、链接和纪念意义。
 - [路线图](ROADMAP.zh-CN.md) —— 下一步安全增量。
 - [贡献指南](CONTRIBUTING.zh-CN.md) —— 修改边界和检查清单。
+- [实现计划](IMPLEMENTATION_PLAN.zh-CN.md) —— 原始交付顺序。
+- [设计说明](UNO_2026_DESIGN.zh-CN.md) —— 产品边界与事实来源。
 
 ## 给 Agent 的入口
 
@@ -77,10 +82,18 @@ UNO_REBUILD_WASM=1 npm run build
 
 ```bash
 cargo fmt --all -- --check
-cargo test -p uno-core
-npm run typecheck
-npm run build
-npm run test:browser
+cargo test --workspace
+pnpm run typecheck
+pnpm run build
+pnpm exec playwright install --with-deps chromium
+pnpm run test:browser
+```
+
+临时调用未安装的外部 CLI 时默认使用 `bunx`，并在注释中保留没有 Bun 时的 `npx` 写法：
+
+```bash
+bunx playwright test tests/offline.spec.ts
+# npx playwright test tests/offline.spec.ts
 ```
 
 前两个命令验证规则域；后三个命令验证 TypeScript 边界、生产包以及玩家真正看到的

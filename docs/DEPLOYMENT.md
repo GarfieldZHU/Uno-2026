@@ -1,6 +1,6 @@
 # Deployment guide
 
-[中文](DEPLOYMENT.zh-CN.md) · [Testing](TESTING.md)
+English | [中文](DEPLOYMENT.zh-CN.md) · [Testing](TESTING.md)
 
 ## Static client on Vercel
 
@@ -9,7 +9,8 @@
 ```json
 {
   "framework": "vite",
-  "buildCommand": "npm run build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm run build",
   "outputDirectory": "web/dist"
 }
 ```

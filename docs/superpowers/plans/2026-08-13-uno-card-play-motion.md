@@ -68,7 +68,7 @@ export type PlayFlightEvent = {
 
 - [x] **Step 3: Run the typecheck.**
 
-Run: `npm run typecheck`
+Run: `pnpm run typecheck`
 
 Expected: PASS; the new component and types compile before App integration.
 
@@ -96,7 +96,8 @@ Extend `tests/offline.spec.ts` after starting a table: click an enabled `.hand-c
 
 - [x] **Step 2: Run the focused test and observe the failure.**
 
-Run: `npx playwright test tests/offline.spec.ts --grep "出牌飞行"`
+Run: `bunx playwright test tests/offline.spec.ts --grep "出牌飞行"`
+<!-- npx playwright test tests/offline.spec.ts --grep "出牌飞行" -->
 
 Expected: FAIL because no `play-flight` element exists yet.
 
@@ -135,7 +136,8 @@ Place `{playFlight && <PlayFlight flight={playFlight} language={language} />}` a
 
 - [x] **Step 7: Run the focused human test.**
 
-Run: `npx playwright test tests/offline.spec.ts --grep "出牌飞行"`
+Run: `bunx playwright test tests/offline.spec.ts --grep "出牌飞行"`
+<!-- npx playwright test tests/offline.spec.ts --grep "出牌飞行" -->
 
 Expected: PASS with `data-source="human"` and `data-player-id="0"`.
 
@@ -174,7 +176,7 @@ Under `@media (prefers-reduced-motion: reduce)`, disable path/flip/trail keyfram
 
 - [x] **Step 5: Run build and inspect a desktop screenshot.**
 
-Run: `npm run typecheck && npm run build`
+Run: `pnpm run typecheck && pnpm run build`
 
 Expected: PASS; no layout shift outside the table scene.
 
@@ -207,7 +209,7 @@ Create a context with `reducedMotion: "reduce"`, start a table, make a legal hum
 
 - [x] **Step 4: Run the complete browser suite.**
 
-Run: `npm run test:browser`
+Run: `pnpm run test:browser`
 
 Expected: all existing offline menu/settings/history/language tests plus the three motion checks pass.
 
@@ -229,9 +231,9 @@ git commit -m "test: verify human and AI card flight motion"
 git diff --check
 cargo fmt --all -- --check
 cargo test -p uno-core
-npm run typecheck
-npm run build
-npm run test:browser
+pnpm run typecheck
+pnpm run build
+pnpm run test:browser
 ```
 
 - [x] **Step 2: Verify identity and worktree.**

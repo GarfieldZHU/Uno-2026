@@ -1,5 +1,7 @@
 # UNO 2026
 
+English | [中文](Home.zh-CN.md)
+
 Rust rules. WebAssembly offline runtime. React table.
 
 UNO 2026 is a deterministic browser UNO game with a native-testable Rust core and
@@ -36,9 +38,14 @@ settings drawer, and in-game HUD to English without restarting the table.
 ## Start
 
 ```bash
-npm install
-npm run dev
+corepack enable
+pnpm install
+pnpm run dev
 ```
+
+The repository uses pnpm 11 and the checked-in `pnpm-lock.yaml` as its JavaScript
+dependency lockfile. For a temporary external CLI, prefer `bunx`; keep an `npx`
+fallback as a comment.
 
 ## Navigate
 

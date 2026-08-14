@@ -1,15 +1,15 @@
 # 测试指南
 
-[English](TESTING.md) · [开发指南](DEVELOPMENT.zh-CN.md)
+[English](TESTING.md) | 中文 · [开发指南](DEVELOPMENT.zh-CN.md)
 
 ## 分层验证
 
 1. `cargo fmt --all -- --check` 检查格式漂移；
 2. `cargo test --workspace` 覆盖牌堆形状、3–8 席位构造、合法性、`WildDrawFour` 限制、
    AI 合法性、UNO 喊牌和快照隐私；
-3. `npm run typecheck` 检查 WASM 门面和 React 契约；
-4. `npm run build` 证明 release 产物和 Vite 包可以生成；
-5. `npm run test:browser` 在 1411 端口启动 Vite，检查中文主菜单、设置抽屉默认值、英文切换、
+3. `pnpm run typecheck` 检查 WASM 门面和 React 契约；
+4. `pnpm run build` 证明 release 产物和 Vite 包可以生成；
+5. `pnpm run test:browser` 在 1411 端口启动 Vite，检查中文主菜单、设置抽屉默认值、英文切换、
    三人/八人启动、响应式牌桌、弃牌历史、牌面 SVG 加载、首击提牌/二次点击或双击出牌、
    拖拽出牌、手牌整理、野牌选色、方向/当前回合/下家标识、牌桌内方向徽章、当前回合标签、
    AI 牌背翻牌和动作特效，以及离线牌局进入结算。
@@ -19,6 +19,9 @@
    `data-sync-transport="websocket"`，且访客能在不等待轮询间隔的情况下收到动作变化；Rust
    房间测试还覆盖最低空闲席位复用、WebSocket 断线转 AI、同 token 重连交还控制权、全断线
    三分钟保护和六小时陈旧状态清理；浏览器测试覆盖刷新后发现恢复记录以及“取消并清除”。
+
+在干净环境首次运行浏览器测试前，先执行
+`pnpm exec playwright install --with-deps chromium` 安装 Chromium。
 
 ## 证据边界
 

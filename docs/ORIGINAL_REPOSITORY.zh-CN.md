@@ -1,6 +1,6 @@
 # 原版仓库与纪念说明
 
-[English](ORIGINAL_REPOSITORY.md) · [项目索引](README.zh-CN.md)
+[English](ORIGINAL_REPOSITORY.md) | 中文 · [项目索引](README.zh-CN.md)
 
 ## 历史链接
 

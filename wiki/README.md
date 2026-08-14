@@ -1,8 +1,15 @@
 # UNO 2026 Wiki mirror
 
+English | [中文](README.zh-CN.md)
+
 This directory is the reviewed, bilingual source for the GitHub Wiki. GitHub Wiki
 pages are maintained separately from the main repository; copy the matching files
 to the Wiki repository when publishing is authorized.
+
+The repository uses pnpm 11 with the checked-in `pnpm-lock.yaml`. Temporary external CLI
+examples should prefer `bunx` and keep an `npx` fallback in a comment. Update the English and
+Simplified Chinese Wiki pages together, and keep local-test evidence separate from live
+deployment claims.
 
 - [Home](Home.md) / [首页](Home.zh-CN.md)
 - [Architecture](Architecture.md) / [架构](Architecture.zh-CN.md)

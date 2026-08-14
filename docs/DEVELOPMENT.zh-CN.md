@@ -1,26 +1,30 @@
 # 开发指南
 
-[English](DEVELOPMENT.md) · [文档索引](README.zh-CN.md)
+[English](DEVELOPMENT.md) | 中文 · [文档索引](README.zh-CN.md)
 
 ## 工具链
 
 - Node 22 或更高（CI 使用 Node 22）；
 - 带 `wasm32-unknown-unknown` target 的 Rust stable；
 - `wasm-pack` 0.13 或更高；
-- 客户端统一使用 npm，不额外维护第二套包管理流程。
+- 客户端默认使用 pnpm 11，`pnpm-lock.yaml` 是唯一权威的 JavaScript 锁文件。
 
 ## 常用命令
 
 ```bash
-npm install
-npm run dev
-npm run typecheck
-npm run build
-npm run test:browser
+corepack enable
+pnpm install
+pnpm run dev
+pnpm run typecheck
+pnpm run build
+pnpm run test:browser
 cargo fmt --all -- --check
 cargo test -p uno-core
 cargo run -p uno-server
 ```
+
+临时调用未安装的外部 CLI 时默认使用 `bunx`；没有 Bun 时，在注释中保留等价的 `npx`
+命令作为回退。
 
 Vite 开发服务器默认使用 `1411` 端口，这是本项目专用的纪念数字。
 

@@ -1,6 +1,6 @@
 # AI 档位
 
-[English](AI_PROFILES.md) · [规则与状态](RULES_AND_STATE.zh-CN.md)
+[English](AI_PROFILES.md) | 中文 · [规则与状态](RULES_AND_STATE.zh-CN.md)
 
 所有档位都通过同一个 `choose_move` 边界，只能返回合法出牌或 `Draw`；差别在于如何给
 合法牌排序。

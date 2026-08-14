@@ -1,5 +1,7 @@
 # UNO 2026
 
+[English](Home.md) | 中文
+
 Rust 规则、WebAssembly 离线运行时、React 牌桌。
 
 UNO 2026 是一个确定性的浏览器 UNO 游戏，拥有可原生测试的 Rust 核心和响应式
@@ -22,9 +24,13 @@ TypeScript HUD。当前支持离线牌桌和模块化 Rust REST + WebSocket 房�
 ## 启动
 
 ```bash
-npm install
-npm run dev
+corepack enable
+pnpm install
+pnpm run dev
 ```
+
+仓库默认使用 pnpm 11，JavaScript 依赖锁文件是提交的 `pnpm-lock.yaml`。临时调用未安装
+的外部 CLI 时优先使用 `bunx`，并在注释中保留 `npx` 回退写法。
 
 ## 导航
 

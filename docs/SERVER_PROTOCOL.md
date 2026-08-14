@@ -1,6 +1,6 @@
 # Server protocol
 
-[中文](SERVER_PROTOCOL.zh-CN.md) · [Architecture](ARCHITECTURE.md)
+English | [中文](SERVER_PROTOCOL.zh-CN.md) · [Architecture](ARCHITECTURE.md)
 
 `server/` is now a small modular Rust authoritative room service. `room.rs`
 owns room/game state and broadcasts, `http.rs` owns the REST boundary, and

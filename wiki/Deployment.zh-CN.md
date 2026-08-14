@@ -1,6 +1,9 @@
 # 部署
 
-`vercel.json` 将 Vite 客户端构建到 `web/dist`。仓库已经提供 Vercel 构建契约；只有在
+[English](Deployment.md) | 中文
+
+`vercel.json` 使用 `pnpm install --frozen-lockfile` 和 `pnpm run build` 将 Vite 客户端构建到
+`web/dist`。仓库已经提供 Vercel 构建契约；只有在
 GarfieldZHU 团队中观察到最新部署为 READY 后，才能发布生产地址。详见
 [`docs/DEPLOYMENT.zh-CN.md`](../docs/DEPLOYMENT.zh-CN.md)。
 

@@ -16,7 +16,7 @@ export default defineConfig({
       timeout: 30_000,
     },
     {
-      command: "npm run dev -- --host 127.0.0.1",
+      command: "pnpm run dev -- --host 127.0.0.1",
       url: "http://127.0.0.1:1411",
       reuseExistingServer: true,
       timeout: 30_000,

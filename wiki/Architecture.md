@@ -1,5 +1,7 @@
 # Architecture
 
+English | [中文](Architecture.zh-CN.md)
+
 ```text
 React / TypeScript HUD
         ↓ JSON commands and snapshots

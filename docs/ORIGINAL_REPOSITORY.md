@@ -1,6 +1,6 @@
 # Original repository and memorial
 
-[中文](ORIGINAL_REPOSITORY.zh-CN.md) · [Project index](README.en.md)
+English | [中文](ORIGINAL_REPOSITORY.zh-CN.md) · [Project index](README.en.md)
 
 ## Historical link
 

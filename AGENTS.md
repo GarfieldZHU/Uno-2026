@@ -35,11 +35,13 @@ browser smoke test. For docs-only changes, still run `git diff --check` (or the
 equivalent whitespace check available in the environment).
 
 ```bash
+corepack enable
+pnpm install --frozen-lockfile
 cargo fmt --all -- --check
 cargo test -p uno-core
-npm run typecheck
-npm run build
-npm run test:browser
+pnpm run typecheck
+pnpm run build
+pnpm run test:browser
 ```
 
 ## Documentation rules

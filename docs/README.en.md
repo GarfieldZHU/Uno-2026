@@ -1,6 +1,6 @@
 # UNO 2026 — English project guide
 
-[简体中文](README.zh-CN.md) · [root README](../README.md)
+English | [中文](README.zh-CN.md) · [root README](../README.md)
 
 ## Purpose
 
@@ -29,22 +29,26 @@ source link and the unverified parity boundary are recorded in
 
 ## Start locally
 
+This repository uses pnpm 11 and the checked-in `pnpm-lock.yaml` as its authoritative
+JavaScript lockfile.
+
 ```bash
-npm install
-npm run dev
+corepack enable
+pnpm install
+pnpm run dev
 ```
 
 Open `http://localhost:1411`. For a production-shaped local run:
 
 ```bash
-npm run build
-npm run preview
+pnpm run build
+pnpm run preview
 ```
 
 To force a fresh Rust artifact instead of using the committed browser artifact:
 
 ```bash
-UNO_REBUILD_WASM=1 npm run build
+UNO_REBUILD_WASM=1 pnpm run build
 ```
 
 The first screen is a focused main menu with Start game, Settings, and About.
@@ -98,6 +102,8 @@ on hover instead of occupying the center HUD.
 - [Original repository](ORIGINAL_REPOSITORY.md) — source link, provenance, and memorial note.
 - [Roadmap](ROADMAP.md) — the next safe increments.
 - [Contributing](CONTRIBUTING.md) — change boundaries and review checklist.
+- [Implementation plan](IMPLEMENTATION_PLAN.md) — the original delivery sequence.
+- [Design](UNO_2026_DESIGN.md) — the source-of-truth product boundary.
 
 ## For agents
 
@@ -109,10 +115,19 @@ things an agent must not claim without live evidence.
 
 ```bash
 cargo fmt --all -- --check
-cargo test -p uno-core
-npm run typecheck
-npm run build
-npm run test:browser
+cargo test --workspace
+pnpm run typecheck
+pnpm run build
+pnpm exec playwright install --with-deps chromium
+pnpm run test:browser
+```
+
+For a temporary external CLI, prefer `bunx`; keep the equivalent `npx` command as a
+comment for environments without Bun:
+
+```bash
+bunx playwright test tests/offline.spec.ts
+# npx playwright test tests/offline.spec.ts
 ```
 
 The first two commands validate the domain directly. The last three validate the

@@ -17,18 +17,21 @@ jobs:
       # pinned tool from crates.io so the WASM build remains reproducible.
       - name: Install wasm-pack
         run: cargo install wasm-pack --version 0.13.1 --locked
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.15.1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: cargo fmt --all -- --check
       - run: cargo test --workspace
-      - run: npm run typecheck
-      - run: npm run build
+      - run: pnpm run typecheck
+      - run: pnpm run build
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-      - run: npm run test:browser
+        run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run test:browser
 
   server-image:
     runs-on: ubuntu-latest

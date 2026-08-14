@@ -1,8 +1,12 @@
 # Contributing
 
-[中文](CONTRIBUTING.zh-CN.md) · [Development](DEVELOPMENT.md)
+English | [中文](CONTRIBUTING.zh-CN.md) · [Development](DEVELOPMENT.md)
 
 ## Before a change
+
+Use Node 22+, run `corepack enable`, and install JavaScript dependencies with pnpm
+from the checked-in `pnpm-lock.yaml`. Keep temporary external CLI examples on
+`bunx` and leave an `npx` fallback in a comment.
 
 Read `AGENTS.md`, the nearest module documentation, and the relevant bilingual
 page. Keep unrelated local files untouched. Do not add protected UNO artwork,
@@ -21,7 +25,7 @@ third-party credentials, or claims of live deployment without evidence.
 ```bash
 cargo fmt --all -- --check
 cargo test -p uno-core
-npm run typecheck
-npm run build
-npm run test:browser
+pnpm run typecheck
+pnpm run build
+pnpm run test:browser
 ```

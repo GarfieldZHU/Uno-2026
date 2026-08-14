@@ -1,5 +1,7 @@
 # UNO 2026 design
 
+English | [中文](UNO_2026_DESIGN.zh-CN.md)
+
 UNO 2026 is a standalone, offline-first card table. The authoritative rules and AI live in `crates/uno-core`, which is compiled both as a native Rust crate for tests and as a `wasm-bindgen` module for the browser. React owns presentation and input only; it never mutates a card, turn, or hand directly.
 
 The first online slice keeps the room service deliberately small: `server/` is a
@@ -23,6 +25,6 @@ The local verification gate is:
 ```text
 cargo fmt --all -- --check
 cargo test -p uno-core
-npm run typecheck
-npm run build
+pnpm run typecheck
+pnpm run build
 ```

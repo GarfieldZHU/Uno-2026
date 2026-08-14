@@ -1,6 +1,6 @@
 # 服务端协议
 
-[English](SERVER_PROTOCOL.md) · [架构说明](ARCHITECTURE.zh-CN.md)
+[English](SERVER_PROTOCOL.md) | 中文 · [架构说明](ARCHITECTURE.zh-CN.md)
 
 `server/` 现在是模块化的 Rust 权威房间服务：`room.rs` 负责房间/牌局状态和广播，
 `http.rs` 负责 REST 路由，`websocket.rs` 负责 RFC 6455 会话。它在内存中保存房间，

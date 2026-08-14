@@ -1,6 +1,6 @@
 # 规则与状态
 
-[English](RULES_AND_STATE.md) · [架构说明](ARCHITECTURE.zh-CN.md)
+[English](RULES_AND_STATE.md) | 中文 · [架构说明](ARCHITECTURE.zh-CN.md)
 
 ## 牌堆
 

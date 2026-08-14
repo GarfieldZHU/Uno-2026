@@ -2,10 +2,7 @@
 
 **Rust + WebAssembly rules. React + TypeScript table. Offline first.**
 
-Choose a language:
-
-- [简体中文 / 中文项目说明](docs/README.zh-CN.md)
-- [English / English project guide](docs/README.en.md)
+English | [中文](README.zh.md)
 
 ## What this is
 
@@ -51,12 +48,13 @@ deployment still needs TLS, rate limiting, and durable identity. See
 
 ## Run it locally
 
-Requirements: Node 22+, Rust stable with `wasm32-unknown-unknown`, and
-`wasm-pack` 0.13+.
+Requirements: Node 22+, Rust stable with `wasm32-unknown-unknown`, `wasm-pack` 0.13+,
+and pnpm 11. The checked-in `pnpm-lock.yaml` is the authoritative JavaScript lockfile.
 
 ```bash
-npm install
-npm run dev
+corepack enable
+pnpm install
+pnpm run dev
 ```
 
 Then open `http://localhost:1411`.
@@ -65,10 +63,18 @@ The verification gate is:
 
 ```bash
 cargo fmt --all -- --check
-cargo test -p uno-core
-npm run typecheck
-npm run build
-npm run test:browser
+cargo test --workspace
+pnpm run typecheck
+pnpm run build
+pnpm exec playwright install --with-deps chromium
+pnpm run test:browser
+```
+
+For a temporary external CLI, prefer `bunx`; keep an `npx` fallback as a comment:
+
+```bash
+bunx playwright test tests/offline.spec.ts
+# npx playwright test tests/offline.spec.ts
 ```
 
 ## Source map
@@ -83,7 +89,7 @@ scripts/            reproducible WASM artifact build helper
 tests/              Playwright offline smoke tests
 ```
 
-Read the [documentation index](docs/README.en.md) or [中文文档索引](docs/README.zh-CN.md)
+Read the [English documentation index](docs/README.en.md) or [中文文档索引](docs/README.zh-CN.md)
 for architecture, rules, AI, WASM, testing, deployment, and contribution guides.
 
 ## A link back to the old game

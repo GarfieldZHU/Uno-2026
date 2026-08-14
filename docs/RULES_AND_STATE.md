@@ -1,6 +1,6 @@
 # Rules and state
 
-[中文](RULES_AND_STATE.zh-CN.md) · [Architecture](ARCHITECTURE.md)
+English | [中文](RULES_AND_STATE.zh-CN.md) · [Architecture](ARCHITECTURE.md)
 
 ## Deck
 

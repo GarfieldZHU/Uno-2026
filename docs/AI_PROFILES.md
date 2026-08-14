@@ -1,6 +1,6 @@
 # AI profiles
 
-[中文](AI_PROFILES.zh-CN.md) · [Rules and state](RULES_AND_STATE.md)
+English | [中文](AI_PROFILES.zh-CN.md) · [Rules and state](RULES_AND_STATE.md)
 
 All profiles implement the same `choose_move` boundary and can return only a
 legal play or `Draw`. They differ in how they rank legal cards.

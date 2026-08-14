@@ -1,6 +1,6 @@
 # 架构说明
 
-[English](ARCHITECTURE.md) · [文档索引](README.zh-CN.md)
+[English](ARCHITECTURE.md) | 中文 · [文档索引](README.zh-CN.md)
 
 ## 所有权模型
 

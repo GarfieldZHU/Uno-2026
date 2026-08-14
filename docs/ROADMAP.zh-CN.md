@@ -1,6 +1,6 @@
 # 路线图
 
-[English](ROADMAP.md) · [原版仓库](ORIGINAL_REPOSITORY.zh-CN.md)
+[English](ROADMAP.md) | 中文 · [原版仓库](ORIGINAL_REPOSITORY.zh-CN.md)
 
 ## 当前
 

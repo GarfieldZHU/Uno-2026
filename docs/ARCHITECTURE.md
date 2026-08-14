@@ -1,6 +1,6 @@
 # Architecture
 
-[中文](ARCHITECTURE.zh-CN.md) · [Documentation index](README.en.md)
+English | [中文](ARCHITECTURE.zh-CN.md) · [Documentation index](README.en.md)
 
 ## Ownership model
 

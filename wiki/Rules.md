@@ -1,5 +1,7 @@
 # Rules
 
+English | [中文](Rules.zh-CN.md)
+
 The table uses a classic 108-card deck, three to eight seven-card hands (four by
 default), numeric opening discard, color/symbol matching, action cards, wild colors, a non-stacking draw
 penalty, draw-pile recycling, and a two-card missed-UNO penalty. The pending

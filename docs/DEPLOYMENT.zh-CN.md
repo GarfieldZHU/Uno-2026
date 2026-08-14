@@ -1,10 +1,10 @@
 # 部署指南
 
-[English](DEPLOYMENT.md) · [测试](TESTING.md)
+[English](DEPLOYMENT.md) | 中文 · [测试](TESTING.md)
 
 ## Vercel 静态客户端
 
-仓库根目录的 `vercel.json` 使用 `npm run build` 构建 Vite 客户端，产物是
+仓库根目录的 `vercel.json` 使用 `pnpm run build` 构建 Vite 客户端，产物是
 `web/dist`。离线模式不需要服务端。联机模式需要在 Vercel 项目环境变量中设置
 `VITE_ONLINE_API_URL` 为 Rust 服务的 HTTPS 地址；留空时使用同源 `/api/v1`，适合由
 反向代理统一转发。

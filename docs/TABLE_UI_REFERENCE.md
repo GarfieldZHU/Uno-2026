@@ -1,5 +1,7 @@
 # UNO 2026 tabletop reference
 
+English | [中文](TABLE_UI_REFERENCE.zh-CN.md)
+
 The live table is intentionally designed as a top-down card table rather than a dashboard:
 
 - `web/public/assets/uno-table-oval-v2.png` is the generated 16:9 walnut-and-felt playfield.

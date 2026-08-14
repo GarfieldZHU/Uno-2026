@@ -1,6 +1,6 @@
 # WASM / 前端契约
 
-[English](WASM_FRONTEND_CONTRACT.md) · [架构说明](ARCHITECTURE.zh-CN.md)
+[English](WASM_FRONTEND_CONTRACT.md) | 中文 · [架构说明](ARCHITECTURE.zh-CN.md)
 
 ## 加载边界
 

@@ -1,6 +1,6 @@
 # WASM / frontend contract
 
-[中文](WASM_FRONTEND_CONTRACT.zh-CN.md) · [Architecture](ARCHITECTURE.md)
+English | [中文](WASM_FRONTEND_CONTRACT.zh-CN.md) · [Architecture](ARCHITECTURE.md)
 
 ## Loading boundary
 

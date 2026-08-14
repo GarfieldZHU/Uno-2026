@@ -1,5 +1,7 @@
 # UNO 2026 牌桌视觉参考
 
+[English](TABLE_UI_REFERENCE.md) | 中文
+
 当前牌桌刻意采用俯视卡牌桌，而不是仪表盘：
 
 - `web/public/assets/uno-table-oval-v2.png`：生成的 16:9 胡桃木与绿色绒布牌桌。

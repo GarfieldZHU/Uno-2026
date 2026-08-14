@@ -1,5 +1,7 @@
 # 联机网络诊断
 
+[English](NETWORK_DIAGNOSTICS.md) | 中文
+
 UNO-2026 的联机大厅和牌桌右下角都有一个低调的 `⌁` 按钮。点击后浏览器会下载
 `uno-2026-network-<时间>.json`，供维护者分析网络环境和性能瓶颈。
 
