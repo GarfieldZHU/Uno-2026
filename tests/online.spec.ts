@@ -44,7 +44,11 @@ test("刷新后主动提示未完成联机牌局并允许取消本地恢复记�
 });
 
 test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌局", async ({ browser }) => {
-  test.setTimeout(180_000);
+  // The loop below intentionally allows up to 1,500 synchronized turns at
+  // 180 ms each. Keep the test budget above that ceiling so a slower shared
+  // CI runner does not report a false timeout while the room is still making
+  // progress.
+  test.setTimeout(300_000);
   const hostContext = await browser.newContext();
   const guestOneContext = await browser.newContext();
   const guestTwoContext = await browser.newContext();
