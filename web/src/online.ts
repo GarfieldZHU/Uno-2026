@@ -7,6 +7,7 @@ export type OnlinePlayer = {
   ready?: boolean;
   isHost?: boolean;
   host?: boolean;
+  connected?: boolean;
 };
 
 export type OnlineSession = {
@@ -24,13 +25,85 @@ export type OnlineRoom = {
   maxPlayers: number;
   aiCount: number;
   countdownSeconds: number;
-  status: "waiting" | "playing";
+  status: "waiting" | "playing" | "finished";
   started: boolean;
   snapshot: Snapshot | null;
-  expiresInSeconds: number;
+  expiresInSeconds: number | null;
   turnDeadlineEpochMs?: number | null;
   session?: OnlineSession;
 };
+
+export type OnlineResumeRecord = {
+  version: 1;
+  roomCode: string;
+  playerId: number;
+  playerToken: string;
+  host: boolean;
+  savedAt: number;
+};
+
+const ONLINE_RESUME_KEY = "uno-2026:online-session:v1";
+
+export function readOnlineResume(): OnlineResumeRecord | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(ONLINE_RESUME_KEY) ?? "null") as Partial<OnlineResumeRecord> | null;
+    if (
+      parsed?.version !== 1 ||
+      typeof parsed.roomCode !== "string" || !/^[A-Z2-9]{4}$/.test(parsed.roomCode) ||
+      typeof parsed.playerId !== "number" || !Number.isInteger(parsed.playerId) || parsed.playerId < 0 ||
+      typeof parsed.playerToken !== "string" || parsed.playerToken.length < 8 ||
+      typeof parsed.host !== "boolean" || typeof parsed.savedAt !== "number"
+    ) return null;
+    return parsed as OnlineResumeRecord;
+  } catch {
+    return null;
+  }
+}
+
+export function persistOnlineResume(room: OnlineRoom): void {
+  if (typeof window === "undefined" || !room.session) return;
+  const record: OnlineResumeRecord = {
+    version: 1,
+    roomCode: room.code,
+    playerId: room.session.playerId,
+    playerToken: room.session.playerToken,
+    host: room.session.host,
+    savedAt: Date.now(),
+  };
+  try {
+    window.localStorage.setItem(ONLINE_RESUME_KEY, JSON.stringify(record));
+  } catch {
+    // Private browsing or a full storage quota should not block a live game.
+  }
+}
+
+export function clearOnlineResume(): void {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.removeItem(ONLINE_RESUME_KEY); } catch { /* ignore storage failures */ }
+}
+
+export function roomFromOnlineResume(record: OnlineResumeRecord): OnlineRoom {
+  return {
+    code: record.roomCode,
+    roomCode: record.roomCode,
+    hostId: record.host ? record.playerId : null,
+    players: [],
+    maxPlayers: 4,
+    aiCount: 0,
+    countdownSeconds: 15,
+    status: "playing",
+    started: true,
+    snapshot: null,
+    expiresInSeconds: null,
+    session: {
+      code: record.roomCode,
+      playerId: record.playerId,
+      playerToken: record.playerToken,
+      host: record.host,
+    },
+  };
+}
 
 export type CreateRoomRequest = {
   name: string;
@@ -57,7 +130,7 @@ export type WireRoom = Partial<OnlineRoom> & {
   player_id?: number;
   player_token?: string;
   host?: boolean;
-  expires_in_seconds?: number;
+  expires_in_seconds?: number | null;
   turn_timeout_seconds?: number;
   turn_deadline_epoch_ms?: number | null;
   room?: WireRoom;
@@ -90,7 +163,11 @@ export function mergeOnlineRoom(payload: WireRoom, previous?: OnlineRoom): Onlin
     status: payload.status ?? (payload.started === true ? "playing" : previous?.status ?? "waiting"),
     started: Boolean(payload.started ?? (payload.status === "playing" ? true : previous?.started)),
     snapshot: has("snapshot") ? (payload.snapshot ?? null) : (previous?.snapshot ?? null),
-    expiresInSeconds: payload.expiresInSeconds ?? (payload.expires_in_seconds as number | undefined) ?? previous?.expiresInSeconds ?? 0,
+    expiresInSeconds: has("expiresInSeconds")
+      ? payload.expiresInSeconds ?? null
+      : Object.prototype.hasOwnProperty.call(payload, "expires_in_seconds")
+        ? payload.expires_in_seconds ?? null
+        : previous?.expiresInSeconds ?? null,
     turnDeadlineEpochMs: has("turnDeadlineEpochMs")
       ? payload.turnDeadlineEpochMs
       : has("turn_deadline_epoch_ms")
@@ -167,6 +244,13 @@ export function connectOnlineRoom(
         if (payload.type === "room.snapshot" && payload.room) {
           currentRoom = mergeOnlineRoom(payload.room, currentRoom);
           onRoom(currentRoom);
+          if (currentRoom.status === "finished" || currentRoom.snapshot?.status === "Won") {
+            stopped = true;
+            if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+            diagnostics.record("ws.closed", { manual: false, reason: "room-finished" });
+            currentSocket.close();
+          }
         }
       } catch {
         diagnostics.record("ws.message.parse-error", { bytes });

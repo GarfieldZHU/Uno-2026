@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Language } from "./i18n";
-import { connectOnlineRoom, createOnlineApi, type OnlineApi, type OnlineRoom, type OnlineSyncStatus } from "./online";
+import { clearOnlineResume, connectOnlineRoom, createOnlineApi, persistOnlineResume, readOnlineResume, roomFromOnlineResume, type OnlineApi, type OnlineResumeRecord, type OnlineRoom, type OnlineSyncStatus } from "./online";
 
 type Props = {
   language?: Language;
@@ -34,6 +34,12 @@ const copy = {
     expires: (seconds: number) => `房间将在 ${Math.max(0, seconds)} 秒后失效`,
     onlineHint: "等待阶段房主离开会关闭房间；开局后任何席位离开都会由 AI 接管。",
     back: "返回",
+    resumeTitle: "发现未完成牌局",
+    resumeBody: (code: string) => `房间 ${code} 仍可能在线。要重新连接吗？`,
+    resume: "重新连接",
+    cancelResume: "取消并清除",
+    reconnecting: "正在恢复牌桌…",
+    wsOnline: "WebSocket 在线",
   },
   en: {
     title: "Online room",
@@ -57,12 +63,19 @@ const copy = {
     expires: (seconds: number) => `Room expires in ${Math.max(0, seconds)}s`,
     onlineHint: "A waiting-room host closes the room; after start, any leaving seat is taken over by AI.",
     back: "Back",
+    resumeTitle: "Unfinished game found",
+    resumeBody: (code: string) => `Room ${code} may still be online. Reconnect?`,
+    resume: "Reconnect",
+    cancelResume: "Cancel and forget",
+    reconnecting: "Reconnecting…",
+    wsOnline: "WebSocket online",
   },
 } as const;
 
 export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarted, onClose }: Props) {
   const t = copy[language];
   const [room, setRoom] = useState<OnlineRoom | null>(null);
+  const [resume, setResume] = useState<OnlineResumeRecord | null>(() => readOnlineResume());
   const [mode, setMode] = useState<LobbyMode>("join");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
@@ -77,6 +90,10 @@ export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarte
   const onStartedRef = useRef(onStarted);
   roomRef.current = room;
   onStartedRef.current = onStarted;
+
+  useEffect(() => {
+    if (room?.session) persistOnlineResume(room);
+  }, [room?.code, room?.session?.playerId, room?.session?.playerToken, room?.session?.host]);
 
   const humanCapacity = useMemo(() => Math.max(1, maxPlayers - aiCount), [maxPlayers, aiCount]);
 
@@ -112,6 +129,7 @@ export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarte
     try {
       const result = await action();
       if (result) {
+        persistOnlineResume(result);
         setRoom(result);
         if (result.status === "playing") onStarted?.(result);
       }
@@ -126,6 +144,8 @@ export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarte
     if (!room) return;
     await run(async () => {
       await api.leaveRoom(room);
+      clearOnlineResume();
+      setResume(null);
       setRoom(null);
       return undefined;
     });
@@ -139,6 +159,7 @@ export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarte
           <button className={mode === "join" ? "is-selected" : undefined} onClick={() => setMode("join")} type="button" role="tab" aria-selected={mode === "join"} data-testid="online-mode-join">{t.join}<span>{t.joinIntro}</span></button>
           <button className={mode === "create" ? "is-selected" : undefined} onClick={() => setMode("create")} type="button" role="tab" aria-selected={mode === "create"} data-testid="online-mode-create">{t.create}<span>{t.createIntro}</span></button>
         </div>
+        {resume && <div className="online-resume-prompt" data-testid="online-resume-prompt" role="alert"><p className="eyebrow">{t.resumeTitle}</p><strong>{t.resumeBody(resume.roomCode)}</strong><div className="drawer-actions"><button className="primary-button" disabled={busy} onClick={() => void (async () => { setBusy(true); setError(null); try { const recovered = await api.getRoom(roomFromOnlineResume(resume)); if (recovered.status === "finished" || recovered.snapshot?.status === "Won") { clearOnlineResume(); setResume(null); setError(language === "zh" ? "该牌局已经结束或失效。" : "That game has ended or expired."); } else { persistOnlineResume(recovered); setRoom(recovered); if (recovered.status === "playing") onStartedRef.current?.(recovered); } } catch (cause) { setError(cause instanceof Error ? cause.message : "Network error"); } finally { setBusy(false); } })()} type="button">{busy ? t.reconnecting : t.resume}</button><button className="secondary-button" disabled={busy} onClick={() => { clearOnlineResume(); setResume(null); setError(null); }} type="button">{t.cancelResume}</button></div></div>}
         <div className="online-lobby-fields">
           <label>{t.name}<input value={name} onChange={(event) => setName(event.target.value)} maxLength={24} autoComplete="nickname" /></label>
           {mode === "join" ? (
@@ -161,8 +182,8 @@ export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarte
   const isHost = room.session?.host ?? room.players.find((player) => player.id === room.session?.playerId)?.isHost ?? false;
   return (
     <section className="online-lobby-panel" aria-labelledby="online-room-title" data-testid="online-room" data-sync-state={syncStatus} data-sync-transport={syncStatus === "connected" ? "websocket" : "rest-fallback"}>
-      <div className="drawer-heading"><div><p className="eyebrow">{room.status === "playing" ? "MATCH LIVE" : "WAITING ROOM"}</p><h2 id="online-room-title">{t.title} <code>{room.code}</code></h2></div>{room.status === "waiting" && onClose && <button className="drawer-close" onClick={onClose} type="button" aria-label={t.back}>×</button>}</div>
-      <p className="online-room-meta">{room.players.length + room.aiCount}/{room.maxPlayers} · {room.countdownSeconds} {t.seconds} · {t.expires(room.expiresInSeconds)}</p>
+      <div className="drawer-heading"><div><p className="eyebrow">{room.status === "playing" ? "MATCH LIVE" : room.status === "finished" ? "MATCH COMPLETE" : "WAITING ROOM"}</p><h2 id="online-room-title">{t.title} <code>{room.code}</code></h2></div>{room.status === "waiting" && onClose && <button className="drawer-close" onClick={onClose} type="button" aria-label={t.back}>×</button>}</div>
+      <p className="online-room-meta">{room.players.length + room.aiCount}/{room.maxPlayers} · {room.countdownSeconds} {t.seconds}{room.expiresInSeconds === null ? ` · ${t.wsOnline}` : ` · ${t.expires(room.expiresInSeconds)}`}</p>
       <ul className="online-player-list">{room.players.map((player) => <li key={player.id}><span className={`seat-avatar seat-avatar-${player.id % 4}`}>{player.name.slice(0, 1).toUpperCase()}</span><span>{player.name}</span>{(player.isHost || player.host) && <small>{t.host}</small>}</li>)}{Array.from({ length: room.aiCount }, (_, index) => <li key={`ai-${index}`}><span className="seat-avatar seat-avatar-2">A</span><span>AI {index + 1}</span><small>AI</small></li>)}</ul>
       {room.status === "waiting" && <p className="online-lobby-note">{t.waiting}<br />{t.onlineHint}</p>}
       <div className="drawer-actions"><button className="secondary-button" disabled={busy} onClick={() => void leave()} type="button">{t.leave}</button>{isHost && room.status === "waiting" && <button className="primary-button" disabled={busy || room.players.length + room.aiCount < 3} onClick={() => void run(() => api.startRoom(room))} type="button">{t.start}</button>}</div>

@@ -8,6 +8,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use uno_core::{AiProfile, GameState, PlayerKind};
 
 pub const ROOM_TTL: Duration = Duration::from_secs(15 * 60);
+pub const DISCONNECTED_ROOM_TTL: Duration = Duration::from_secs(3 * 60);
+pub const STATE_RETENTION: Duration = Duration::from_secs(6 * 60 * 60);
 pub const MIN_PLAYERS: usize = 3;
 pub const MAX_PLAYERS: usize = 8;
 
@@ -16,6 +18,7 @@ pub type Response = (&'static str, Value);
 pub type HandlerResult = Result<Response, Response>;
 
 static ID_COUNTER: AtomicU64 = AtomicU64::new(1);
+static LAST_MAINTENANCE_DAY: AtomicU64 = AtomicU64::new(0);
 
 pub struct Subscriber {
     pub id: u64,
@@ -28,6 +31,7 @@ pub struct PlayerSession {
     pub name: String,
     pub seat: usize,
     pub host: bool,
+    pub connected: bool,
 }
 
 pub struct Room {
@@ -39,6 +43,9 @@ pub struct Room {
     pub profile: AiProfile,
     pub timeout: Duration,
     pub expires_at: SystemTime,
+    pub disconnect_deadline: Option<SystemTime>,
+    pub last_activity: SystemTime,
+    pub finished_at: Option<SystemTime>,
     pub game: Option<GameState>,
     pub started: bool,
     pub turn_deadline: Option<SystemTime>,
@@ -136,9 +143,56 @@ fn clamp_config(request: &CreateRequest) -> Result<(usize, usize, AiProfile, Dur
     Ok((seat_count, ai_count, profile, Duration::from_secs(seconds)))
 }
 
+fn room_status(room: &Room) -> &'static str {
+    if !room.started {
+        "waiting"
+    } else if room.finished_at.is_some() {
+        "finished"
+    } else {
+        "playing"
+    }
+}
+
+fn room_expiration(room: &Room) -> Option<SystemTime> {
+    if room.started {
+        room.disconnect_deadline
+    } else {
+        Some(room.expires_at)
+    }
+}
+
+fn room_expiry_seconds(room: &Room) -> Option<u64> {
+    room_expiration(room)
+        .map(|deadline| deadline.duration_since(now()).unwrap_or_default().as_secs())
+}
+
 fn purge_expired(rooms: &mut HashMap<String, Room>) {
     let current = now();
-    rooms.retain(|_, room| room.expires_at > current);
+    rooms.retain(|_, room| {
+        let room_alive = room_expiration(room)
+            .map(|deadline| deadline > current)
+            .unwrap_or(true);
+        let state_alive = room
+            .finished_at
+            .map(|finished| finished + STATE_RETENTION > current)
+            .unwrap_or(true);
+        room_alive && state_alive
+    });
+}
+
+/// Run the retention pass once per UTC day. The current service has no disk
+/// database; this protects the in-memory room/status registry if a future
+/// record stops receiving updates without reaching one of the normal TTLs.
+fn daily_state_cleanup(rooms: &mut HashMap<String, Room>) {
+    let day = now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+        / 86_400;
+    if LAST_MAINTENANCE_DAY.swap(day, Ordering::Relaxed) != day {
+        let cutoff = now().checked_sub(STATE_RETENTION).unwrap_or(UNIX_EPOCH);
+        rooms.retain(|_, room| room.last_activity >= cutoff);
+    }
 }
 
 fn with_room<'a>(
@@ -176,12 +230,16 @@ pub fn create_room(body: &str, rooms: &SharedRooms) -> HandlerResult {
                 name,
                 seat: 0,
                 host: true,
+                connected: false,
             }],
             seat_count,
             ai_count,
             profile,
             timeout,
             expires_at: now() + ROOM_TTL,
+            disconnect_deadline: None,
+            last_activity: now(),
+            finished_at: None,
             game: None,
             started: false,
             turn_deadline: None,
@@ -227,7 +285,9 @@ pub fn join_room(code: &str, body: &str, rooms: &SharedRooms) -> HandlerResult {
         name,
         seat,
         host: false,
+        connected: false,
     });
+    room.last_activity = now();
     let result = Ok((
         "201 Created",
         json!({
@@ -236,7 +296,7 @@ pub fn join_room(code: &str, body: &str, rooms: &SharedRooms) -> HandlerResult {
             "player_token": player_token,
             "host": false,
             "status": "waiting",
-            "expires_in_seconds": room.expires_at.duration_since(now()).unwrap_or_default().as_secs()
+            "expires_in_seconds": room_expiry_seconds(room)
         }),
     ));
     drop(all_rooms);
@@ -260,7 +320,11 @@ fn start_game(room: &mut Room) {
     for session in &room.players {
         if let Some(player) = game.players_mut().get_mut(session.seat) {
             player.name = session.name.clone();
-            player.kind = PlayerKind::Human;
+            player.kind = if session.connected {
+                PlayerKind::Human
+            } else {
+                PlayerKind::Ai(room.profile)
+            };
         }
     }
     for (index, player) in game.players_mut().iter_mut().enumerate() {
@@ -270,8 +334,95 @@ fn start_game(room: &mut Room) {
     }
     room.game = Some(game);
     room.started = true;
+    room.finished_at = None;
+    room.disconnect_deadline = if room.subscribers.is_empty() {
+        Some(now() + DISCONNECTED_ROOM_TTL)
+    } else {
+        None
+    };
+    room.last_activity = now();
     room.turn_deadline = Some(now() + room.timeout);
     room.next_ai_at = Some(now() + Duration::from_millis(900));
+}
+
+fn mark_finished_if_needed(room: &mut Room) {
+    let won = room
+        .game
+        .as_ref()
+        .and_then(|game| serde_json::from_str::<Value>(&game.snapshot_json()).ok())
+        .map(|snapshot| snapshot["status"] == "Won")
+        .unwrap_or(false);
+    if won && room.finished_at.is_none() {
+        room.finished_at = Some(now());
+        room.turn_deadline = None;
+        room.next_ai_at = None;
+        if room.subscribers.is_empty() {
+            room.disconnect_deadline = Some(now() + DISCONNECTED_ROOM_TTL);
+        }
+    }
+}
+
+fn mark_player_connected(room: &mut Room, token_value: &str) {
+    let Some(seat) = room
+        .players
+        .iter_mut()
+        .find(|player| player.token == token_value)
+        .map(|player| {
+            player.connected = true;
+            player.seat
+        })
+    else {
+        return;
+    };
+    room.last_activity = now();
+    if room.started {
+        room.disconnect_deadline = None;
+        if let Some(game) = room.game.as_mut() {
+            if let Some(player) = game.players_mut().get_mut(seat) {
+                player.kind = PlayerKind::Human;
+            }
+        }
+        let current = room
+            .game
+            .as_ref()
+            .and_then(|game| serde_json::from_str::<Value>(&game.snapshot_json()).ok())
+            .and_then(|snapshot| snapshot["current_player"].as_u64())
+            .map(|player| player as usize);
+        if current == Some(seat) {
+            room.turn_deadline = Some(now() + room.timeout);
+            room.next_ai_at = Some(now() + Duration::from_millis(900));
+        }
+    }
+}
+
+fn mark_player_disconnected(room: &mut Room, token_value: &str) {
+    if room
+        .subscribers
+        .iter()
+        .any(|subscriber| subscriber.token == token_value)
+    {
+        return;
+    }
+    let Some(seat) = room
+        .players
+        .iter_mut()
+        .find(|player| player.token == token_value)
+        .map(|player| {
+            player.connected = false;
+            player.seat
+        })
+    else {
+        return;
+    };
+    room.last_activity = now();
+    if room.started {
+        if let Some(game) = room.game.as_mut() {
+            game.replace_player_with_ai(seat, room.profile);
+        }
+        if room.subscribers.is_empty() {
+            room.disconnect_deadline = Some(now() + DISCONNECTED_ROOM_TTL);
+        }
+    }
 }
 
 pub fn start_room(code: &str, token_value: Option<&str>, rooms: &SharedRooms) -> HandlerResult {
@@ -297,22 +448,26 @@ pub fn start_room(code: &str, token_value: Option<&str>, rooms: &SharedRooms) ->
 }
 
 pub fn advance_automatic_turns(room: &mut Room) -> bool {
-    let mut changed = false;
-    let Some(game) = room.game.as_mut() else {
+    if room.game.is_none() {
         return false;
-    };
+    }
+    let mut changed = false;
     for _ in 0..32 {
-        let snapshot = serde_json::from_str::<Value>(&game.snapshot_json()).ok();
+        let snapshot = room
+            .game
+            .as_ref()
+            .and_then(|game| serde_json::from_str::<Value>(&game.snapshot_json()).ok());
         let Some(snapshot) = snapshot else {
-            return changed;
+            break;
         };
         if snapshot["status"] == "Won" {
-            return changed;
+            break;
         }
         let current = snapshot["current_player"].as_u64().unwrap_or(0) as usize;
-        let is_human = game
-            .players()
-            .get(current)
+        let is_human = room
+            .game
+            .as_ref()
+            .and_then(|game| game.players().get(current))
             .map(|player| matches!(player.kind, PlayerKind::Human))
             .unwrap_or(true);
         if is_human {
@@ -320,23 +475,30 @@ pub fn advance_automatic_turns(room: &mut Room) -> bool {
                 .turn_deadline
                 .get_or_insert_with(|| now() + room.timeout);
             if *deadline > now() {
-                return changed;
+                break;
             }
-            let _ = game.timeout_step(current);
+            if let Some(game) = room.game.as_mut() {
+                let _ = game.timeout_step(current);
+            }
             room.turn_deadline = Some(now() + room.timeout);
             room.next_ai_at = Some(now() + Duration::from_millis(900));
+            room.last_activity = now();
             changed = true;
-            return changed;
+            break;
         }
         let due = room.next_ai_at.unwrap_or_else(now);
         if due > now() {
-            return changed;
+            break;
         }
-        let _ = game.ai_step(room.profile);
+        if let Some(game) = room.game.as_mut() {
+            let _ = game.ai_step(room.profile);
+        }
         room.next_ai_at = Some(now() + Duration::from_millis(900));
         room.turn_deadline = Some(now() + room.timeout);
+        room.last_activity = now();
         changed = true;
     }
+    mark_finished_if_needed(room);
     changed
 }
 
@@ -356,19 +518,19 @@ pub fn room_view(room: &mut Room, viewer_token: Option<&str>) -> Value {
         "code": room.code,
         "room_code": room.code,
         "host_id": room.players.iter().find(|player| player.host).map(|player| player.seat),
-        "players": room.players.iter().map(|player| json!({ "id": player.seat, "name": player.name, "isHost": player.host, "host": player.host, "ready": true })).collect::<Vec<_>>(),
+        "players": room.players.iter().map(|player| json!({ "id": player.seat, "name": player.name, "isHost": player.host, "host": player.host, "ready": true, "connected": player.connected })).collect::<Vec<_>>(),
         "maxPlayers": room.seat_count,
         "seat_count": room.seat_count,
         "aiCount": room.ai_count,
         "ai_count": room.ai_count,
         "countdownSeconds": room.timeout.as_secs(),
         "turn_timeout_seconds": room.timeout.as_secs(),
-        "status": if room.started { "playing" } else { "waiting" },
+        "status": room_status(room),
         "started": room.started,
         "snapshot": snapshot,
         "current_player": room.game.as_ref().and_then(|game| serde_json::from_str::<Value>(&game.snapshot_json()).ok()).and_then(|value| value["current_player"].as_u64()),
         "next_player": room.game.as_ref().and_then(|game| serde_json::from_str::<Value>(&game.snapshot_json()).ok()).and_then(|value| value["next_player"].as_u64()),
-        "expires_in_seconds": room.expires_at.duration_since(now()).unwrap_or_default().as_secs(),
+        "expires_in_seconds": room_expiry_seconds(room),
         "turn_deadline_epoch_ms": room.turn_deadline.and_then(|deadline| deadline.duration_since(UNIX_EPOCH).ok()).map(|duration| duration.as_millis())
     })
 }
@@ -404,40 +566,45 @@ pub fn action_room(
         return Err(error("409 Conflict", "room-not-started"));
     }
     advance_automatic_turns(room);
-    let game = room.game.as_mut().expect("started room has a game");
-    let current = serde_json::from_str::<Value>(&game.snapshot_json())
-        .ok()
-        .and_then(|snapshot| snapshot["current_player"].as_u64())
-        .unwrap_or(usize::MAX as u64) as usize;
-    if current != viewer_id {
-        return Err(error("409 Conflict", "not-your-turn"));
-    }
-    let raw = match input.action.as_str() {
-        "play" => game
-            .play_card(
-                viewer_id,
-                input
-                    .card_id
-                    .ok_or_else(|| error("400 Bad Request", "card-id-required"))?,
-                input
-                    .chosen_color
-                    .as_deref()
-                    .and_then(uno_core::Color::from_wire),
-            )
-            .unwrap_or_else(|message| game.error_json_for(viewer_id, message)),
-        "draw" => game
-            .draw_for_player(viewer_id)
-            .unwrap_or_else(|message| game.error_json_for(viewer_id, message)),
-        "call_uno" => game
-            .call_uno(viewer_id)
-            .unwrap_or_else(|message| game.error_json_for(viewer_id, message)),
-        _ => return Err(error("400 Bad Request", "unknown-action")),
+    let (raw, snapshot) = {
+        let game = room.game.as_mut().expect("started room has a game");
+        let current = serde_json::from_str::<Value>(&game.snapshot_json())
+            .ok()
+            .and_then(|snapshot| snapshot["current_player"].as_u64())
+            .unwrap_or(usize::MAX as u64) as usize;
+        if current != viewer_id {
+            return Err(error("409 Conflict", "not-your-turn"));
+        }
+        let raw = match input.action.as_str() {
+            "play" => game
+                .play_card(
+                    viewer_id,
+                    input
+                        .card_id
+                        .ok_or_else(|| error("400 Bad Request", "card-id-required"))?,
+                    input
+                        .chosen_color
+                        .as_deref()
+                        .and_then(uno_core::Color::from_wire),
+                )
+                .unwrap_or_else(|message| game.error_json_for(viewer_id, message)),
+            "draw" => game
+                .draw_for_player(viewer_id)
+                .unwrap_or_else(|message| game.error_json_for(viewer_id, message)),
+            "call_uno" => game
+                .call_uno(viewer_id)
+                .unwrap_or_else(|message| game.error_json_for(viewer_id, message)),
+            _ => return Err(error("400 Bad Request", "unknown-action")),
+        };
+        let snapshot = serde_json::from_str::<Value>(&game.snapshot_json_for(viewer_id))
+            .unwrap_or_else(|_| json!({}));
+        (raw, snapshot)
     };
     room.turn_deadline = Some(now() + room.timeout);
     room.next_ai_at = Some(now() + Duration::from_millis(900));
+    room.last_activity = now();
+    mark_finished_if_needed(room);
     let command = serde_json::from_str::<Value>(&raw).unwrap_or_else(|_| json!({}));
-    let snapshot = serde_json::from_str::<Value>(&game.snapshot_json_for(viewer_id))
-        .unwrap_or_else(|_| json!({}));
     let result = Ok((
         "200 OK",
         json!({ "ok": command.get("ok").and_then(Value::as_bool).unwrap_or(true), "error": command.get("error"), "snapshot": snapshot, "room": room_view_without_advance(room, Some(token_value)) }),
@@ -493,6 +660,10 @@ pub fn leave_room(
                     }
                 }
             }
+            room.last_activity = now();
+            if room.started && room.subscribers.is_empty() {
+                room.disconnect_deadline = Some(now() + DISCONNECTED_ROOM_TTL);
+            }
             false
         }
     };
@@ -524,19 +695,19 @@ fn room_view_without_advance(room: &Room, viewer_token: Option<&str>) -> Value {
         "host_id": room.players.iter().find(|player| player.host).map(|player| player.seat),
         "player_id": viewer.map(|player| player.seat),
         "host": viewer.map(|player| player.host),
-        "players": room.players.iter().map(|player| json!({ "id": player.seat, "name": player.name, "isHost": player.host, "host": player.host, "ready": true })).collect::<Vec<_>>(),
+        "players": room.players.iter().map(|player| json!({ "id": player.seat, "name": player.name, "isHost": player.host, "host": player.host, "ready": true, "connected": player.connected })).collect::<Vec<_>>(),
         "maxPlayers": room.seat_count,
         "seat_count": room.seat_count,
         "aiCount": room.ai_count,
         "ai_count": room.ai_count,
         "countdownSeconds": room.timeout.as_secs(),
         "turn_timeout_seconds": room.timeout.as_secs(),
-        "status": if room.started { "playing" } else { "waiting" },
+        "status": room_status(room),
         "started": room.started,
         "snapshot": snapshot,
         "current_player": room.game.as_ref().and_then(|game| serde_json::from_str::<Value>(&game.snapshot_json()).ok()).and_then(|value| value["current_player"].as_u64()),
         "next_player": room.game.as_ref().and_then(|game| serde_json::from_str::<Value>(&game.snapshot_json()).ok()).and_then(|value| value["next_player"].as_u64()),
-        "expires_in_seconds": room.expires_at.duration_since(now()).unwrap_or_default().as_secs(),
+        "expires_in_seconds": room_expiry_seconds(room),
         "turn_deadline_epoch_ms": room.turn_deadline.and_then(|deadline| deadline.duration_since(UNIX_EPOCH).ok()).map(|duration| duration.as_millis())
     })
 }
@@ -554,14 +725,22 @@ fn broadcast_locked(room: &mut Room) {
         })
         .collect::<Vec<_>>();
     let mut dead = Vec::new();
+    let mut dead_tokens = Vec::new();
     for (id, token_value, tx) in subscribers {
         let payload = json!({ "type": "room.snapshot", "room": room_view_without_advance(room, Some(&token_value)) }).to_string();
         if tx.send(payload).is_err() {
             dead.push(id);
+            dead_tokens.push(token_value);
         }
     }
     room.subscribers
         .retain(|subscriber| !dead.contains(&subscriber.id));
+    for token_value in dead_tokens {
+        mark_player_disconnected(room, &token_value);
+    }
+    if room.started && room.subscribers.is_empty() && room.disconnect_deadline.is_none() {
+        room.disconnect_deadline = Some(now() + DISCONNECTED_ROOM_TTL);
+    }
 }
 
 pub fn broadcast_room(rooms: &SharedRooms, code: &str) {
@@ -579,6 +758,7 @@ pub fn subscribe(
     let mut all_rooms = rooms.lock().expect("room mutex poisoned");
     let room = with_room(code, &mut all_rooms)?;
     find_player(room, token_value)?;
+    mark_player_connected(room, token_value);
     let (tx, rx) = mpsc::channel();
     let id = nonce();
     let initial = json!({ "type": "room.snapshot", "room": room_view_without_advance(room, Some(token_value)) }).to_string();
@@ -593,19 +773,60 @@ pub fn subscribe(
 pub fn unsubscribe(code: &str, subscriber_id: u64, rooms: &SharedRooms) {
     let mut all_rooms = rooms.lock().expect("room mutex poisoned");
     if let Some(room) = all_rooms.get_mut(code) {
+        let token_value = room
+            .subscribers
+            .iter()
+            .find(|subscriber| subscriber.id == subscriber_id)
+            .map(|subscriber| subscriber.token.clone());
         room.subscribers
             .retain(|subscriber| subscriber.id != subscriber_id);
+        if let Some(token_value) = token_value {
+            mark_player_disconnected(room, &token_value);
+        }
+        room.last_activity = now();
+        if room.started && room.subscribers.is_empty() {
+            room.disconnect_deadline = Some(now() + DISCONNECTED_ROOM_TTL);
+        }
+    }
+}
+
+pub fn touch_subscriber(code: &str, subscriber_id: u64, rooms: &SharedRooms) {
+    let mut all_rooms = rooms.lock().expect("room mutex poisoned");
+    if let Some(room) = all_rooms.get_mut(code) {
+        if room
+            .subscribers
+            .iter()
+            .any(|subscriber| subscriber.id == subscriber_id)
+        {
+            room.last_activity = now();
+            if room.started {
+                room.disconnect_deadline = None;
+            }
+        }
     }
 }
 
 pub fn scheduler_tick(rooms: &SharedRooms) {
     let mut all_rooms = rooms.lock().expect("room mutex poisoned");
+    daily_state_cleanup(&mut all_rooms);
     purge_expired(&mut all_rooms);
     for room in all_rooms.values_mut() {
         if advance_automatic_turns(room) {
             broadcast_locked(room);
         }
+        if room
+            .finished_at
+            .map(|finished| finished + Duration::from_secs(5) <= now())
+            .unwrap_or(false)
+        {
+            room.subscribers.clear();
+            for player in &mut room.players {
+                player.connected = false;
+            }
+            room.disconnect_deadline = Some(now() + DISCONNECTED_ROOM_TTL);
+        }
     }
+    purge_expired(&mut all_rooms);
 }
 
 #[cfg(test)]
@@ -628,6 +849,9 @@ mod tests {
                 profile: AiProfile::Garfield1993AiSimple,
                 timeout: Duration::from_secs(15),
                 expires_at: now() + ROOM_TTL,
+                disconnect_deadline: None,
+                last_activity: now(),
+                finished_at: None,
                 game: None,
                 started: false,
                 turn_deadline: None,
@@ -736,6 +960,8 @@ mod tests {
         let code = host["room_code"].as_str().unwrap().to_string();
         let _ = join_room(&code, r#"{"name":"Guest"}"#, &rooms).unwrap();
         let _ = join_room(&code, r#"{"name":"Other"}"#, &rooms).unwrap();
+        let (_subscriber_id, _receiver, _initial) =
+            subscribe(&code, host["player_token"].as_str().unwrap(), &rooms).unwrap();
         start_room(&code, host["player_token"].as_str(), &rooms).unwrap();
 
         let mut all_rooms = rooms.lock().unwrap();
@@ -767,5 +993,64 @@ mod tests {
         );
         assert_eq!(view["host_id"], guest["player_id"]);
         assert_eq!(view["ai_count"], 1);
+    }
+
+    #[test]
+    fn websocket_disconnect_takes_over_started_human_and_reconnect_restores_control() {
+        let rooms = new_store();
+        let (_, host) = create_room(r#"{"name":"Host","max_players":3}"#, &rooms).unwrap();
+        let code = host["room_code"].as_str().unwrap().to_string();
+        let _ = join_room(&code, r#"{"name":"Guest"}"#, &rooms).unwrap();
+        let _ = join_room(&code, r#"{"name":"Other"}"#, &rooms).unwrap();
+        start_room(&code, host["player_token"].as_str(), &rooms).unwrap();
+
+        let (subscriber_id, _receiver, _initial) =
+            subscribe(&code, host["player_token"].as_str().unwrap(), &rooms).unwrap();
+        unsubscribe(&code, subscriber_id, &rooms);
+
+        let (_, disconnected) = view_room(&code, host["player_token"].as_str(), &rooms).unwrap();
+        assert_eq!(
+            disconnected["snapshot"]["players"][0]["kind"],
+            "garfield1993-ai-simple"
+        );
+
+        let (_subscriber_id, _receiver, _initial) =
+            subscribe(&code, host["player_token"].as_str().unwrap(), &rooms).unwrap();
+        let (_, reconnected) = view_room(&code, host["player_token"].as_str(), &rooms).unwrap();
+        assert_eq!(reconnected["snapshot"]["players"][0]["kind"], "human");
+    }
+
+    #[test]
+    fn started_room_uses_websocket_liveness_then_three_minute_disconnect_grace() {
+        let rooms = new_store();
+        let (_, host) = create_room(r#"{"name":"Host","max_players":3}"#, &rooms).unwrap();
+        let code = host["room_code"].as_str().unwrap().to_string();
+        let _ = join_room(&code, r#"{"name":"Guest"}"#, &rooms).unwrap();
+        let _ = join_room(&code, r#"{"name":"Other"}"#, &rooms).unwrap();
+        start_room(&code, host["player_token"].as_str(), &rooms).unwrap();
+
+        let (subscriber_id, _receiver, _initial) =
+            subscribe(&code, host["player_token"].as_str().unwrap(), &rooms).unwrap();
+        let (_, connected) = view_room(&code, host["player_token"].as_str(), &rooms).unwrap();
+        assert!(connected["expires_in_seconds"].is_null());
+
+        unsubscribe(&code, subscriber_id, &rooms);
+        let (_, disconnected) = view_room(&code, host["player_token"].as_str(), &rooms).unwrap();
+        let grace = disconnected["expires_in_seconds"].as_u64().unwrap();
+        assert!(grace <= 180 && grace > 0);
+    }
+
+    #[test]
+    fn daily_state_cleanup_removes_records_older_than_six_hours() {
+        let rooms = new_store();
+        let (_, created) = create_room(r#"{"name":"Stale","max_players":3}"#, &rooms).unwrap();
+        let code = created["room_code"].as_str().unwrap().to_string();
+        LAST_MAINTENANCE_DAY.store(0, Ordering::Relaxed);
+        rooms.lock().unwrap().get_mut(&code).unwrap().last_activity =
+            now() - STATE_RETENTION - Duration::from_secs(1);
+
+        let mut all_rooms = rooms.lock().unwrap();
+        daily_state_cleanup(&mut all_rooms);
+        assert!(!all_rooms.contains_key(&code));
     }
 }

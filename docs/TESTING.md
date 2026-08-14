@@ -22,8 +22,11 @@
    six-seat room with three AI seats, verify viewer-safe hands and SVG assets,
    and drive the room to a `Won` snapshot in every window. It also asserts that
    all three tables report `data-sync-transport="websocket"` and that a guest
-   receives a changed action without waiting for a polling interval. Rust room
-   tests cover lowest-free seat reuse and AI takeover after a started-game leave.
+   receives a changed action without waiting for a polling interval. The browser
+   suite also verifies that a refresh discovers a stored resume record and that
+   Cancel and forget removes it. Rust room tests cover lowest-free seat reuse,
+   disconnect-to-AI takeover, same-token control restoration, three-minute
+   all-disconnected grace, and six-hour stale-state cleanup.
 
 ## Evidence discipline
 

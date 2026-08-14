@@ -2,7 +2,7 @@ use crate::room::{self, SharedRooms};
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
 use std::sync::mpsc::{Receiver, RecvTimeoutError};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 const WEBSOCKET_GUID: &[u8] = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
@@ -39,13 +39,25 @@ pub fn handle_upgrade(
         return Err(error);
     }
 
-    let result = websocket_loop(&mut stream, &receiver);
+    let result = websocket_loop(&mut stream, &receiver, code, subscriber_id, rooms);
     room::unsubscribe(code, subscriber_id, rooms);
     result
 }
 
-fn websocket_loop(stream: &mut TcpStream, receiver: &Receiver<String>) -> io::Result<()> {
+fn websocket_loop(
+    stream: &mut TcpStream,
+    receiver: &Receiver<String>,
+    code: &str,
+    subscriber_id: u64,
+    rooms: &SharedRooms,
+) -> io::Result<()> {
+    let mut last_heartbeat = Instant::now();
     loop {
+        if last_heartbeat.elapsed() >= Duration::from_secs(15) {
+            room::touch_subscriber(code, subscriber_id, rooms);
+            write_control_frame(stream, 0x9, b"uno-heartbeat")?;
+            last_heartbeat = Instant::now();
+        }
         match read_client_frame(stream)? {
             Some(Frame::Close) => return Ok(()),
             Some(Frame::Ping(payload)) => write_control_frame(stream, 0xA, &payload)?,

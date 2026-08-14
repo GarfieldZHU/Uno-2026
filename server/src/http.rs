@@ -1,4 +1,6 @@
-use crate::room::{self, HandlerResult, SharedRooms, ROOM_TTL};
+use crate::room::{
+    self, HandlerResult, SharedRooms, DISCONNECTED_ROOM_TTL, ROOM_TTL, STATE_RETENTION,
+};
 use crate::websocket;
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
@@ -37,7 +39,10 @@ pub fn handle_connection(mut stream: TcpStream, rooms: &SharedRooms) -> io::Resu
                 "status": "ok",
                 "mode": "rooms",
                 "transport": "rest+websocket",
-                "room_ttl_seconds": ROOM_TTL.as_secs()
+                "room_ttl_seconds": ROOM_TTL.as_secs(),
+                "disconnect_grace_seconds": DISCONNECTED_ROOM_TTL.as_secs(),
+                "state_retention_seconds": STATE_RETENTION.as_secs(),
+                "state_store": "in-memory"
             }),
         );
     }

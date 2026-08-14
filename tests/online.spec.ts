@@ -25,6 +25,24 @@ async function waitForInitialDeal(page: Page) {
   await expect(page.locator(".table-scene")).toHaveAttribute("data-deal-phase", "ready", { timeout: 10_000 });
 }
 
+test("刷新后主动提示未完成联机牌局并允许取消本地恢复记录", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("uno-2026:online-session:v1", JSON.stringify({
+      version: 1,
+      roomCode: "ABCD",
+      playerId: 0,
+      playerToken: "p-resume-token-1234",
+      host: true,
+      savedAt: Date.now(),
+    }));
+  });
+  await page.goto("/");
+  await expect(page.getByTestId("online-resume-prompt")).toBeVisible();
+  await page.getByRole("button", { name: "取消并清除" }).click();
+  await expect(page.getByTestId("online-resume-prompt")).toHaveCount(0);
+  expect(await page.evaluate(() => window.localStorage.getItem("uno-2026:online-session:v1"))).toBeNull();
+});
+
 test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌局", async ({ browser }) => {
   test.setTimeout(180_000);
   const hostContext = await browser.newContext();
@@ -85,6 +103,7 @@ test("三个浏览器窗口可加入六席房间并与三个 AI 完成联机牌�
       await expect(page.locator('.seat-player.is-active .seat-turn-label')).toBeVisible();
       await expect(page.locator('.seat-player.is-next .seat-next-label')).toHaveCount(1);
       await expect(page.locator('.seat-player.is-next .seat-next-label')).toBeVisible();
+      await expect(page.locator('.online-table-shell .table-profile small')).toContainText("WS 在线");
       await expect(page.getByText("保持节奏。")).toHaveCount(0);
     }
 

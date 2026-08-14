@@ -5,7 +5,7 @@ import { DiscardHistory } from "./DiscardHistory";
 import { MainMenuScreen } from "./MainMenuScreen";
 import { OnlineLobby } from "./OnlineLobby";
 import { OnlineTable } from "./OnlineTable";
-import { createOnlineApi, type OnlineRoom } from "./online";
+import { createOnlineApi, readOnlineResume, type OnlineRoom } from "./online";
 import { NetworkLogExportButton } from "./NetworkLogExportButton";
 import { resetNetworkDiagnostics } from "./networkDiagnostics";
 import { PlayFlight } from "./PlayFlight";
@@ -127,7 +127,7 @@ export function App() {
   const [language, setLanguage] = useState<Language>("zh");
   const [setupConfig, setSetupConfig] = useState<SetupConfig>(() => createDefaultSetup());
   const [activeConfig, setActiveConfig] = useState<SetupConfig | null>(null);
-  const [screen, setScreen] = useState<Screen>("menu");
+  const [screen, setScreen] = useState<Screen>(() => readOnlineResume() ? "online-lobby" : "menu");
   const [onlineRoom, setOnlineRoom] = useState<OnlineRoom | null>(null);
   const onlineApi = useMemo(() => createOnlineApi(), []);
   const [settingsOpen, setSettingsOpen] = useState(false);

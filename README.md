@@ -30,19 +30,23 @@ The current vertical slice includes:
   SVG card fronts/backs, perimeter seats, fan-shaped hands, deal/draw/play/shuffle motion,
   and a clickable discard history;
 - an English toggle available from the menu, settings drawer, and table HUD;
-- a Rust room service with four-character codes, 15-minute expiry, 3–8 seats,
-  configurable AI seats, host-owned start/close semantics, viewer-safe hands,
-  and 5–30 second human turn deadlines;
+- a Rust room service with four-character waiting-room codes, 15-minute waiting
+  expiry, 3–8 seats, configurable AI seats, host-owned start/close semantics,
+  viewer-safe hands, and separate 5–30 second human turn deadlines;
 - a quiet online-lobby/table network-log export that records redacted WebSocket
   and REST timings, reconnects, browser connection capabilities, and public
   edge clues without uploading automatically;
 - Vercel configuration for the static Vite client.
 
 Online rooms now expose a modular REST + WebSocket slice. A started-game leave
-keeps the seat in the turn ring and hands it to AI; expired human turns choose a
-legal move or draw deterministically. The service is still in-memory: restart
-closes active rooms, and public deployment still needs TLS, rate limiting, and
-durable identity. See
+or disconnect keeps the seat in the turn ring and hands it to AI; reconnecting
+with the same player token restores human control. Live sockets remove the
+started-room TTL; when all sockets disappear, the room has a three-minute grace
+window. Expired human turns choose a legal move or draw deterministically, and
+the service sends heartbeat frames to detect dead connections. Browser refreshes
+offer a local resume/forget prompt. The service is still in-memory: restart
+closes active rooms, a daily UTC pass removes six-hour-stale records, and public
+deployment still needs TLS, rate limiting, and durable identity. See
 [`docs/SERVER_PROTOCOL.md`](docs/SERVER_PROTOCOL.md).
 
 ## Run it locally

@@ -23,7 +23,7 @@ source link and the unverified parity boundary are recorded in
 | AI | `garfield1993-ai-simple`, `garfield1993-ai-hard`, plus two `uno-2026` profiles |
 | UI | Chinese-first main menu (Start game/Settings/About), settings drawer, responsive React table, SVG cards, a 3.8-second deal sequence with starting-player callout, translucent hoverable tabletop direction arrows, draw/play/shuffle motion, settlement result layer, discard history, English toggle |
 | Offline setup | One human plus AI seats; each AI pause is 1–30 seconds, default three |
-| Multiplayer | Rust room service + WebSocket snapshots: create/join/leave, AI takeover after an in-game leave, host start, AI seats, four-character 15-minute codes, deadlines, reconnect, and authoritative next-seat markers |
+| Multiplayer | Rust room service + WebSocket snapshots: create/join/leave, AI takeover on explicit leave or disconnect, host start, AI seats, four-character waiting-room codes, separate human turn deadlines, three-minute all-disconnected grace, token-based resume, and authoritative next-seat markers |
 | Network diagnostics | A quiet corner export control records local WebSocket/REST timings, reconnects, browser network capabilities, and visible edge headers; room codes, tokens, cards, and request bodies are removed before export |
 | Deployment | `vercel.json` is present; live deployment must be verified separately |
 
@@ -53,10 +53,17 @@ settings drawer, and table HUD to English. Open Settings to choose 3–8 players
 (four is the default), select an AI profile, and tune each AI seat's pause
 independently. Click the discard pile during a match to inspect played cards in
 chronological order.
-Online now has a Rust room/WebSocket slice. A started-game leave converts that
-seat to AI, expired human turns choose a legal move or draw, and clients reconnect
-with bounded backoff. The Rust service is still an in-memory demo and must be
-deployed behind TLS with `VITE_ONLINE_API_URL` before public play.
+Online now has a Rust room/WebSocket slice. A started-game leave or WebSocket
+disconnect converts that seat to AI while preserving the player token; reconnecting
+with the same token restores human control. A live WebSocket removes the started
+room TTL. If every socket disconnects, the room receives a three-minute grace
+window. Expired human turns choose a legal move or draw, and the server sends a
+heartbeat so dead sockets are eventually detected. A browser refresh opens an
+unfinished-game prompt backed by local storage; Reconnect keeps the token, while
+Cancel and forget deletes it. Finished games clear the resume record and obsolete
+sockets are closed after the final snapshot. The Rust service is still an
+in-memory demo and must be deployed behind TLS with `VITE_ONLINE_API_URL` before
+public play.
 The online lobby opens in Join mode by default and only asks for a nickname and
 four-character room code. Switching to Create mode reveals the host-only seat,
 AI-count, and human-turn deadline controls; the create form never asks for a
