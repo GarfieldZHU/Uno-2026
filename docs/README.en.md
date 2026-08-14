@@ -21,7 +21,7 @@ source link and the unverified parity boundary are recorded in
 | Offline game | Playable in the browser through Rust/WASM |
 | Rules | 108 cards, 3–8 offline seats (default four), classic actions, wild colors, UNO penalty |
 | AI | `garfield1993-ai-simple`, `garfield1993-ai-hard`, plus two `uno-2026` profiles |
-| UI | Chinese-first main menu (Start game/Settings/About), settings drawer, responsive React table, SVG cards, a 3.8-second deal sequence with starting-player callout, translucent hoverable tabletop direction arrows, draw/play/shuffle motion, settlement result layer, discard history, English toggle |
+| UI | Chinese-first low-chrome menu (Start game/Settings/About), shared jade-felt/gold visual system, responsive React table, SVG cards, a 3.8-second deal sequence with starting-player callout, translucent hoverable tabletop direction arrows, draw/play/shuffle motion, settlement result layer, discard history, English toggle |
 | Offline setup | One human plus AI seats; each AI pause is 1–30 seconds, default three |
 | Multiplayer | Rust room service + WebSocket snapshots: create/join/leave, AI takeover on explicit leave or disconnect, host start, AI seats, four-character waiting-room codes, separate human turn deadlines, three-minute all-disconnected grace, token-based resume, and authoritative next-seat markers |
 | Network diagnostics | A quiet corner export control records local WebSocket/REST timings, reconnects, browser network capabilities, and visible edge headers; room codes, tokens, cards, and request bodies are removed before export |

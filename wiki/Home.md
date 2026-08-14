@@ -56,6 +56,7 @@ fallback as a comment.
 - [Development](Development.md)
 - [Deployment](Deployment.md)
 - [History](History.md)
+- [UI design](UI-Design.md)
 
 See the [English project guide](../docs/README.en.md) and [中文项目说明](../docs/README.zh-CN.md)
 for the complete repository documentation.

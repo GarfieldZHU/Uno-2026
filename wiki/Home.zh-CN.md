@@ -41,5 +41,6 @@ pnpm run dev
 - [开发](Development.zh-CN.md)
 - [部署](Deployment.zh-CN.md)
 - [历史](History.zh-CN.md)
+- [UI 设计](UI-Design.zh-CN.md)
 
 完整说明见[英文项目指南](../docs/README.en.md)和[中文项目说明](../docs/README.zh-CN.md)。

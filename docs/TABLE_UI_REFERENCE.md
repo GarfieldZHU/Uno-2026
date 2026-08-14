@@ -9,6 +9,21 @@ The live table is intentionally designed as a top-down card table rather than a 
 - `web/public/assets/cards/card-back-v2.svg` is the resolution-independent navy/red/gold card back.
 - `web/src/CardArt.tsx` draws card fronts as SVG so symbols remain sharp at desktop and mobile sizes.
 
+## 2026 visual pass
+
+The menu, setup surface, drawers, and table now share one restrained material
+language: deep jade felt, warm paper/gold for actions, and mint for live state.
+The main menu keeps one dominant Start action and groups the less frequent
+Online, Settings, and About actions into a compact secondary grid. Setup remains
+a single table ticket; it does not turn the opening screen into a dashboard.
+
+The play surface receives the most space. The top information bar is collapsed
+by default, the table center remains clear for piles and flight effects, and the
+hand rail is a single high-contrast surface with larger SVG cards. Active and
+next seats use color and elevation rather than paragraphs of status text. The
+same layout rules collapse to one column on narrow screens and keep the card
+rail horizontally reachable.
+
 The visual reference is the supplied UNO Offline Google Play surface: players sit around the table, opponent hands are represented by card-back fans, the draw and discard piles share the center, and the human hand is a readable fan along the near edge. The reference informed composition and interaction patterns only; UNO-2026 uses its own generated and authored assets.
 
 Interaction rules:
