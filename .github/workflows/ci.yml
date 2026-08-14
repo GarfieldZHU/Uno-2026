@@ -13,9 +13,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-      - uses: jetli/wasm-pack@v0.13.1
-        with:
-          version: v0.13.1
+      # The former jetli/wasm-pack action is no longer published. Install the
+      # pinned tool from crates.io so the WASM build remains reproducible.
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --version 0.13.1 --locked
       - uses: actions/setup-node@v4
         with:
           node-version: 22
