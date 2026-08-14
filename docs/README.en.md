@@ -60,6 +60,8 @@ The online lobby opens in Join mode by default and only asks for a nickname and
 four-character room code. Switching to Create mode reveals the host-only seat,
 AI-count, and human-turn deadline controls; the create form never asks for a
 room code because the server generates it.
+The main menu also keeps a small `alohayo.me` link for the project home without
+adding another prominent navigation surface.
 
 ## Documentation map
 

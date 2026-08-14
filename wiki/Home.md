@@ -20,6 +20,7 @@ draws deterministically. Configure the Rust origin before public use.
 The lobby defaults to Join room and only shows nickname plus room code. Create
 room is a separate host mode; it reveals seat, AI, and deadline settings, while
 the server generates the code.
+The main menu keeps a small `alohayo.me` project-home link as well.
 
 Chinese is the default interface language. The `EN` control switches the menu,
 settings drawer, and in-game HUD to English without restarting the table.

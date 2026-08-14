@@ -25,6 +25,8 @@ test("中文主菜单是默认界面，并可切换到英文", async ({ page }) 
   await expect(page.getByRole("button", { name: "开始游戏" })).toBeVisible();
   await expect(page.getByRole("button", { name: "设置" })).toBeVisible();
   await expect(page.getByRole("button", { name: "关于" })).toBeVisible();
+  await expect(page.locator(".menu-home-link")).toHaveAttribute("href", "https://alohayo.me/");
+  await expect(page.locator(".menu-home-link")).toHaveAttribute("target", "_blank");
   await expect(page.getByTestId("main-menu").getByLabel("玩家")).toHaveCount(0);
   await page.screenshot({ path: "test-results/offline-menu-zh.png", fullPage: true });
 

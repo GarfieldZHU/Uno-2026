@@ -38,7 +38,7 @@ export function MainMenuScreen({ language, onLanguageChange, onStart, onOpenOnli
           <button className="menu-action" type="button" onClick={onOpenAbout}><span>{text.about}</span><b>i</b></button>
         </div>
         {error && <p className="menu-error" role="alert">{error}</p>}
-        <p className="menu-footnote"><span>{text.statusOnlineLocked}</span><i />{language === "zh" ? "离线牌局不需要登录" : "Offline play needs no account"}</p>
+        <p className="menu-footnote"><span>{text.statusOnlineLocked}</span><i />{language === "zh" ? "离线牌局不需要登录" : "Offline play needs no account"}<i /><a className="menu-home-link" href="https://alohayo.me/" target="_blank" rel="noreferrer">alohayo.me ↗</a></p>
         <img className="menu-sparkle menu-sparkle-right" src="/assets/cards/sparkle.svg" alt="" />
       </section>
     </main>

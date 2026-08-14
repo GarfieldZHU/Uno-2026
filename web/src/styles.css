@@ -164,6 +164,8 @@ h1, h2, p { margin-top: 0; }
 .menu-action-online b { color: var(--cyan); }
 .menu-footnote { display: flex; align-items: center; gap: 9px; margin: 26px 0 0; color: rgba(237,241,224,.45); font-size: 9px; letter-spacing: .06em; }
 .menu-footnote i { display: block; width: 1px; height: 13px; background: rgba(237,241,224,.22); }
+.menu-home-link { color: rgba(245,201,107,.68); text-decoration: none; text-underline-offset: 3px; transition: color .18s ease, text-decoration-color .18s ease; }
+.menu-home-link:hover, .menu-home-link:focus-visible { color: var(--yellow); text-decoration: underline; }
 .menu-error { max-width: 330px; margin: 14px 0 0; color: #ffad91; font-size: 11px; line-height: 1.45; }
 .menu-sparkle { position: absolute; width: 42px; height: 42px; opacity: .75; filter: drop-shadow(0 0 16px rgba(255,224,138,.45)); }
 .menu-sparkle-left { top: 31%; left: -8%; transform: rotate(-12deg); }.menu-sparkle-right { right: -8%; bottom: 22%; width: 30px; height: 30px; transform: rotate(22deg); }
