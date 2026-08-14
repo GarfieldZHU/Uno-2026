@@ -26,6 +26,8 @@ jobs:
       - run: cargo test --workspace
       - run: npm run typecheck
       - run: npm run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
       - run: npm run test:browser
 
   server-image:
