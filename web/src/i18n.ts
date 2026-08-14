@@ -74,7 +74,6 @@ type UiCopy = {
   disabled: string;
   onlineNote: string;
   oneCardLeft: string;
-  keepRhythm: string;
   callUno: string;
   drawCard: string;
   clickHint: string;
@@ -172,7 +171,6 @@ const COPY: Record<Language, UiCopy> = {
     disabled: "未启用",
     onlineNote: "联机房间使用 Rust 服务，房间状态短期保存在内存中。",
     oneCardLeft: "只剩一张。",
-    keepRhythm: "保持节奏。",
     callUno: "喊 UNO",
     drawCard: "摸一张牌",
     clickHint: "点击亮起的牌出牌",
@@ -268,7 +266,6 @@ const COPY: Record<Language, UiCopy> = {
     disabled: "DISABLED",
     onlineNote: "Online rooms use a Rust service and short-lived in-memory room state.",
     oneCardLeft: "One card left.",
-    keepRhythm: "Keep the rhythm.",
     callUno: "CALL UNO",
     drawCard: "DRAW CARD",
     clickHint: "a lit card to play",

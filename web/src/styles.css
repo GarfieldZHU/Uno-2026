@@ -563,6 +563,9 @@ body { background: radial-gradient(circle at 50% -16%, #254b46 0, #0b1c1d 44%, #
 }
 
 /* Turn HUD polish: keep the direction and seat state readable at a glance. */
+/* Keep the rail scrollable normally, but let the color picker escape its
+   scrollport while a wild card is waiting for a color choice. */
+.hand-rail.hand-fan:has(.wild-picker) { overflow: visible; }
 .table-direction-chip {
   min-width: 148px;
   min-height: 50px;

@@ -213,6 +213,8 @@ test("手牌可以拖到牌桌出牌", async ({ page }) => {
   const card = page.locator(".hand-fan .card-art.is-playable:not(:disabled)").first();
   await expect(card).toBeVisible();
   await card.dragTo(page.locator('[data-drop-target="table"]'));
+  const picker = page.getByRole("dialog");
+  if (await picker.isVisible().catch(() => false)) await picker.getByRole("button").first().click();
   await expect(page.getByTestId("play-flight")).toBeAttached();
   await expect(page.locator('[data-drop-target="table"]')).not.toHaveClass(/is-card-drop-target/);
 });
