@@ -133,7 +133,7 @@ Use SVG `<text>` for number/action labels and four color wedges for wild cards. 
 
 - [ ] **Step 5: Inspect the SVGs in the browser**
 
-Run `pnpm run dev -- --host 127.0.0.1`, open the app, and verify card corners, labels, glyphs, and back contrast at desktop and mobile sizes. Stop the server after inspection.
+Run `pnpm run dev --host 127.0.0.1`, open the app, and verify card corners, labels, glyphs, and back contrast at desktop and mobile sizes. Stop the server after inspection.
 
 - [ ] **Step 6: Commit assets**
 
@@ -285,7 +285,7 @@ pnpm run test:browser
 
 - [ ] **Step 2: Run the game playtest against the real dev port**
 
-Start `pnpm run dev -- --host 127.0.0.1` and use Playwright at port `1411` to verify boot, menu actions, settings, start, human play/draw, discard history, language switching, and return-to-menu. Capture desktop 1440×1000 and mobile 390×844 screenshots.
+Start `pnpm run dev --host 127.0.0.1` and use Playwright at port `1411` to verify boot, menu actions, settings, start, human play/draw, discard history, language switching, and return-to-menu. Capture desktop 1440×1000 and mobile 390×844 screenshots.
 
 - [ ] **Step 3: Inspect screenshots for quality**
 
