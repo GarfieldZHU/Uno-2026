@@ -24,8 +24,9 @@ The current vertical slice includes:
 - a Chinese-first main menu with only Start game, Settings, and About, plus a
   settings drawer for the 3–8 seat and 1–30 second offline controls;
 - a top-down oval felt tabletop with generated wood/portrait assets, resolution-independent
-  SVG card fronts/backs, perimeter seats, fan-shaped hands, deal/draw/play/shuffle motion,
-  and a clickable discard history;
+  SVG card fronts/backs, perimeter seats, fan-shaped hands, seat-to-seat dealing motion,
+  draw/play/shuffle motion, a clickable discard history, and a local match-record drawer
+  with replay and JSON export;
 - an English toggle available from the menu, settings drawer, and table HUD;
 - a Rust room service with four-character waiting-room codes, 15-minute waiting
   expiry, 3–8 seats, configurable AI seats, host-owned start/close semantics,
@@ -33,6 +34,9 @@ The current vertical slice includes:
 - a quiet online-lobby/table network-log export that records redacted WebSocket
   and REST timings, reconnects, browser connection capabilities, and public
   edge clues without uploading automatically;
+- an in-table match record that observes every distinct Rust snapshot, including the
+  actor, card, active color, direction, next player, hand counts, and penalty state;
+  the record can be replayed locally or exported for post-game review;
 - Vercel configuration for the static Vite client.
 
 Online rooms now expose a modular REST + WebSocket slice. A started-game leave

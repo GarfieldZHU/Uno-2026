@@ -95,6 +95,16 @@ type UiCopy = {
   networkLog: string;
   networkLogDone: string;
   networkLogHint: string;
+  gameRecord: string;
+  gameRecordHint: string;
+  gameRecordTitle: string;
+  gameRecordSummary: (count: number) => string;
+  noGameRecord: string;
+  replayRecord: string;
+  replaying: string;
+  exportRecord: string;
+  recordExported: string;
+  closeRecord: string;
   dealingDetail: (playerCount: number) => string;
   startingWith: (name: string) => string;
   playBegins: string;
@@ -111,7 +121,7 @@ type UiCopy = {
 const COPY: Record<Language, UiCopy> = {
   zh: {
     menuEyebrow: "UNO-2026 / 1411",
-    menuTitle: "把下一张牌，\\n发到桌上。",
+    menuTitle: "开始一局 UNO",
     menuSubtitle: "一张为纪念而重做的离线 UNO 牌桌。Rust 负责规则，WASM 让它留在你的浏览器里。",
     startGame: "开始游戏",
     settings: "设置",
@@ -202,6 +212,16 @@ const COPY: Record<Language, UiCopy> = {
     networkLog: "导出网络日志",
     networkLogDone: "网络日志已导出",
     networkLogHint: "导出脱敏的 WebSocket 与网络性能日志",
+    gameRecord: "局内记录",
+    gameRecordHint: "查看、回放或导出本局记录",
+    gameRecordTitle: "本局记录",
+    gameRecordSummary: (count) => `已记录 ${count} 个状态节点，可用于复盘。`,
+    noGameRecord: "等待牌桌产生第一条记录。",
+    replayRecord: "回放",
+    replaying: "回放中…",
+    exportRecord: "导出记录",
+    recordExported: "已导出",
+    closeRecord: "关闭局内记录",
     dealingDetail: (playerCount) => `${playerCount} 位玩家 · 手牌已准备，正在发到牌桌`,
     startingWith: (name) => `从 ${name} 开始`,
     playBegins: "请留意当前回合。",
@@ -216,7 +236,7 @@ const COPY: Record<Language, UiCopy> = {
   },
   en: {
     menuEyebrow: "UNO-2026 / 1411",
-    menuTitle: "Deal the next card\\nto the table.",
+    menuTitle: "Start a UNO game",
     menuSubtitle: "An offline UNO table rebuilt as a small memorial. Rust owns the rules; WASM keeps the match in your browser.",
     startGame: "Start game",
     settings: "Settings",
@@ -307,6 +327,16 @@ const COPY: Record<Language, UiCopy> = {
     networkLog: "Export network log",
     networkLogDone: "Network log exported",
     networkLogHint: "Export redacted WebSocket and network performance logs",
+    gameRecord: "Match record",
+    gameRecordHint: "Review, replay, or export this match",
+    gameRecordTitle: "Match record",
+    gameRecordSummary: (count) => `${count} state nodes recorded for replay.`,
+    noGameRecord: "The first table event will appear here.",
+    replayRecord: "Replay",
+    replaying: "Replaying…",
+    exportRecord: "Export record",
+    recordExported: "Exported",
+    closeRecord: "Close match record",
     dealingDetail: (playerCount) => `${playerCount} players · hands are moving to the table`,
     startingWith: (name) => `Starting with ${name}`,
     playBegins: "Watch the active turn.",

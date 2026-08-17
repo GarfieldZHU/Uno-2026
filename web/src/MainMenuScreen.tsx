@@ -27,10 +27,13 @@ export function MainMenuScreen({ language, onLanguageChange, onStart, onOpenOnli
 
       <section className="menu-stage" aria-labelledby="menu-title">
         <img className="menu-sparkle menu-sparkle-left" src="/assets/cards/sparkle.svg" alt="" />
-        <div className="menu-wordmark"><img src="/assets/cards/uno-title.svg" alt="UNO" /></div>
+        <div className="menu-wordmark" aria-label="UNO 2026">
+          <span className="menu-card-logo" aria-hidden="true"><img src="/assets/cards/reference/card-back.svg" alt="" /></span>
+          <img className="menu-wordmark-title" src="/assets/cards/uno-title.svg" alt="UNO" />
+          <small>2026 · 1411</small>
+        </div>
         <p className="menu-eyebrow">{text.menuEyebrow}</p>
         <h1 id="menu-title">{titleLines.map((line) => <span key={line}>{line}</span>)}</h1>
-        <p className="menu-subtitle">{text.menuSubtitle}</p>
         <div className="menu-actions">
           <button className="menu-action menu-action-primary" type="button" onClick={onStart}><span>{text.startGame}</span><b>→</b></button>
           <button className="menu-action menu-action-online" type="button" onClick={onOpenOnline}><span>{text.online}</span><b>↗</b></button>

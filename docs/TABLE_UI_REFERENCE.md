@@ -30,14 +30,21 @@ Interaction rules:
 
 1. Click the draw pile to draw when it is your turn.
 2. Click the discard pile to open the chronological played-card history.
-3. Click a lit hand card to play it; wild cards open the color picker.
+3. Click a lit hand card once to lift it, click again (or double-click) to play it; drag it
+   to the felt for a deliberate play. Wild cards open the color picker.
 4. The table exposes only high-signal controls; settings and language remain outside the playfield.
 5. The online lobby and table keep a quiet `⌁` control that exports redacted network diagnostics only when clicked; nothing is uploaded.
 
-When assets finish loading, the table runs a 3.8-second initial deal and then
-calls out the starting player before enabling input. The play direction is a
+When assets finish loading, the table runs a 3.8-second initial deal from the
+centre pile to the perimeter seats and then calls out the starting player before
+enabling input. The play direction is a
 translucent, connected SVG arrow ring over the felt (hover a segment to lift
 its contrast); the old center direction chip is intentionally not rendered.
 Completed games show a persistent win/lose settlement layer with the winner's
 name. Animations are state-driven (`deal`, `shuffle`, `draw`, `play`, settlement)
 and respect `prefers-reduced-motion`.
+
+The quiet match-record button beside the network diagnostics button opens the
+observed snapshot timeline. It records public state only (not hidden opponent
+cards), highlights each event during local replay, and downloads a JSON record
+that can be archived or inspected without uploading it.

@@ -23,6 +23,7 @@ On a clean machine, install the browser once with
 6. With `uno-server` listening on `127.0.0.1:8787`, the same command also runs
    `tests/online.spec.ts`: three isolated browser contexts create/join one
    six-seat room with three AI seats, verify viewer-safe hands and SVG assets,
+   the seat-to-seat initial deal, the match-record drawer/replay/export,
    and drive the room to a `Won` snapshot in every window. It also asserts that
    all three tables report `data-sync-transport="websocket"` and that a guest
    receives a changed action without waiting for a polling interval. The browser

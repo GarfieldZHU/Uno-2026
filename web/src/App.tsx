@@ -13,6 +13,8 @@ import { ActionEffectOverlay, PenaltyDrawFlight } from "./PenaltyDrawFlight";
 import { SettingsDrawer } from "./SettingsDrawer";
 import { createDefaultSetup, type SetupConfig } from "./SetupScreen";
 import { DealSequenceOverlay, SettlementOverlay, type TablePhase } from "./TableOverlays";
+import { GameRecordPanel } from "./GameRecordPanel";
+import { appendSnapshotEvent, createGameRecord, type GameRecord } from "./gameRecord";
 import { TableDirectionArrows } from "./TableDirectionArrows";
 import { copy, localizeEngineMessage, profileLabel, translateColor, type Language } from "./i18n";
 import { createWasmGame, type WasmGame } from "./wasm";
@@ -133,6 +135,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [recordOpen, setRecordOpen] = useState(false);
   const [topbarOpen, setTopbarOpen] = useState(false);
   const [game, setGame] = useState<WasmGame | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -150,6 +153,8 @@ export function App() {
   const [playFlight, setPlayFlight] = useState<PlayFlightEvent | null>(null);
   const [tableEffect, setTableEffect] = useState<TableEffect>(null);
   const [penaltyDraw, setPenaltyDraw] = useState<{ playerId: number; count: number; source: PlayFlightSource } | null>(null);
+  const gameRecordRef = useRef<GameRecord>(createGameRecord("offline"));
+  const [gameRecord, setGameRecord] = useState<GameRecord>(() => gameRecordRef.current);
   const aiBusy = useRef(false);
   const gameRef = useRef<WasmGame | null>(null);
   const draggingCardRef = useRef<number | null>(null);
@@ -167,6 +172,18 @@ export function App() {
   const dealTimerRef = useRef<number | null>(null);
   const startingTimerRef = useRef<number | null>(null);
   const text = copy(language);
+
+  const resetGameRecord = useCallback((source: "offline" | "online" = "offline", roomCode?: string) => {
+    const next = createGameRecord(source, roomCode);
+    gameRecordRef.current = next;
+    setGameRecord(next);
+  }, []);
+
+  const appendGameRecord = useCallback((nextSnapshot: Snapshot) => {
+    const next = appendSnapshotEvent(gameRecordRef.current, nextSnapshot);
+    gameRecordRef.current = next;
+    setGameRecord(next);
+  }, []);
 
   const triggerAnimation = useCallback((next: Exclude<TableAnimation, null>) => {
     if (animationTimerRef.current !== null) window.clearTimeout(animationTimerRef.current);
@@ -234,6 +251,8 @@ export function App() {
     setNotice(null);
     setWildCardId(null);
     setHistoryOpen(false);
+    setRecordOpen(false);
+    resetGameRecord("offline");
     setTopbarOpen(false);
     setPlayFlight(null);
     setTableEffect(null);
@@ -253,6 +272,7 @@ export function App() {
       const nextSnapshot = parseSnapshot(nextGame.snapshot()).snapshot;
       setGame(nextGame);
       setSnapshot(nextSnapshot);
+      appendGameRecord(nextSnapshot);
       setActiveConfig(nextConfig);
       setSetupConfig(nextConfig);
       setScreen("table");
@@ -265,7 +285,7 @@ export function App() {
     } finally {
       if (runToken === runTokenRef.current) setLoading(false);
     }
-  }, [beginDealSequence]);
+  }, [appendGameRecord, beginDealSequence, resetGameRecord]);
 
   const enterOnlineTable = useCallback(async (room: OnlineRoom) => {
     const runToken = runTokenRef.current + 1;
@@ -310,6 +330,8 @@ export function App() {
     setNotice(null);
     setWildCardId(null);
     setHistoryOpen(false);
+    setRecordOpen(false);
+    resetGameRecord("offline");
     setPlayFlight(null);
     setTableEffect(null);
     setPenaltyDraw(null);
@@ -323,6 +345,7 @@ export function App() {
   const applyRaw = useCallback((raw: string, nextAnimation?: Exclude<TableAnimation, null>) => {
     const result = parseSnapshot(raw);
     setSnapshot(result.snapshot);
+    appendGameRecord(result.snapshot);
     showTableEffects(result.snapshot);
     if (result.error) setNotice(result.error);
     else {
@@ -330,7 +353,7 @@ export function App() {
       if (nextAnimation) triggerAnimation(nextAnimation);
     }
     if (result.snapshot.status === "Won") setWildCardId(null);
-  }, [showTableEffects, triggerAnimation]);
+  }, [appendGameRecord, showTableEffects, triggerAnimation]);
 
   const runAiTurns = useCallback(async () => {
     if (dealPhase !== null || aiBusy.current || !gameRef.current || !activeConfig) return;
@@ -348,6 +371,7 @@ export function App() {
         const aiPlayerId = playedPlayerId(result.snapshot.last_action);
         if (aiPlayerId !== null) showPlayFlight(result.snapshot.top_card, aiPlayerId, result.snapshot.players.length);
         showTableEffects(result.snapshot);
+        appendGameRecord(result.snapshot);
         setSnapshot(result.snapshot);
         triggerAnimation(aiPlayerId === null ? "draw" : "play");
         if (result.error) setNotice(result.error);
@@ -356,7 +380,7 @@ export function App() {
     } finally {
       aiBusy.current = false;
     }
-  }, [activeConfig, dealPhase, showPlayFlight, showTableEffects, snapshot, triggerAnimation]);
+  }, [activeConfig, appendGameRecord, dealPhase, showPlayFlight, showTableEffects, snapshot, triggerAnimation]);
 
   useEffect(() => {
     if (screen === "table" && dealPhase === null && snapshot && snapshot.current_player !== HUMAN_ID && snapshot.status === "Playing") void runAiTurns();
@@ -582,6 +606,7 @@ export function App() {
 
   return (
     <div className={`app-shell ${topbarOpen ? "topbar-is-open" : "topbar-is-hidden"}`}>
+      <GameRecordPanel language={language} record={gameRecord} open={recordOpen} onToggle={() => setRecordOpen((open) => !open)} />
       <button className="topbar-toggle" type="button" onClick={() => setTopbarOpen((open) => !open)} aria-expanded={topbarOpen} aria-label={topbarOpen ? (language === "zh" ? "隐藏顶部信息栏" : "Hide top information bar") : (language === "zh" ? "显示顶部信息栏" : "Show top information bar")}>{topbarOpen ? "−" : "☰"}</button>
       <header className="topbar">
         <div className="brand-lockup"><div className="brand-mark">UNO<small>2026</small></div><div className="brand-divider" /><div className="brand-context"><span>{text.offlineTable}</span><small>{text.rustRuntime}</small></div></div>

@@ -14,14 +14,28 @@ type DealProps = {
 export function DealSequenceOverlay({ phase, language, playerCount, startingPlayer }: DealProps) {
   const text = copy(language);
   const dealing = phase === "dealing";
-  const cardCount = Math.min(8, Math.max(4, playerCount + 2));
+  // One visible pass around the table is enough to communicate the real deal
+  // without holding the player in a loading state for the full seven-card
+  // deal. The engine has already dealt the complete hands underneath.
+  const cardCount = Math.min(24, Math.max(9, playerCount * 3));
+  const targets = [
+    ["0vw", "24vh", "0deg"],
+    ["-28vw", "-15vh", "-12deg"],
+    ["0vw", "-23vh", "0deg"],
+    ["28vw", "-15vh", "12deg"],
+    ["27vw", "14vh", "10deg"],
+    ["-27vw", "14vh", "-10deg"],
+    ["20vw", "-25vh", "9deg"],
+    ["-20vw", "-25vh", "-9deg"],
+  ];
   return (
     <div className={`deal-sequence-layer ${dealing ? "is-dealing" : "is-starting"}`} data-testid="initial-deal" data-phase={phase} role="status" aria-live="polite">
       <div className="deal-sequence-vignette" />
       <div className="deal-sequence-stack" aria-hidden="true">
-        {Array.from({ length: cardCount }, (_, index) => (
-          <img key={index} src="/assets/cards/reference/card-back.svg" alt="" style={{ "--deal-index": index } as CSSProperties} />
-        ))}
+        {Array.from({ length: cardCount }, (_, index) => {
+          const [x, y, rotate] = targets[index % Math.min(playerCount, targets.length)];
+          return <img key={index} src="/assets/cards/reference/card-back.svg" alt="" style={{ "--deal-index": index, "--deal-x": x, "--deal-y": y, "--deal-rotate": rotate, "--deal-delay": `${index * 115}ms` } as CSSProperties} />;
+        })}
       </div>
       <div className="deal-sequence-copy">
         {dealing ? (

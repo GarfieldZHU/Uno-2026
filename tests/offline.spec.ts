@@ -32,6 +32,7 @@ test("中文主菜单是默认界面，并可切换到英文", async ({ page }) 
   await expect(page.getByRole("button", { name: "开始游戏" })).toBeVisible();
   await expect(page.getByRole("button", { name: "设置" })).toBeVisible();
   await expect(page.getByRole("button", { name: "关于" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "开始一局 UNO" })).toBeVisible();
   await expect(page.locator(".menu-home-link")).toHaveAttribute("href", "https://alohayo.me/");
   await expect(page.locator(".menu-home-link")).toHaveAttribute("target", "_blank");
   await expect(page.getByTestId("main-menu").getByLabel("玩家")).toHaveCount(0);
@@ -43,6 +44,21 @@ test("中文主菜单是默认界面，并可切换到英文", async ({ page }) 
   await expect(page.getByRole("button", { name: "About" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Switch to Chinese" })).toBeVisible();
   await page.screenshot({ path: "test-results/offline-menu-en.png", fullPage: true });
+});
+
+test("局内记录可以查看、回放并导出", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
+
+  await page.getByTestId("game-record-toggle").click();
+  await expect(page.getByTestId("game-record-panel")).toBeVisible();
+  await expect(page.getByTestId("game-record-panel").locator(".game-record-event")).toHaveCount(1);
+  const download = page.waitForEvent("download");
+  await page.getByTestId("game-record-export").click();
+  expect((await download).suggestedFilename()).toMatch(/^uno-2026-offline-record-.*\.json$/);
+  await page.getByTestId("game-record-replay").click();
+  await expect(page.getByTestId("game-record-panel")).toContainText("回放中");
 });
 
 test("开始牌局会先等待所有牌桌资源加载完成", async ({ page }) => {

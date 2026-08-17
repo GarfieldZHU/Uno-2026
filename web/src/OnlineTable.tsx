@@ -7,6 +7,8 @@ import { copy, localizeEngineMessage, translateColor, type Language } from "./i1
 import { clearOnlineResume, connectOnlineRoom, persistOnlineResume, type OnlineApi, type OnlineRoom, type OnlineSyncStatus } from "./online";
 import { NetworkLogExportButton } from "./NetworkLogExportButton";
 import { DealSequenceOverlay, SettlementOverlay, type TablePhase } from "./TableOverlays";
+import { GameRecordPanel } from "./GameRecordPanel";
+import { appendSnapshotEvent, createGameRecord, type GameRecord } from "./gameRecord";
 import { TableDirectionArrows } from "./TableDirectionArrows";
 import { drawInfoForAction, effectForAction, type TableEffect } from "./tableEffects";
 import { COLORS, type Card, type Color, type PlayFlightEvent, type PlayFlightSource, type Snapshot } from "./types";
@@ -30,6 +32,9 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   const text = copy(language);
   const [room, setRoom] = useState(initialRoom);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [recordOpen, setRecordOpen] = useState(false);
+  const gameRecordRef = useRef<GameRecord>(createGameRecord("online", initialRoom.code, initialRoom.snapshot));
+  const [gameRecord, setGameRecord] = useState<GameRecord>(() => gameRecordRef.current);
   const [wildCardId, setWildCardId] = useState<number | null>(null);
   const [handOrder, setHandOrder] = useState<number[]>([]);
   const [draggingCardId, setDraggingCardId] = useState<number | null>(null);
@@ -78,6 +83,11 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
 
   const applyRoom = (next: OnlineRoom) => {
     const nextSnapshot = next.snapshot;
+    if (nextSnapshot) {
+      const nextRecord = appendSnapshotEvent(gameRecordRef.current, nextSnapshot);
+      gameRecordRef.current = nextRecord;
+      setGameRecord(nextRecord);
+    }
     if (nextSnapshot && nextSnapshot.last_action !== previousAction.current) {
       const playerId = parsePlayedPlayer(nextSnapshot.last_action);
       setAnimation(nextSnapshot.last_action.includes("drew") ? "draw" : playerId === null ? null : "play");
@@ -320,6 +330,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   const winner = snapshot.winner === null ? undefined : snapshot.players.find((player) => player.id === snapshot.winner);
   return <div className={`app-shell online-table-shell ${topbarOpen ? "topbar-is-open" : "topbar-is-hidden"}`} data-sync-transport={syncStatus === "connected" ? "websocket" : "rest-fallback"} data-sync-state={syncStatus}>
     <NetworkLogExportButton language={language} />
+    <GameRecordPanel language={language} record={gameRecord} open={recordOpen} onToggle={() => setRecordOpen((open) => !open)} />
     <button className="topbar-toggle" type="button" onClick={() => setTopbarOpen((open) => !open)} aria-expanded={topbarOpen} aria-label={topbarOpen ? (language === "zh" ? "隐藏顶部信息栏" : "Hide top information bar") : (language === "zh" ? "显示顶部信息栏" : "Show top information bar")}>{topbarOpen ? "−" : "☰"}</button>
     <header className="topbar">
       <div className="brand-lockup"><div className="brand-mark">UNO<small>2026</small></div><div className="brand-divider" /><div className="brand-context"><span>{language === "zh" ? "联机牌桌" : "ONLINE TABLE"}</span><small>{room.code} · Rust room service</small></div></div>
