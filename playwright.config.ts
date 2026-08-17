@@ -3,6 +3,12 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
   timeout: 20_000,
+  // The online smoke test owns one in-memory room and three WebSocket
+  // clients. Keeping CI workers serialized prevents another browser context
+  // from competing for the same dev-server proxy while still allowing a
+  // single retry for transient runner/socket failures.
+  workers: process.env.CI ? 1 : undefined,
+  retries: process.env.CI ? 1 : 0,
   use: {
     baseURL: "http://127.0.0.1:1411",
     trace: "retain-on-failure",
