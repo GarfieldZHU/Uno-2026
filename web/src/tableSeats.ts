@@ -17,20 +17,26 @@ export const SEAT_LAYOUTS: Record<number, OpponentSeat[]> = {
   10: ["south-south-west", "south-west", "west", "north-west", "north", "north-east", "east", "south-east", "south-south-east"],
 };
 
-function relativeOffset(playerId: number, humanId: number, playerCount: number) {
+function relativeOffset(playerId: number, humanId: number, playerCount: number, playerIds?: readonly number[]) {
+  if (playerIds && playerIds.length === playerCount) {
+    const playerIndex = playerIds.indexOf(playerId);
+    const humanIndex = playerIds.indexOf(humanId);
+    if (playerIndex >= 0 && humanIndex >= 0) return (playerIndex - humanIndex + playerCount) % playerCount;
+  }
   return (playerId - humanId + playerCount) % playerCount;
 }
 
-export function seatSlotForPlayer(playerId: number, humanId: number, playerCount: number): SeatSlot {
+export function seatSlotForPlayer(playerId: number, humanId: number, playerCount: number, playerIds?: readonly number[]): SeatSlot {
   if (playerId === humanId) return "south";
   const layout = SEAT_LAYOUTS[playerCount] ?? SEAT_LAYOUTS[4];
-  return layout[relativeOffset(playerId, humanId, playerCount) - 1] ?? "north";
+  return layout[relativeOffset(playerId, humanId, playerCount, playerIds) - 1] ?? "north";
 }
 
 export function orderedOpponents(players: Player[], humanId: number) {
+  const playerIds = players.map((player) => player.id);
   return [...players]
     .filter((player) => player.id !== humanId)
-    .sort((a, b) => relativeOffset(a.id, humanId, players.length) - relativeOffset(b.id, humanId, players.length));
+    .sort((a, b) => relativeOffset(a.id, humanId, players.length, playerIds) - relativeOffset(b.id, humanId, players.length, playerIds));
 }
 
 export function nextPlayerId(players: Player[], playerId: number, direction: number) {
@@ -41,7 +47,7 @@ export function nextPlayerId(players: Player[], playerId: number, direction: num
   return players[(index + step + players.length) % players.length]?.id ?? playerId;
 }
 
-export function sourceForPlayer(playerId: number, humanId: number, playerCount: number): PlayFlightSource {
+export function sourceForPlayer(playerId: number, humanId: number, playerCount: number, playerIds?: readonly number[]): PlayFlightSource {
   if (playerId === humanId) return "human";
-  return seatSlotForPlayer(playerId, humanId, playerCount) as OpponentSeat;
+  return seatSlotForPlayer(playerId, humanId, playerCount, playerIds) as OpponentSeat;
 }

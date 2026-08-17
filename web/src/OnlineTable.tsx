@@ -66,8 +66,8 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   const previousAction = useRef(room.snapshot?.last_action ?? "");
   const humanId = room.session?.playerId ?? HUMAN_ID_FALLBACK;
   const snapshot = room.snapshot;
-  const human = snapshot?.players[humanId];
-  const currentPlayer = snapshot?.players[snapshot.current_player];
+  const human = snapshot?.players.find((player) => player.id === humanId);
+  const currentPlayer = snapshot?.players.find((player) => player.id === snapshot.current_player);
   const nextId = snapshot ? (snapshot.next_player ?? nextPlayerId(snapshot.players, snapshot.current_player, snapshot.direction)) : null;
   roomRef.current = room;
   const orderedHand = useMemo(() => {
@@ -81,8 +81,8 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
     // A draw reveal contains the card face and is intentionally private to
     // the client that owns the seat. Other clients only see the public count.
     if (playerId !== humanId) return;
-    const before = new Set(previous?.players[humanId]?.hand.map((card) => card.id) ?? []);
-    const drawn = next.players[humanId]?.hand.find((card) => !before.has(card.id));
+    const before = new Set(previous?.players.find((player) => player.id === humanId)?.hand.map((card) => card.id) ?? []);
+    const drawn = next.players.find((player) => player.id === humanId)?.hand.find((card) => !before.has(card.id));
     if (!drawn) return;
     if (drawFlightTimerRef.current !== null) window.clearTimeout(drawFlightTimerRef.current);
     if (drawnHighlightTimerRef.current !== null) window.clearTimeout(drawnHighlightTimerRef.current);
@@ -103,7 +103,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
     setTableEffect(effect);
     if (effect) window.setTimeout(() => setTableEffect(null), effect === "draw-four" ? 1_450 : 900);
     const draw = drawInfoForAction(nextSnapshot.last_action);
-    setPenaltyDraw(draw && draw.playerId !== humanId ? { playerId: draw.playerId, count: draw.count, source: sourceForPlayer(draw.playerId, humanId, nextSnapshot.players.length) } : null);
+    setPenaltyDraw(draw && draw.playerId !== humanId ? { playerId: draw.playerId, count: draw.count, source: sourceForPlayer(draw.playerId, humanId, nextSnapshot.players.length, nextSnapshot.players.map((player) => player.id)) } : null);
     if (draw) window.setTimeout(() => setPenaltyDraw(null), 1_100);
   };
 
@@ -122,7 +122,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
       if (draw) showDrawCard(previousSnapshot, nextSnapshot, draw.playerId);
       if (playerId !== null) {
         const card = nextSnapshot.top_card;
-        setFlight({ id: `${nextSnapshot.last_action}-${Date.now()}`, card, playerId, source: sourceForPlayer(playerId, humanId, nextSnapshot.players.length) });
+        setFlight({ id: `${nextSnapshot.last_action}-${Date.now()}`, card, playerId, source: sourceForPlayer(playerId, humanId, nextSnapshot.players.length, nextSnapshot.players.map((player) => player.id)) });
         window.setTimeout(() => setFlight(null), 1_050);
       }
       previousAction.current = nextSnapshot.last_action;
@@ -388,7 +388,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
               const center = visible > 0 ? (visible - 1) / 2 : 0;
               const active = player.id === snapshot.current_player;
               const isNext = player.id === nextId;
-              return <div key={player.id} data-player-id={player.id} className={`seat-player player-row seat-${seatSlotForPlayer(player.id, humanId, snapshot.players.length)} ${active ? "is-active" : ""} ${isNext ? "is-next" : ""}`}>
+              return <div key={player.id} data-player-id={player.id} className={`seat-player player-row seat-${seatSlotForPlayer(player.id, humanId, snapshot.players.length, snapshot.players.map((candidate) => candidate.id))} ${active ? "is-active" : ""} ${isNext ? "is-next" : ""}`}>
                 <span className="seat-avatar-wrap"><span className={`seat-avatar seat-avatar-${player.id % 4}`} />{active && <span className="seat-turn-pip" aria-label={language === "zh" ? "当前回合" : "current turn"} />}</span>
                 <div className="seat-player-info"><strong title={player.name}>{player.name}</strong><span>{active ? (language === "zh" ? "当前回合" : "CURRENT TURN") : player.kind.startsWith("human") ? `${player.hand_count} ${language === "zh" ? "张牌" : "cards"}` : `AI · ${player.hand_count} ${language === "zh" ? "张牌" : "cards"}`}</span></div>
                 {active && <span className="seat-turn-label">{language === "zh" ? "出牌中" : "TURN"}</span>}

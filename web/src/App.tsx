@@ -48,8 +48,8 @@ function colorClass(color: Color) {
   return color.toLowerCase();
 }
 
-function sourceForPlayer(playerId: number, playerCount: number): PlayFlightSource {
-  return seatSourceForPlayer(playerId, HUMAN_ID, playerCount);
+function sourceForPlayer(playerId: number, playerCount: number, playerIds?: readonly number[]): PlayFlightSource {
+  return seatSourceForPlayer(playerId, HUMAN_ID, playerCount, playerIds);
 }
 
 function playedPlayerId(lastAction: string): number | null {
@@ -217,9 +217,9 @@ export function App() {
     }, DEAL_DURATION_MS);
   }, []);
 
-  const showPlayFlight = useCallback((card: Card, playerId: number, playerCount: number) => {
+  const showPlayFlight = useCallback((card: Card, playerId: number, playerCount: number, playerIds?: readonly number[]) => {
     if (flightTimerRef.current !== null) window.clearTimeout(flightTimerRef.current);
-    setPlayFlight({ id: `${playerId}-${card.id}-${Date.now()}`, card, playerId, source: sourceForPlayer(playerId, playerCount) });
+    setPlayFlight({ id: `${playerId}-${card.id}-${Date.now()}`, card, playerId, source: sourceForPlayer(playerId, playerCount, playerIds) });
     flightTimerRef.current = window.setTimeout(() => {
       setPlayFlight(null);
       flightTimerRef.current = null;
@@ -258,7 +258,7 @@ export function App() {
     const draw = drawInfoForAction(nextSnapshot.last_action);
     if (penaltyTimerRef.current !== null) window.clearTimeout(penaltyTimerRef.current);
     if (draw && draw.playerId !== HUMAN_ID) {
-      setPenaltyDraw({ playerId: draw.playerId, count: draw.count, source: sourceForPlayer(draw.playerId, nextSnapshot.players.length) });
+      setPenaltyDraw({ playerId: draw.playerId, count: draw.count, source: sourceForPlayer(draw.playerId, nextSnapshot.players.length, nextSnapshot.players.map((player) => player.id)) });
       penaltyTimerRef.current = window.setTimeout(() => {
         setPenaltyDraw(null);
         penaltyTimerRef.current = null;
@@ -403,7 +403,7 @@ export function App() {
         const result = parseSnapshot(gameRef.current.ai_step());
         current = result.snapshot;
         const aiPlayerId = playedPlayerId(result.snapshot.last_action);
-        if (aiPlayerId !== null) showPlayFlight(result.snapshot.top_card, aiPlayerId, result.snapshot.players.length);
+        if (aiPlayerId !== null) showPlayFlight(result.snapshot.top_card, aiPlayerId, result.snapshot.players.length, result.snapshot.players.map((player) => player.id));
         showTableEffects(result.snapshot);
         appendGameRecord(result.snapshot);
         setSnapshot(result.snapshot);
@@ -420,14 +420,14 @@ export function App() {
     if (screen === "table" && dealPhase === null && snapshot && snapshot.current_player !== HUMAN_ID && snapshot.status === "Playing") void runAiTurns();
   }, [dealPhase, runAiTurns, screen, snapshot]);
 
-  const human = snapshot?.players[HUMAN_ID];
+  const human = snapshot?.players.find((player) => player.id === HUMAN_ID);
   const orderedHand = useMemo(() => {
     if (!human) return [];
     const byId = new Map(human.hand.map((card) => [card.id, card]));
     const ordered = handOrder.map((id) => byId.get(id)).filter((card): card is Card => Boolean(card));
     return [...ordered, ...human.hand.filter((card) => !handOrder.includes(card.id))];
   }, [handOrder, human]);
-  const currentPlayer = snapshot?.players[snapshot.current_player];
+  const currentPlayer = snapshot?.players.find((player) => player.id === snapshot.current_player);
   const nextId = snapshot ? (snapshot.next_player ?? nextPlayerId(snapshot.players, snapshot.current_player, snapshot.direction)) : null;
   const playableIds = useMemo(() => {
     if (dealPhase !== null || !snapshot || snapshot.current_player !== HUMAN_ID || snapshot.pending_draw > 0) return new Set<number>();
@@ -448,7 +448,7 @@ export function App() {
       setWildCardId(card.id);
       return;
     }
-    showPlayFlight(card, HUMAN_ID, snapshot.players.length);
+    showPlayFlight(card, HUMAN_ID, snapshot.players.length, snapshot.players.map((player) => player.id));
     applyRaw(game.play_card(card.id, ""), "play");
   }
 
@@ -596,7 +596,7 @@ export function App() {
   function handleWildColor(color: Color) {
     if (dealPhase !== null || !game || wildCardId === null) return;
     const card = human?.hand.find((candidate) => candidate.id === wildCardId);
-    if (card && snapshot) showPlayFlight(card, HUMAN_ID, snapshot.players.length);
+    if (card && snapshot) showPlayFlight(card, HUMAN_ID, snapshot.players.length, snapshot.players.map((player) => player.id));
     applyRaw(game.play_card(wildCardId, color.toLowerCase()), "play");
     setWildCardId(null);
   }
@@ -656,7 +656,7 @@ export function App() {
             <TableDirectionArrows direction={snapshot.direction} language={language} players={snapshot.players.map((player) => player.id)} humanId={HUMAN_ID} currentPlayerId={snapshot.current_player} nextPlayerId={nextId} />
             <div className="table-scene-badge"><span className="live-pip" />{snapshot.status === "Won" ? text.tableComplete : currentPlayer?.name === "You" ? text.yourMove : text.thinking(currentPlayer?.name ?? "AI")}</div>
             <div className="table-seats" data-player-count={snapshot.players.length}>
-              {orderedOpponents(snapshot.players, HUMAN_ID).map((player) => <SeatPlayer key={player.id} player={player} language={language} active={player.id === snapshot.current_player} next={player.id === nextId} slot={seatSlotForPlayer(player.id, HUMAN_ID, snapshot.players.length)} />)}
+              {orderedOpponents(snapshot.players, HUMAN_ID).map((player) => <SeatPlayer key={player.id} player={player} language={language} active={player.id === snapshot.current_player} next={player.id === nextId} slot={seatSlotForPlayer(player.id, HUMAN_ID, snapshot.players.length, snapshot.players.map((candidate) => candidate.id))} />)}
               {human && <SeatPlayer player={human} language={language} active={human.id === snapshot.current_player} next={human.id === nextId} slot="south" human />}
             </div>
             <div className="table-center">

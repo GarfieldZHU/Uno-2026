@@ -690,9 +690,8 @@ body { background: radial-gradient(circle at 50% -16%, #254b46 0, #0b1c1d 44%, #
   .table-direction-chip, .seat-turn-label { animation: none !important; }
 }
 
-/* The direction is part of the felt now: a low-contrast path joins the
-   perimeter seats, while a wider invisible stroke keeps each segment easy to
-   discover and brightens it on hover. */
+/* The direction is part of the felt now: a wider invisible stroke keeps each
+   seat-to-seat segment easy to discover and brightens it on hover. */
 .table-direction-arrows { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: visible; color: rgba(245, 201, 107, .92); opacity: .5; pointer-events: none; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .28)); transition: opacity .2s ease, filter .2s ease; }
 .table-direction-arrows:hover { opacity: .84; filter: drop-shadow(0 3px 7px rgba(245, 201, 107, .25)); }
 .direction-arrow-ring, .direction-arrow-segment { pointer-events: all; }
@@ -1007,38 +1006,29 @@ body {
   .menu-action, .table-seats .seat-player, .hand-fan .card-art { transition: none; }
 }
 
-/* Direction routes: the rail is deliberately quiet; the player-to-player
-   connector is the readable signal. Non-scaling strokes keep the arrowhead
-   crisp when the oval table changes aspect ratio. */
+/* Direction routes: the player-to-player connector is the readable signal.
+   Non-scaling strokes keep the arrowhead crisp when the oval table changes
+   aspect ratio. */
 .table-direction-arrows {
   z-index: 3;
   color: rgba(142, 232, 212, .92);
-  opacity: .62;
+  opacity: .74;
   pointer-events: none;
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .34));
   transition: opacity .2s ease, filter .2s ease;
 }
 .table-direction-arrows:hover,
 .table-direction-arrows:focus-within { opacity: .96; filter: drop-shadow(0 3px 9px rgba(142, 232, 212, .24)); }
-.direction-arrow-rail .direction-arrow-line {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.2;
-  stroke-dasharray: 1.2 4.8;
-  stroke-linecap: round;
-  opacity: .2;
-  vector-effect: non-scaling-stroke;
-}
 .direction-arrow-routes { pointer-events: all; }
 .direction-arrow-route { pointer-events: all; }
-.direction-arrow-route-hit { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; vector-effect: non-scaling-stroke; }
+.direction-arrow-route-hit { fill: none; stroke: transparent; stroke-width: 22; pointer-events: stroke; vector-effect: non-scaling-stroke; }
 .direction-arrow-route-line {
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.65;
+  stroke-width: 2.15;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: .42;
+  opacity: .7;
   vector-effect: non-scaling-stroke;
   transition: opacity .18s ease, stroke-width .18s ease, filter .18s ease;
 }
@@ -1046,13 +1036,13 @@ body {
 .direction-arrow-route:focus-visible .direction-arrow-route-line { opacity: .98; stroke-width: 2.5; filter: drop-shadow(0 0 5px rgba(142, 232, 212, .8)); }
 .direction-arrow-route.is-active-route .direction-arrow-route-line {
   color: var(--ui-gold);
-  stroke-width: 3;
+  stroke-width: 3.8;
   opacity: 1;
   stroke-dasharray: 8 4;
   animation: active-route-flow 1.1s linear infinite;
   filter: drop-shadow(0 0 7px rgba(246, 204, 113, .82));
 }
-.direction-arrow-route.is-active-route .direction-arrow-route-hit { stroke-width: 24; }
+.direction-arrow-route.is-active-route .direction-arrow-route-hit { stroke-width: 28; }
 @keyframes active-route-flow { to { stroke-dashoffset: -24; } }
 
 /* Private human draw reveal. The front is not mounted until the same asset
