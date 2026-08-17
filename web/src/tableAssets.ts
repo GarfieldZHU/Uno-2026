@@ -24,21 +24,13 @@ function loadImage(url: string) {
   return new Promise<void>((resolve, reject) => {
     const image = new Image();
     image.onload = () => {
-      // Reference card SVGs crop one shared 2.2 MB sprite sheet through an
-      // <image> node. Waiting for decode() on every crop serializes the same
-      // bitmap dozens of times on Chromium (especially on a cold CDN edge),
-      // leaving the loading screen stuck even though the network resources
-      // are complete. `load` is the correct readiness boundary for SVG: the
-      // browser has the document and can paint it from the cached sprite.
-      if (url.endsWith(".svg")) {
-        resolve();
-        return;
-      }
-      if (image.decode) {
-        void image.decode().catch(() => undefined).then(() => resolve());
-      } else {
-        resolve();
-      }
+      // `load` means the resource is available to paint. Do not gate the
+      // loading screen on `decode()`: Chromium can leave decode pending for
+      // large PNGs or SVG crops while the image is otherwise renderable,
+      // which would strand users on a nearly-complete progress counter.
+      // The browser decodes on first paint and the CSS keeps the table hidden
+      // until this bounded network preload completes.
+      resolve();
     };
     image.onerror = () => reject(new Error(`Unable to load table asset: ${url}`));
     image.src = url;
