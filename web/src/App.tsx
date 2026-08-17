@@ -9,6 +9,7 @@ import { createOnlineApi, readOnlineResume, type OnlineRoom } from "./online";
 import { NetworkLogExportButton } from "./NetworkLogExportButton";
 import { resetNetworkDiagnostics } from "./networkDiagnostics";
 import { PlayFlight } from "./PlayFlight";
+import { DrawCardFlight } from "./DrawCardFlight";
 import { ActionEffectOverlay, PenaltyDrawFlight } from "./PenaltyDrawFlight";
 import { SettingsDrawer } from "./SettingsDrawer";
 import { createDefaultSetup, type SetupConfig } from "./SetupScreen";
@@ -120,7 +121,7 @@ function SeatPlayer({ player, language, active, next = false, slot, human = fals
       </div>
       {active && <span className="seat-turn-label">{language === "zh" ? "出牌中" : "TURN"}</span>}
       {!human && <CardBackFan count={player.hand_count} />}
-      {next && <><span className="seat-next-label">{language === "zh" ? "下家" : "NEXT"}</span><span className="seat-next-marker" aria-label={language === "zh" ? "你的下家" : "your next player"}>↗</span></>}
+      {next && <><span className="seat-next-label">{text.nextPlayer}</span><span className="seat-next-marker" aria-label={language === "zh" ? "下一位出牌玩家" : "next player to play"}>↗</span></>}
     </div>
   );
 }
@@ -153,6 +154,8 @@ export function App() {
   const [playFlight, setPlayFlight] = useState<PlayFlightEvent | null>(null);
   const [tableEffect, setTableEffect] = useState<TableEffect>(null);
   const [penaltyDraw, setPenaltyDraw] = useState<{ playerId: number; count: number; source: PlayFlightSource } | null>(null);
+  const [drawFlight, setDrawFlight] = useState<{ card: Card; playerId: number } | null>(null);
+  const [drawnCardId, setDrawnCardId] = useState<number | null>(null);
   const gameRecordRef = useRef<GameRecord>(createGameRecord("offline"));
   const [gameRecord, setGameRecord] = useState<GameRecord>(() => gameRecordRef.current);
   const aiBusy = useRef(false);
@@ -169,6 +172,8 @@ export function App() {
   const flightTimerRef = useRef<number | null>(null);
   const effectTimerRef = useRef<number | null>(null);
   const penaltyTimerRef = useRef<number | null>(null);
+  const drawFlightTimerRef = useRef<number | null>(null);
+  const drawnHighlightTimerRef = useRef<number | null>(null);
   const dealTimerRef = useRef<number | null>(null);
   const startingTimerRef = useRef<number | null>(null);
   const text = copy(language);
@@ -221,6 +226,25 @@ export function App() {
     }, 1_050);
   }, []);
 
+  const showDrawCard = useCallback((previous: Snapshot | null, next: Snapshot, playerId: number) => {
+    if (playerId !== HUMAN_ID) return;
+    const before = new Set(previous?.players[HUMAN_ID]?.hand.map((card) => card.id) ?? []);
+    const drawn = next.players[HUMAN_ID]?.hand.find((card) => !before.has(card.id));
+    if (!drawn) return;
+    if (drawFlightTimerRef.current !== null) window.clearTimeout(drawFlightTimerRef.current);
+    if (drawnHighlightTimerRef.current !== null) window.clearTimeout(drawnHighlightTimerRef.current);
+    setDrawFlight({ card: drawn, playerId });
+    setDrawnCardId(drawn.id);
+    drawFlightTimerRef.current = window.setTimeout(() => {
+      setDrawFlight(null);
+      drawFlightTimerRef.current = null;
+    }, 1_250);
+    drawnHighlightTimerRef.current = window.setTimeout(() => {
+      setDrawnCardId(null);
+      drawnHighlightTimerRef.current = null;
+    }, 2_100);
+  }, []);
+
   const showTableEffects = useCallback((nextSnapshot: Snapshot) => {
     const effect = effectForAction(nextSnapshot.last_action);
     if (effectTimerRef.current !== null) window.clearTimeout(effectTimerRef.current);
@@ -233,13 +257,13 @@ export function App() {
     }
     const draw = drawInfoForAction(nextSnapshot.last_action);
     if (penaltyTimerRef.current !== null) window.clearTimeout(penaltyTimerRef.current);
-    if (draw) {
+    if (draw && draw.playerId !== HUMAN_ID) {
       setPenaltyDraw({ playerId: draw.playerId, count: draw.count, source: sourceForPlayer(draw.playerId, nextSnapshot.players.length) });
       penaltyTimerRef.current = window.setTimeout(() => {
         setPenaltyDraw(null);
         penaltyTimerRef.current = null;
       }, 1_100);
-    }
+    } else setPenaltyDraw(null);
   }, []);
 
   const startGame = useCallback(async (nextConfig: SetupConfig, nextSeed = seedFromClock()) => {
@@ -255,6 +279,8 @@ export function App() {
     resetGameRecord("offline");
     setTopbarOpen(false);
     setPlayFlight(null);
+    setDrawFlight(null);
+    setDrawnCardId(null);
     setTableEffect(null);
     setPenaltyDraw(null);
     setDealPhase(null);
@@ -316,6 +342,8 @@ export function App() {
     if (flightTimerRef.current !== null) window.clearTimeout(flightTimerRef.current);
     if (effectTimerRef.current !== null) window.clearTimeout(effectTimerRef.current);
     if (penaltyTimerRef.current !== null) window.clearTimeout(penaltyTimerRef.current);
+    if (drawFlightTimerRef.current !== null) window.clearTimeout(drawFlightTimerRef.current);
+    if (drawnHighlightTimerRef.current !== null) window.clearTimeout(drawnHighlightTimerRef.current);
     if (dealTimerRef.current !== null) window.clearTimeout(dealTimerRef.current);
     if (startingTimerRef.current !== null) window.clearTimeout(startingTimerRef.current);
   }, []);
@@ -333,6 +361,8 @@ export function App() {
     setRecordOpen(false);
     resetGameRecord("offline");
     setPlayFlight(null);
+    setDrawFlight(null);
+    setDrawnCardId(null);
     setTableEffect(null);
     setPenaltyDraw(null);
     setDealPhase(null);
@@ -343,6 +373,7 @@ export function App() {
   }, []);
 
   const applyRaw = useCallback((raw: string, nextAnimation?: Exclude<TableAnimation, null>) => {
+    const previousSnapshot = snapshot;
     const result = parseSnapshot(raw);
     setSnapshot(result.snapshot);
     appendGameRecord(result.snapshot);
@@ -350,10 +381,13 @@ export function App() {
     if (result.error) setNotice(result.error);
     else {
       setNotice(null);
-      if (nextAnimation) triggerAnimation(nextAnimation);
+      if (nextAnimation) {
+        triggerAnimation(nextAnimation);
+        if (nextAnimation === "draw") showDrawCard(previousSnapshot, result.snapshot, HUMAN_ID);
+      }
     }
     if (result.snapshot.status === "Won") setWildCardId(null);
-  }, [appendGameRecord, showTableEffects, triggerAnimation]);
+  }, [appendGameRecord, showDrawCard, showTableEffects, snapshot, triggerAnimation]);
 
   const runAiTurns = useCallback(async () => {
     if (dealPhase !== null || aiBusy.current || !gameRef.current || !activeConfig) return;
@@ -619,7 +653,7 @@ export function App() {
           <div className="table-heading"><div><p className="eyebrow">{text.match} / 001 · {text.seats(snapshot.players.length)}</p><h1>{text.makeYourMove}</h1></div><div className="round-meta"><span>{text.turn} {String(snapshot.turn_number).padStart(2, "0")}</span><span className="direction-mark" data-testid="direction-indicator" data-direction={snapshot.direction === 1 ? "clockwise" : "counter-clockwise"} aria-label={snapshot.direction === 1 ? (language === "zh" ? "顺时针出牌" : "Clockwise play") : (language === "zh" ? "逆时针出牌" : "Counter-clockwise play")}><b>{snapshot.direction === 1 ? "↻" : "↺"}</b><small>{snapshot.direction === 1 ? (language === "zh" ? "顺时针" : "CW") : (language === "zh" ? "逆时针" : "CCW")}</small></span></div></div>
           <div ref={tableDropRef} className={`felt-table table-scene ${draggingCardId !== null ? "is-card-drop-target" : ""}`} data-animation={animation ?? undefined} data-deal-phase={dealPhase ?? "ready"} data-drop-target="table" onDragEnter={handleTableDragEnter} onDragOver={handleTableDragOver} onDrop={handleTableDrop}>
             <div className="table-grid-lines" />
-            <TableDirectionArrows direction={snapshot.direction} language={language} />
+            <TableDirectionArrows direction={snapshot.direction} language={language} players={snapshot.players.map((player) => player.id)} humanId={HUMAN_ID} currentPlayerId={snapshot.current_player} nextPlayerId={nextId} />
             <div className="table-scene-badge"><span className="live-pip" />{snapshot.status === "Won" ? text.tableComplete : currentPlayer?.name === "You" ? text.yourMove : text.thinking(currentPlayer?.name ?? "AI")}</div>
             <div className="table-seats">
               {orderedOpponents(snapshot.players, HUMAN_ID).map((player) => <SeatPlayer key={player.id} player={player} language={language} active={player.id === snapshot.current_player} next={player.id === nextId} slot={seatSlotForPlayer(player.id, HUMAN_ID, snapshot.players.length)} />)}
@@ -637,6 +671,7 @@ export function App() {
             <div className="table-scene-status" aria-live="polite"><span className={`status-pulse ${snapshot.status === "Won" ? "is-won" : ""}`} aria-label={localizeEngineMessage(language, snapshot.message)} /><span className="sr-only">{localizeEngineMessage(language, snapshot.message)}</span><span className="status-code sr-only">{snapshot.last_action}</span></div>
             <div className="table-scene-footnote table-metrics" aria-label={`${text.drawPile} ${snapshot.draw_count}, ${text.discard} ${snapshot.discard_count}`}><span className="table-metric" title={text.drawPile}><span aria-hidden="true">▤</span><b>{snapshot.draw_count}</b></span><span className="table-metric" title={text.discard}><span aria-hidden="true">◈</span><b>{snapshot.discard_count}</b></span><span className="table-metric metric-ruleset" title={text.ruleset}>UNO</span></div>
             {playFlight && <PlayFlight flight={playFlight} language={language} />}
+            {drawFlight && <DrawCardFlight card={drawFlight.card} playerId={drawFlight.playerId} language={language} />}
             {tableEffect && <ActionEffectOverlay effect={tableEffect} language={language} />}
             {penaltyDraw && <PenaltyDrawFlight count={penaltyDraw.count} playerId={penaltyDraw.playerId} source={penaltyDraw.source} language={language} />}
             {dealPhase && <DealSequenceOverlay phase={dealPhase} language={language} playerCount={snapshot.players.length} startingPlayer={startingPlayer} />}
@@ -646,8 +681,8 @@ export function App() {
 
         <section className="hand-column">
           <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human?.hand_count ?? 0).padStart(2, "0")}</p>{human?.hand_count === 1 && <h2 className="hand-alert">{text.oneCardLeft}</h2>}</div><div className="hand-actions"><button className="ghost-button" data-testid="sort-hand" disabled={dealPhase !== null || snapshot.status === "Won"} onClick={() => { if (human) setHandOrder([...human.hand].sort((a, b) => a.color.localeCompare(b.color) || a.kind.localeCompare(b.kind)).map((card) => card.id)); }} type="button">{language === "zh" ? "整理手牌" : "SORT"}</button><button className="ghost-button" onClick={handleUno} disabled={dealPhase !== null || human?.hand_count !== 1 || snapshot.status === "Won"} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={handleDraw} disabled={dealPhase !== null || snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
-          <div className="hand-rail hand-fan" data-testid="hand-rail">{orderedHand.map((card, index) => <div className={`hand-card-slot ${draggingCardId === card.id ? "is-dragging" : ""}`} key={card.id} data-card-id={card.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const source = Number(event.dataTransfer.getData("text/plain")); if (source) reorderHand(source, card.id); }}>
-            <CardArt card={card} language={language} className={`hand-card ${playableIds.has(card.id) ? "is-playable" : "is-unplayable"} ${liftedCardId === card.id ? "is-lifted" : ""}`} style={{ "--hand-index": index, "--hand-total": human?.hand.length ?? 0 } as CSSProperties} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} ariaDisabled={!playableIds.has(card.id)} draggable={snapshot.current_player === HUMAN_ID && snapshot.status !== "Won"} onClick={() => handleCardClick(card)} onDoubleClick={() => handleCardDoubleClick(card)} onDragStart={(event) => handleDragStart(event, card)} onDragEnd={handleDragEnd} onPointerDown={(event) => handlePointerDown(event, card)} />
+          <div className="hand-rail hand-fan" data-testid="hand-rail">{orderedHand.map((card, index) => <div className={`hand-card-slot ${draggingCardId === card.id ? "is-dragging" : ""} ${drawnCardId === card.id ? "is-drawn-highlight" : ""}`} key={card.id} data-card-id={card.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const source = Number(event.dataTransfer.getData("text/plain")); if (source) reorderHand(source, card.id); }}>
+            <CardArt card={card} language={language} className={`hand-card ${playableIds.has(card.id) ? "is-playable" : "is-unplayable"} ${liftedCardId === card.id ? "is-lifted" : ""} ${drawnCardId === card.id ? "is-drawn-highlight" : ""}`} style={{ "--hand-index": index, "--hand-total": human?.hand.length ?? 0 } as CSSProperties} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} ariaDisabled={!playableIds.has(card.id)} draggable={snapshot.current_player === HUMAN_ID && snapshot.status !== "Won"} onClick={() => handleCardClick(card)} onDoubleClick={() => handleCardDoubleClick(card)} onDragStart={(event) => handleDragStart(event, card)} onDragEnd={handleDragEnd} onPointerDown={(event) => handlePointerDown(event, card)} />
             {wildCardId === card.id && <div className="wild-picker" role="dialog" aria-modal="false" aria-labelledby="color-title"><span className="wild-picker-stem" /><p className="eyebrow">{text.wildCard}</p><strong id="color-title">{text.chooseColor}</strong><div className="wild-picker-options">{COLORS.map((color) => <button key={color.name} className={`wild-picker-option color-option-${color.className}`} onClick={() => handleWildColor(color.name)} aria-label={translateColor(language, color.name)} type="button"><span className={`color-swatch swatch-${color.className}`} /></button>)}</div><button className="wild-picker-cancel" onClick={() => setWildCardId(null)} type="button">×</button></div>}
           </div>)}</div>
           <div className="hand-help compact-help" aria-label={language === "zh" ? "牌桌操作提示" : "Table controls"}><span className="help-action" title={language === "zh" ? "拖拽亮起的牌到牌桌出牌" : "Drag a lit card to the table"}><kbd>↕</kbd><span className="sr-only">{language === "zh" ? "拖拽亮起的牌到牌桌出牌" : "Drag a lit card to the table"}</span></span><span className="help-action" title={text.drawHint}><kbd>＋</kbd><span className="sr-only">{text.drawHint}</span></span><span className={`help-state ${notice ? "is-alert" : "is-ready"}`} title={notice ? localizeEngineMessage(language, notice) : text.playableHint}><span className="status-pulse" /><span className="sr-only">{notice ? localizeEngineMessage(language, notice) : text.playableHint}</span></span></div>

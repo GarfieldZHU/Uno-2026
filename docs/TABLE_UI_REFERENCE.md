@@ -37,9 +37,19 @@ Interaction rules:
 
 When assets finish loading, the table runs a 3.8-second initial deal from the
 centre pile to the perimeter seats and then calls out the starting player before
-enabling input. The play direction is a
-translucent, connected SVG arrow ring over the felt (hover a segment to lift
-its contrast); the old center direction chip is intentionally not rendered.
+enabling input. The play direction is a translucent, seat-aware SVG route over
+the felt. Each route connects one player to the next in the active direction;
+the current player-to-next-player route uses a gold animated stroke, while the
+other routes remain quiet. Hovering a route lifts its contrast; the old center
+direction chip is intentionally not rendered. The next-seat label reads
+`NEXT TO PLAY`/`下一位出牌` so it describes the action rather than relying on
+an ambiguous “next” shorthand.
+
+When the human player draws, only that client sees a private draw reveal: a
+card back travels from the draw pile, flips to the resolved SVG face, and
+settles into the hand. The inserted card keeps a two-second glow so the new
+card is easy to find. Other clients receive the public hand-count update but
+never see another player's card face.
 Completed games show a persistent win/lose settlement layer with the winner's
 name. Animations are state-driven (`deal`, `shuffle`, `draw`, `play`, settlement)
 and respect `prefers-reduced-motion`.

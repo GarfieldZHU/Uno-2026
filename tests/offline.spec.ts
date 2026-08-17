@@ -132,6 +132,10 @@ test("摸牌会显示对应的短暂动画状态", async ({ page }) => {
 
   await page.getByRole("button", { name: "从摸牌堆摸牌" }).click();
   await expect(page.locator(".felt-table")).toHaveAttribute("data-animation", "draw");
+  await expect(page.getByTestId("draw-card-flight")).toBeAttached();
+  await expect(page.getByTestId("draw-card-flight").locator(".draw-card-flight-back")).toBeAttached();
+  await expect(page.getByTestId("draw-card-flight").locator(".draw-card-flight-front")).toBeAttached();
+  await expect(page.locator(".hand-card.is-drawn-highlight")).toHaveCount(1);
 });
 
 test("初始发牌结束后会短暂标示起始玩家", async ({ page }) => {
@@ -144,6 +148,8 @@ test("初始发牌结束后会短暂标示起始玩家", async ({ page }) => {
   await expect(page.getByTestId("table-direction-indicator")).toBeVisible();
   await expect(page.getByTestId("table-direction-indicator")).toHaveAttribute("data-direction", "clockwise");
   await expect(page.getByTestId("table-direction-indicator")).toContainText("顺时针");
+  await expect(page.locator(".direction-arrow-route.is-active-route")).toHaveCount(1);
+  await expect(page.getByTestId("table-direction-indicator")).toHaveAttribute("data-active-route", /\d+-\d+/);
   await expect(page.locator(".table-direction-arrows .direction-arrow-line")).toHaveCount(8);
   await expect(page.locator(".table-center .table-direction-chip")).toHaveCount(0);
 });

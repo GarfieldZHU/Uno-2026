@@ -30,7 +30,7 @@ function EventRow({ event, language, active }: { event: GameRecordEvent; languag
       <span className="game-record-sequence">{String(event.sequence).padStart(2, "0")}</span>
       <div>
         <strong>{actionLabel(event, language)}</strong>
-        <small>{language === "zh" ? `当前颜色 ${color} · ${direction} · 当前手牌 ${Object.values(event.handCounts).join("/")} · 下家 ${event.nextPlayerName ?? "—"}` : `Color ${color} · ${direction} · hands ${Object.values(event.handCounts).join("/")} · next ${event.nextPlayerName ?? "—"}`}</small>
+        <small>{language === "zh" ? `当前颜色 ${color} · ${direction} · 当前手牌 ${Object.values(event.handCounts).join("/")} · 下一位出牌 ${event.nextPlayerName ?? "—"}` : `Color ${color} · ${direction} · hands ${Object.values(event.handCounts).join("/")} · next to play ${event.nextPlayerName ?? "—"}`}</small>
       </div>
     </li>
   );
@@ -89,4 +89,3 @@ export function GameRecordPanel({ language, record, open, onToggle }: Props) {
     </>
   );
 }
-

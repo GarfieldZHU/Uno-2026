@@ -10,9 +10,15 @@ largest share of the viewport.
 
 The information bar is collapsed by default. The center of the felt remains
 clear for draw/discard piles and card-flight effects. The hand is a single
-high-contrast rail with resolution-independent SVG cards. Current and next
-players are shown by elevation, outline, and short labels; long explanations are
-kept in tooltips or accessible text. At narrow widths, the layout becomes one
-column and the hand rail remains horizontally reachable.
+high-contrast rail with resolution-independent SVG cards. Direction is drawn as
+seat-aware SVG routes; the current-to-next route is a gold animated connector,
+and the next seat is labelled `NEXT TO PLAY` instead of an ambiguous shorthand.
+Current and next players are shown by elevation, outline, and short labels; long
+explanations are kept in tooltips or accessible text. At narrow widths, the
+layout becomes one column and the hand rail remains horizontally reachable.
+
+The human draw interaction is private: a back travels from the pile, flips to
+the resolved face, and the inserted card glows for two seconds. Other clients
+only receive the public count update.
 
 Implementation reference: [`docs/TABLE_UI_REFERENCE.md`](../docs/TABLE_UI_REFERENCE.md).

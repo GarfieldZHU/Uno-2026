@@ -62,6 +62,7 @@ type UiCopy = {
   makeYourMove: string;
   turn: string;
   yourMove: string;
+  nextPlayer: string;
   thinking: (name: string) => string;
   tableComplete: string;
   activeColor: string;
@@ -179,6 +180,7 @@ const COPY: Record<Language, UiCopy> = {
     makeYourMove: "轮到你出牌。",
     turn: "回合",
     yourMove: "你的回合",
+    nextPlayer: "下一位出牌",
     thinking: (name) => `${name} 思考中`,
     tableComplete: "牌局结束",
     activeColor: "当前颜色",
@@ -294,6 +296,7 @@ const COPY: Record<Language, UiCopy> = {
     makeYourMove: "Make your move.",
     turn: "TURN",
     yourMove: "YOUR MOVE",
+    nextPlayer: "NEXT TO PLAY",
     thinking: (name) => `${name.toUpperCase()} IS THINKING`,
     tableComplete: "TABLE COMPLETE",
     activeColor: "ACTIVE COLOR",
