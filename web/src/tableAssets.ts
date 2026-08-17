@@ -49,9 +49,19 @@ export async function preloadTableAssets(onProgress?: (progress: AssetProgress) 
   let loaded = 0;
   const total = TABLE_ASSET_URLS.length;
   onProgress?.({ loaded, total });
-  await Promise.all(TABLE_ASSET_URLS.map(async (url) => {
-    await loadImage(url);
-    loaded += 1;
-    onProgress?.({ loaded, total });
-  }));
+  // Keep the browser's connection/decode queue bounded. A cold Vercel edge
+  // can otherwise receive 63 simultaneous image requests and make the
+  // loading screen appear stuck even though every file is small or cached.
+  const queue = [...TABLE_ASSET_URLS];
+  let cursor = 0;
+  const worker = async () => {
+    while (cursor < queue.length) {
+      const url = queue[cursor];
+      cursor += 1;
+      await loadImage(url);
+      loaded += 1;
+      onProgress?.({ loaded, total });
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(8, total) }, () => worker()));
 }
