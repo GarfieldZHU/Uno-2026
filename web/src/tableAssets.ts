@@ -24,6 +24,16 @@ function loadImage(url: string) {
   return new Promise<void>((resolve, reject) => {
     const image = new Image();
     image.onload = () => {
+      // Reference card SVGs crop one shared 2.2 MB sprite sheet through an
+      // <image> node. Waiting for decode() on every crop serializes the same
+      // bitmap dozens of times on Chromium (especially on a cold CDN edge),
+      // leaving the loading screen stuck even though the network resources
+      // are complete. `load` is the correct readiness boundary for SVG: the
+      // browser has the document and can paint it from the cached sprite.
+      if (url.endsWith(".svg")) {
+        resolve();
+        return;
+      }
       if (image.decode) {
         void image.decode().catch(() => undefined).then(() => resolve());
       } else {
