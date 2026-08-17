@@ -48,7 +48,7 @@ Example create request:
 }
 ```
 
-`max_players` is bounded to 3–8, matching the offline engine. `ai_count` can be
+`max_players` is bounded to 3–10, matching the offline engine. `ai_count` can be
 zero, but must leave at least one human seat. Human hands are returned only to
 the token's viewer; opponent hands are count-only. A WebSocket disconnect keeps
 the player session and seat, marks that seat as AI-controlled, and lets the room

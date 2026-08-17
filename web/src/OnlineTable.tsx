@@ -382,7 +382,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
             <strong>{secondsLeft}s</strong>
             <small>{language === "zh" ? "回合倒计时" : "turn timer"}</small>
           </div>
-          <div className="table-seats">
+          <div className="table-seats" data-player-count={snapshot.players.length}>
             {orderedOpponents(snapshot.players, humanId).map((player) => {
               const visible = Math.min(8, Math.max(0, player.hand_count));
               const center = visible > 0 ? (visible - 1) / 2 : 0;

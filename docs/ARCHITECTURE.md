@@ -48,7 +48,7 @@ own. This keeps native tests and browser behavior on the same implementation.
 ## State flow
 
 1. `MainMenuScreen` renders Chinese by default with only Start game, Settings, and About. `SettingsDrawer`
-   collects 3–8 seats (default four), the AI profile, and each AI seat's 1–30 second presentation pause (default three).
+   collects 3–10 seats (default four), the AI profile, and each AI seat's 1–30 second presentation pause (default three).
 2. `App` creates `UnoGame.new_with_config(seed, profile, player_count)` only
    after the offline start action.
 3. Rust creates a deterministic 108-card deck, shuffles it with the supplied

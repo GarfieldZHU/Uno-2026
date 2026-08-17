@@ -655,7 +655,7 @@ export function App() {
             <div className="table-grid-lines" />
             <TableDirectionArrows direction={snapshot.direction} language={language} players={snapshot.players.map((player) => player.id)} humanId={HUMAN_ID} currentPlayerId={snapshot.current_player} nextPlayerId={nextId} />
             <div className="table-scene-badge"><span className="live-pip" />{snapshot.status === "Won" ? text.tableComplete : currentPlayer?.name === "You" ? text.yourMove : text.thinking(currentPlayer?.name ?? "AI")}</div>
-            <div className="table-seats">
+            <div className="table-seats" data-player-count={snapshot.players.length}>
               {orderedOpponents(snapshot.players, HUMAN_ID).map((player) => <SeatPlayer key={player.id} player={player} language={language} active={player.id === snapshot.current_player} next={player.id === nextId} slot={seatSlotForPlayer(player.id, HUMAN_ID, snapshot.players.length)} />)}
               {human && <SeatPlayer player={human} language={language} active={human.id === snapshot.current_player} next={human.id === nextId} slot="south" human />}
             </div>

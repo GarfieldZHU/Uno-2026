@@ -9,7 +9,7 @@ import {
 } from "./types";
 import { copy, profileHint, profileLabel, type Language } from "./i18n";
 
-export const SEAT_NAMES = ["You", "Mika", "Nori", "Juno", "Kiki", "Olli", "Pika", "Rumi"] as const;
+export const SEAT_NAMES = ["You", "Mika", "Nori", "Juno", "Kiki", "Olli", "Pika", "Rumi", "Sora", "Taro"] as const;
 
 export type SetupConfig = {
   playerCount: PlayerCount;

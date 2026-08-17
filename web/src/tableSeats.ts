@@ -1,20 +1,27 @@
 import type { PlayFlightSource, Player } from "./types";
 
 /** Slots are ordered clockwise around the human seat (south). */
-export const SEAT_LAYOUTS: Record<number, string[]> = {
+type OpponentSeat = Exclude<PlayFlightSource, "human">;
+type SeatSlot = "south" | OpponentSeat;
+
+export const SEAT_LAYOUTS: Record<number, OpponentSeat[]> = {
   3: ["west", "east"],
   4: ["west", "north", "east"],
   5: ["west", "north-west", "north-east", "east"],
   6: ["south-west", "west", "north", "east", "south-east"],
   7: ["south-west", "west", "north-west", "north-east", "east", "south-east"],
   8: ["south-west", "west", "north-west", "north", "north-east", "east", "south-east"],
+  // Nine and ten seats use two shallow lower-corner slots so the human seat
+  // remains readable while every opponent still has a unique anchor.
+  9: ["south-south-west", "west", "north-west", "north", "north-east", "east", "south-east", "south-south-east"],
+  10: ["south-south-west", "south-west", "west", "north-west", "north", "north-east", "east", "south-east", "south-south-east"],
 };
 
 function relativeOffset(playerId: number, humanId: number, playerCount: number) {
   return (playerId - humanId + playerCount) % playerCount;
 }
 
-export function seatSlotForPlayer(playerId: number, humanId: number, playerCount: number) {
+export function seatSlotForPlayer(playerId: number, humanId: number, playerCount: number): SeatSlot {
   if (playerId === humanId) return "south";
   const layout = SEAT_LAYOUTS[playerCount] ?? SEAT_LAYOUTS[4];
   return layout[relativeOffset(playerId, humanId, playerCount) - 1] ?? "north";
@@ -36,5 +43,5 @@ export function nextPlayerId(players: Player[], playerId: number, direction: num
 
 export function sourceForPlayer(playerId: number, humanId: number, playerCount: number): PlayFlightSource {
   if (playerId === humanId) return "human";
-  return seatSlotForPlayer(playerId, humanId, playerCount) as PlayFlightSource;
+  return seatSlotForPlayer(playerId, humanId, playerCount) as OpponentSeat;
 }

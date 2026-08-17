@@ -4,7 +4,7 @@ English | [中文](TABLE_UI_REFERENCE.zh-CN.md)
 
 The live table is intentionally designed as a top-down card table rather than a dashboard:
 
-- `web/public/assets/uno-table-oval-v2.png` is the generated 16:9 walnut-and-felt playfield.
+- `web/public/assets/uno-table-oval-v2.jpg` is the optimized generated 16:9 walnut-and-felt playfield (the original PNG remains in the asset folder for source-quality review).
 - `web/public/assets/uno-avatar-sheet-v2.png` is the generated four-character portrait sheet used by perimeter seats.
 - `web/public/assets/cards/card-back-v2.svg` is the resolution-independent navy/red/gold card back.
 - `web/src/CardArt.tsx` draws card fronts as SVG so symbols remain sharp at desktop and mobile sizes.
@@ -44,6 +44,12 @@ other routes remain quiet. Hovering a route lifts its contrast; the old center
 direction chip is intentionally not rendered. The next-seat label reads
 `NEXT TO PLAY`/`下一位出牌` so it describes the action rather than relying on
 an ambiguous “next” shorthand.
+
+The route geometry is generated from the same seat resolver as the players:
+3–10 seat layouts use a shallow lower pair for nine and ten seats, and the SVG
+rail emits exactly one segment per live seat. The active arrow is therefore the
+authoritative current-player → next-player edge rather than a fixed eight-seat
+overlay.
 
 When the human player draws, only that client sees a private draw reveal: a
 card back travels from the draw pile, flips to the resolved SVG face, and

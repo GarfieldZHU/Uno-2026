@@ -75,7 +75,7 @@ test("开始牌局会先等待所有牌桌资源加载完成", async ({ page }) 
   await expect.poll(async () => page.locator(".table-scene img").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
 });
 
-test("设置面板保留3到8席与1到30秒节奏", async ({ page }) => {
+test("设置面板保留3到10席与1到30秒节奏", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "设置" }).click();
   await expect(page.getByTestId("settings-drawer")).toBeVisible();
@@ -150,8 +150,29 @@ test("初始发牌结束后会短暂标示起始玩家", async ({ page }) => {
   await expect(page.getByTestId("table-direction-indicator")).toContainText("顺时针");
   await expect(page.locator(".direction-arrow-route.is-active-route")).toHaveCount(1);
   await expect(page.getByTestId("table-direction-indicator")).toHaveAttribute("data-active-route", /\d+-\d+/);
-  await expect(page.locator(".table-direction-arrows .direction-arrow-line")).toHaveCount(8);
+  await expect(page.locator(".table-direction-arrows .direction-arrow-line")).toHaveCount(4);
   await expect(page.locator(".table-center .table-direction-chip")).toHaveCount(0);
+});
+
+test("五到十席按实际座位环生成对应方向箭头", async ({ page }) => {
+  test.setTimeout(80_000);
+  for (const playerCount of [5, 6, 7, 8, 9, 10]) {
+    await page.goto("/");
+    await page.getByRole("button", { name: "设置" }).click();
+    await page.getByLabel("玩家").selectOption(String(playerCount));
+    await page.getByLabel("AI 默认停顿").fill("1");
+    await page.getByRole("button", { name: "保存设置" }).click();
+    await page.getByRole("button", { name: "开始游戏" }).click();
+    await waitForInitialDeal(page);
+
+    const seats = page.locator(`.table-seats[data-player-count="${playerCount}"] .seat-player`);
+    await expect(seats).toHaveCount(playerCount);
+    await expect(page.locator(".direction-arrow-route")).toHaveCount(playerCount);
+    await expect(page.locator(".direction-arrow-line")).toHaveCount(playerCount);
+    await expect(page.locator(".direction-arrow-route.is-active-route")).toHaveCount(1);
+    const playerIds = await seats.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-player-id")));
+    expect(new Set(playerIds).size).toBe(playerCount);
+  }
 });
 
 test("牌桌显示出牌方向并支持一键整理手牌", async ({ page }) => {

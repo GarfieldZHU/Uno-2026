@@ -5,7 +5,7 @@ English | [中文](TESTING.zh-CN.md) · [Development](DEVELOPMENT.md)
 ## Layers
 
 1. `cargo fmt --all -- --check` catches formatting drift.
-2. `cargo test --workspace` tests deck shape, 3–8 seat construction, legality,
+2. `cargo test --workspace` tests deck shape, 3–10 seat construction, legality,
    WildDrawFour restriction, AI legality, UNO calls, and snapshot privacy.
 3. `pnpm run typecheck` checks the WASM facade and React contract.
 4. `pnpm run build` proves the release artifact and Vite bundle can be produced.

@@ -5,12 +5,12 @@
 ## 分层验证
 
 1. `cargo fmt --all -- --check` 检查格式漂移；
-2. `cargo test --workspace` 覆盖牌堆形状、3–8 席位构造、合法性、`WildDrawFour` 限制、
+2. `cargo test --workspace` 覆盖牌堆形状、3–10 席位构造、合法性、`WildDrawFour` 限制、
    AI 合法性、UNO 喊牌和快照隐私；
 3. `pnpm run typecheck` 检查 WASM 门面和 React 契约；
 4. `pnpm run build` 证明 release 产物和 Vite 包可以生成；
 5. `pnpm run test:browser` 在 1411 端口启动 Vite，检查中文主菜单、设置抽屉默认值、英文切换、
-   三人/八人启动、响应式牌桌、按座位发牌动画、局内记录查看/回放/导出、弃牌历史、牌面 SVG 加载、首击提牌/二次点击或双击出牌、
+   三人/十人启动、响应式牌桌、按座位发牌动画、局内记录查看/回放/导出、弃牌历史、牌面 SVG 加载、首击提牌/二次点击或双击出牌、
    拖拽出牌、手牌整理、野牌选色、方向/当前回合/下家标识、牌桌内方向徽章、当前回合标签、
    AI 牌背翻牌和动作特效，以及离线牌局进入结算。
 6. 本地启动 `uno-server`（`127.0.0.1:8787`）后，同一命令还会运行 `tests/online.spec.ts`：

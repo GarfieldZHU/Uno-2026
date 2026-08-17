@@ -25,7 +25,7 @@ impl UnoGame {
 
     pub fn new_with_config(seed: u32, profile: &str, player_count: u8) -> UnoGame {
         let profile = AiProfile::from_wire(profile).unwrap_or(AiProfile::Garfield1993AiSimple);
-        let player_count = (player_count as usize).clamp(3, 8);
+        let player_count = (player_count as usize).clamp(3, 10);
         UnoGame {
             state: GameState::new_with_player_count(seed as u64, player_count, profile),
             profile,
@@ -173,8 +173,8 @@ mod tests {
     }
 
     #[test]
-    fn supports_three_to_eight_player_tables_with_seven_card_hands() {
-        for player_count in 3..=8 {
+    fn supports_three_to_ten_player_tables_with_seven_card_hands() {
+        for player_count in 3..=10 {
             let game = GameState::new_with_player_count(
                 100 + player_count as u64,
                 player_count,
@@ -195,8 +195,8 @@ mod tests {
         let small = GameState::new_with_player_count(1, 1, AiProfile::Garfield1993AiHard);
         assert_eq!(small.players().len(), 3);
         let large = GameState::new_with_player_count(2, 99, AiProfile::Garfield1993AiHard);
-        assert_eq!(large.players().len(), 8);
-        assert_eq!(large.next_player_id(7), 0);
+        assert_eq!(large.players().len(), 10);
+        assert_eq!(large.next_player_id(9), 0);
     }
 
     #[test]

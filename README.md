@@ -13,7 +13,7 @@ game truth.
 
 The current vertical slice includes:
 
-- a standard 108-card deck with configurable offline tables for 3–8 seats
+- a standard 108-card deck with configurable offline tables for 3–10 seats
   (default four), draw/discard recycling, action cards, wild-color selection,
   UNO calls, penalties, and winner detection;
 - one human seat plus AI seats in offline mode, with an independent 1–30 second
@@ -22,14 +22,14 @@ The current vertical slice includes:
 - four deterministic AI profiles, including the compatibility names
   `garfield1993-ai-simple` and `garfield1993-ai-hard`;
 - a Chinese-first main menu with only Start game, Settings, and About, plus a
-  settings drawer for the 3–8 seat and 1–30 second offline controls;
+  settings drawer for the 3–10 seat and 1–30 second offline controls;
 - a top-down oval felt tabletop with generated wood/portrait assets, resolution-independent
   SVG card fronts/backs, perimeter seats, fan-shaped hands, seat-to-seat dealing motion,
   draw/play/shuffle motion, a clickable discard history, and a local match-record drawer
   with replay and JSON export;
 - an English toggle available from the menu, settings drawer, and table HUD;
 - a Rust room service with four-character waiting-room codes, 15-minute waiting
-  expiry, 3–8 seats, configurable AI seats, host-owned start/close semantics,
+  expiry, 3–10 seats, configurable AI seats, host-owned start/close semantics,
   viewer-safe hands, and separate 5–30 second human turn deadlines;
 - a quiet online-lobby/table network-log export that records redacted WebSocket
   and REST timings, reconnects, browser connection capabilities, and public

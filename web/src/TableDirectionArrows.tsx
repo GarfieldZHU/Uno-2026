@@ -19,6 +19,7 @@ type Point = [number, number];
  */
 const SEAT_ANCHORS: Record<string, Point> = {
   south: [50, 88],
+  "south-south-west": [34, 84],
   "south-west": [22, 76],
   west: [9, 50],
   "north-west": [22, 24],
@@ -26,21 +27,8 @@ const SEAT_ANCHORS: Record<string, Point> = {
   "north-east": [78, 24],
   east: [91, 50],
   "south-east": [78, 76],
+  "south-south-east": [66, 84],
 };
-
-// This is only a quiet orientation rail. The player-to-player routes below
-// carry the actual arrowheads and state, while this keeps the direction
-// visible when a seat card is temporarily hidden by a small viewport.
-const ORIENTATION_RAIL = [
-  "M 18 24 Q 32 11 49 12",
-  "M 51 12 Q 68 11 82 24",
-  "M 82 24 Q 92 35 89 49",
-  "M 89 51 Q 92 66 82 76",
-  "M 82 76 Q 68 89 51 88",
-  "M 49 88 Q 32 89 18 76",
-  "M 18 76 Q 8 65 11 51",
-  "M 11 49 Q 8 35 18 24",
-];
 
 function routePath(from: Point, to: Point) {
   const [x1, y1] = from;
@@ -70,6 +58,14 @@ export function TableDirectionArrows({
     ? (language === "zh" ? "顺时针出牌，箭头连接每位玩家与下一位" : "Clockwise play; arrows connect each player to the next")
     : (language === "zh" ? "逆时针出牌，箭头连接每位玩家与下一位" : "Counter-clockwise play; arrows connect each player to the next");
   const markerId = clockwise ? "direction-arrow-head-cw" : "direction-arrow-head-ccw";
+  const seatPoints = players.map((playerId) => ({ playerId, point: playerPoint(playerId, players, humanId) }));
+  // The quiet rail follows the same actual seat ring as the player cards. It
+  // is generated from the count rather than using a fixed eight-segment oval,
+  // so 5–10 seat tables never show orphaned arrows.
+  const orientationRail = seatPoints.map(({ playerId, point }, index) => {
+    const next = seatPoints[(index + 1) % seatPoints.length];
+    return { playerId, path: routePath(point, next.point) };
+  });
   const routeEdges = players.map((from, index) => {
     const nextIndex = (index + (clockwise ? 1 : -1) + players.length) % players.length;
     const to = players[nextIndex];
@@ -81,6 +77,7 @@ export function TableDirectionArrows({
       className={`table-direction-arrows ${clockwise ? "is-clockwise" : "is-counter-clockwise"}`}
       data-testid="table-direction-indicator"
       data-direction={clockwise ? "clockwise" : "counter-clockwise"}
+      data-player-count={players.length}
       data-active-route={currentPlayerId !== null && nextPlayerId !== null ? `${currentPlayerId}-${nextPlayerId}` : undefined}
       role="img"
       aria-label={label}
@@ -99,7 +96,7 @@ export function TableDirectionArrows({
       </defs>
 
       <g className="direction-arrow-rail" aria-hidden="true">
-        {ORIENTATION_RAIL.map((path, index) => <path className="direction-arrow-line" d={path} key={`rail-${index}`} />)}
+        {orientationRail.map(({ playerId, path }) => <path className="direction-arrow-line" d={path} key={`rail-${playerId}`} />)}
       </g>
 
       <g className="direction-arrow-routes" aria-hidden="true">

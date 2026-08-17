@@ -13,9 +13,9 @@ export const TABLE_ASSET_URLS = [
   "/assets/cards/sparkle.svg",
   "/assets/cards/uno-title.svg",
   "/assets/uno-avatar-sheet-v2.png",
-  "/assets/uno-felt-texture.png",
-  "/assets/uno-menu-hero-v2.png",
-  "/assets/uno-table-oval-v2.png",
+  "/assets/uno-felt-texture.jpg",
+  "/assets/uno-menu-hero-v2.jpg",
+  "/assets/uno-table-oval-v2.jpg",
 ] as const;
 
 export type AssetProgress = { loaded: number; total: number };

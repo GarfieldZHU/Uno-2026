@@ -92,11 +92,11 @@ impl GameState {
     }
 
     pub fn new_with_player_count(seed: u64, player_count: usize, profile: AiProfile) -> Self {
-        let player_count = player_count.clamp(3, 8);
+        let player_count = player_count.clamp(3, 10);
         let mut draw_pile = build_deck();
         shuffle(&mut draw_pile, seed);
-        const SEAT_NAMES: [&str; 8] = [
-            "You", "Mika", "Nori", "Juno", "Kiki", "Olli", "Pika", "Rumi",
+        const SEAT_NAMES: [&str; 10] = [
+            "You", "Mika", "Nori", "Juno", "Kiki", "Olli", "Pika", "Rumi", "Sora", "Taro",
         ];
         let mut players = SEAT_NAMES[..player_count]
             .iter()

@@ -46,7 +46,7 @@ Rust 领域层是唯一事实来源。浏览器中的 `UnoGame` 持有一个 `Ga
 
 ## 状态流
 
-1. `MainMenuScreen` 默认渲染中文，只提供开始游戏、设置、关于；`SettingsDrawer` 收集 3–8 个席位（默认四人）、AI 档位和每个 AI 的 1–30 秒展示停顿（默认三秒）。
+1. `MainMenuScreen` 默认渲染中文，只提供开始游戏、设置、关于；`SettingsDrawer` 收集 3–10 个席位（默认四人）、AI 档位和每个 AI 的 1–30 秒展示停顿（默认三秒）。
 2. 只有点击离线开始后，`App` 才创建 `UnoGame.new_with_config(seed, profile, player_count)`。
 3. Rust 构造确定性的 108 张牌、使用 seed 洗牌、给每个席位发七张牌，并以数字牌作为首张弃牌。
 4. 门面返回 JSON `Snapshot`；AI 的具体手牌被隐藏，只公开数量；`discard_cards` 按从旧到新的顺序提供给按需打开的弃牌历史面板。

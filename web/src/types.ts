@@ -15,7 +15,9 @@ export type PlayFlightSource =
   | "east"
   | "west"
   | "south-east"
-  | "south-west";
+  | "south-west"
+  | "south-south-east"
+  | "south-south-west";
 
 export type PlayFlightEvent = {
   id: string;
@@ -52,9 +54,9 @@ export type Snapshot = {
   ai_profile: string;
 };
 
-export type PlayerCount = 3 | 4 | 5 | 6 | 7 | 8;
+export type PlayerCount = 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
-export const PLAYER_COUNTS: PlayerCount[] = [3, 4, 5, 6, 7, 8];
+export const PLAYER_COUNTS: PlayerCount[] = [3, 4, 5, 6, 7, 8, 9, 10];
 export const AI_DELAY_MIN_SECONDS = 1;
 export const AI_DELAY_MAX_SECONDS = 30;
 export const DEFAULT_AI_DELAY_SECONDS = 3;

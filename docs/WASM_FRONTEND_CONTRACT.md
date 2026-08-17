@@ -29,7 +29,7 @@ restart(seed: number): string
 `uno-2026-ai-easy`, or `uno-2026-ai-strategist`. An unknown profile currently
 defaults to `garfield1993-ai-simple` in the Rust constructor.
 
-`new_with_config` bounds `player_count` to 3–8 and creates one human seat plus
+`new_with_config` bounds `player_count` to 3–10 and creates one human seat plus
 the remaining AI seats. The old two-argument constructor still creates four
 seats for compatibility. React's per-seat AI pause values are intentionally not
 sent through this ABI; they are UI scheduling values around `ai_step`.

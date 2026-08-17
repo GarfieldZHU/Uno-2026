@@ -166,7 +166,7 @@ export function OnlineLobby({ language = "zh", api = createOnlineApi(), onStarte
             <label>{t.code}<input value={code} onChange={(event) => setCode(event.target.value.replace(/[^a-z0-9]/gi, "").slice(0, 4).toUpperCase())} maxLength={4} placeholder="ABCD" /></label>
           ) : (
             <>
-              <label>{t.seats}<input type="number" min={3} max={8} value={maxPlayers} onChange={(event) => { const next = Math.min(8, Math.max(3, Number(event.target.value))); setMaxPlayers(next); setAiCount((current) => Math.min(current, next - 1)); }} /></label>
+              <label>{t.seats}<input type="number" min={3} max={10} value={maxPlayers} onChange={(event) => { const next = Math.min(10, Math.max(3, Number(event.target.value))); setMaxPlayers(next); setAiCount((current) => Math.min(current, next - 1)); }} /></label>
               <label>{t.ai}<input type="number" min={0} max={Math.max(0, maxPlayers - 1)} value={aiCount} onChange={(event) => setAiCount(Math.min(maxPlayers - 1, Math.max(0, Number(event.target.value))))} /></label>
               <label className="online-range-field">{t.countdown}<output>{countdownSeconds} {t.seconds}</output><input type="range" min={5} max={30} value={countdownSeconds} onChange={(event) => setCountdownSeconds(Number(event.target.value))} /><span className="range-scale"><span>5s</span><span>30s</span></span></label>
             </>

@@ -11,7 +11,7 @@ human/AI seats, host start/close, viewer-safe hands, reconnecting clients, and
 AI takeover when a started-game player leaves, including host-role transfer. The
 room service is in-memory.
 
-The main menu keeps only Start game, Settings, and About. Settings supports 3–8
+The main menu keeps only Start game, Settings, and About. Settings supports 3–10
 offline seats (four by default), one human plus AI seats, and an independent
 1–30 second pause for every AI seat (three by default). The felt table uses SVG
 card art, a 3.8-second initial deal with a starting-player callout, connected

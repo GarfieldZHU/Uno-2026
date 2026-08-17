@@ -11,7 +11,7 @@ pub const ROOM_TTL: Duration = Duration::from_secs(15 * 60);
 pub const DISCONNECTED_ROOM_TTL: Duration = Duration::from_secs(3 * 60);
 pub const STATE_RETENTION: Duration = Duration::from_secs(6 * 60 * 60);
 pub const MIN_PLAYERS: usize = 3;
-pub const MAX_PLAYERS: usize = 8;
+pub const MAX_PLAYERS: usize = 10;
 
 pub type SharedRooms = Arc<Mutex<HashMap<String, Room>>>;
 pub type Response = (&'static str, Value);
