@@ -10,12 +10,13 @@ English | [中文](TESTING.zh-CN.md) · [Development](DEVELOPMENT.md)
 3. `pnpm run typecheck` checks the WASM facade and React contract.
 4. `pnpm run build` proves the release artifact and Vite bundle can be produced.
 5. `pnpm run test:browser` boots Vite on port 1411 and checks the Chinese-first
-   main menu, settings drawer defaults, three-seat and eight-seat starts,
+   main menu, settings drawer defaults, three-seat through ten-seat starts and
+   five-to-ten seat route geometry,
    responsive table layout, discard-history open/close, draw animation state,
    the English toggle, online entry, card asset loading, first-click lift/
    second-click or double-click play, drag/drop, hand sorting, wild-color
    selection, direction/current-turn/next-player markers, AI back-to-front
-   flight, action effects, the in-table direction chip and active-turn label,
+   flight, action effects, seat-aware direction routes and active-turn label,
    and offline settlement.
 
 On a clean machine, install the browser once with
