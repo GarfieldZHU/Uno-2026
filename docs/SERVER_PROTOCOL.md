@@ -31,8 +31,8 @@ to 5–30 seconds and defaulting to 15 seconds. Existing UNO rules remain in
 | `POST /api/v1/rooms` | none | create a room; returns code, player token, seats, AI count, timeout |
 | `POST /api/v1/rooms/:code/players` | none | join a waiting room; returns player id/token |
 | `GET /api/v1/rooms/:code` | `X-Player-Token` after start | room roster, WebSocket liveness/grace, countdown, viewer-safe snapshot |
-| `POST /api/v1/rooms/:code/start` | host token | start once at least three total seats exist |
-| `POST /api/v1/rooms/:code/actions` | player token | `play`, `draw`, or `call_uno` |
+| `POST /api/v1/rooms/:code/start` | host token | start or restart once at least three total seats exist |
+| `POST /api/v1/rooms/:code/actions` | player token | `play`, `draw`, `call_uno`, or interstitial `challenge_uno` |
 | `DELETE /api/v1/rooms/:code/players/:id` | matching player token | leave; waiting host closes the room, started-game seats become AI |
 | `GET /api/v1/rooms/:code/ws?token=...` | player token query | WebSocket snapshot stream |
 
@@ -57,8 +57,12 @@ human control and the viewer-scoped hand. An explicit REST leave is permanent
 for that session and also converts the started seat to AI; if that seat was the
 host, host control transfers to the lowest remaining human seat. AI seats
 automatically step on the room scheduler.
-When a human deadline expires, the server deterministically chooses a legal card
-or draws the required cards, then broadcasts the resulting snapshot. Each
+`call_uno` and `challenge_uno` are interstitial actions: they do not require the
+requesting player to own the current turn and they pause the next human turn
+deadline while `uno_pending_player` is open. The challenge window is short and
+server-owned; after it closes, an uncalled one-card player receives the normal
+two-card penalty. When a human deadline expires, the server deterministically
+chooses a legal card or draws the required cards, then broadcasts the resulting snapshot. Each
 snapshot includes `current_player`, `next_player`, and `direction` so clients do
 not infer seat order independently. Every state-changing REST request broadcasts
 a `room.snapshot` event; AI and timeout changes are broadcast too. The browser

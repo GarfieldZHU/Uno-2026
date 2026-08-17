@@ -14,5 +14,7 @@ export function drawInfoForAction(lastAction: string): { playerId: number; count
   if (draw) return { playerId: Number(draw[1]), count: Number(draw[2]) };
   const unoPenalty = /^player-(\d+)-uno-penalty$/.exec(lastAction);
   if (unoPenalty) return { playerId: Number(unoPenalty[1]), count: 2 };
+  const unoChallenge = /^player-(\d+)-uno-challenged$/.exec(lastAction);
+  if (unoChallenge) return { playerId: Number(unoChallenge[1]), count: 2 };
   return null;
 }

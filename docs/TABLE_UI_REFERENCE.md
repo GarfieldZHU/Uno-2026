@@ -19,10 +19,11 @@ a single table ticket; it does not turn the opening screen into a dashboard.
 
 The play surface receives the most space. The top information bar is collapsed
 by default, the table center remains clear for piles and flight effects, and the
-hand rail is a single high-contrast surface with larger SVG cards. Active and
-next seats use color and elevation rather than paragraphs of status text. The
-same layout rules collapse to one column on narrow screens and keep the card
-rail horizontally reachable.
+hand rail is a single high-contrast surface with larger SVG cards. The current
+seat receives the strongest gold ring, elevation, and `YOUR TURN` treatment;
+the next seat uses a quieter mint marker so hierarchy is unambiguous. The same
+layout rules collapse to one column on narrow screens and keep the card rail
+horizontally reachable.
 
 The visual reference is the supplied UNO Offline Google Play surface: players sit around the table, opponent hands are represented by card-back fans, the draw and discard piles share the center, and the human hand is a readable fan along the near edge. The reference informed composition and interaction patterns only; UNO-2026 uses its own generated and authored assets.
 
@@ -58,9 +59,16 @@ card back travels from the draw pile, flips to the resolved SVG face, and
 settles into the hand. The inserted card keeps a two-second glow so the new
 card is easy to find. Other clients receive the public hand-count update but
 never see another player's card face.
-Completed games show a persistent win/lose settlement layer with the winner's
-name. Animations are state-driven (`deal`, `shuffle`, `draw`, `play`, settlement)
-and respect `prefers-reduced-motion`.
+Reverse and skip actions add a 2.6-second transition overlay that names the
+affected player and the new next player. The UNO button grows and changes to a
+high-signal style while `uno_pending_player` points at the human; a successful
+call shows an avatar-originating `UNO!` shout for three seconds. During the
+interstitial window, the offending seat exposes `CHALLENGE UNO`; a successful
+challenge resolves before the next turn clock starts. Completed games show a
+persistent win/lose settlement layer with the winner's name, then reveal
+`PLAY AGAIN` and `EXIT` after five seconds. A small exit control remains in the
+table's top-right corner. Animations are state-driven (`deal`, `shuffle`,
+`draw`, `play`, reverse/skip, UNO, settlement) and respect `prefers-reduced-motion`.
 
 The quiet match-record button beside the network diagnostics button opens the
 observed snapshot timeline. It records public state only (not hidden opponent

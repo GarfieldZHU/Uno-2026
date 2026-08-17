@@ -21,6 +21,7 @@ snapshot(): string
 play_card(card_id: number, chosen_color: string)
 draw(): string
 call_uno(): string
+challenge_uno(): string
 ai_step(): string
 restart(seed: number): string
 ```
@@ -46,7 +47,7 @@ restart(seed: number): string
 ```
 
 快照包含 `players`、`current_player`、`next_player`、`direction`、`active_color`、`top_card`、按时间顺序排列的
-`discard_cards`（从旧到新，包含 `top_card`）、摸牌/弃牌数量、`pending_draw`、`status`、`winner`、
+`discard_cards`（从旧到新，包含 `top_card`）、摸牌/弃牌数量、`pending_draw`、`uno_pending_player`、`status`、`winner`、
 `turn_number`、`message`、`last_action`、`ai_profile`。人类 `players[0].hand` 有牌面；AI 的手牌数组为空，但
 `hand_count` 可见。React 的弃牌历史面板直接渲染 `discard_cards`，不会从 CSS 或本地 UI 状态推导历史。
 

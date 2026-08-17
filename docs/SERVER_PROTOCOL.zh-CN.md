@@ -27,8 +27,8 @@ WebSocket，已开局房间就没有房间过期倒计时。最后一个 WebSock
 | `POST /api/v1/rooms` | 无 | 创建房间，返回房间码、玩家 token、席位、AI 数量和倒计时 |
 | `POST /api/v1/rooms/:code/players` | 无 | 加入等待中的房间，返回玩家 id/token |
 | `GET /api/v1/rooms/:code` | 开始后需 `X-Player-Token` | 房间成员、WebSocket 存活/断线保护、回合倒计时和安全快照 |
-| `POST /api/v1/rooms/:code/start` | 房主 token | 至少三个总席位时开局，只能开始一次 |
-| `POST /api/v1/rooms/:code/actions` | 玩家 token | `play`、`draw`、`call_uno` |
+| `POST /api/v1/rooms/:code/start` | 房主 token | 至少三个总席位时开局；结算后可重新开始 |
+| `POST /api/v1/rooms/:code/actions` | 玩家 token | `play`、`draw`、`call_uno`，或插入阶段的 `challenge_uno` |
 | `DELETE /api/v1/rooms/:code/players/:id` | 对应玩家 token | 退出；等待阶段房主退出关闭房间，开局后席位转 AI |
 | `GET /api/v1/rooms/:code/ws?token=...` | query 中玩家 token | WebSocket 快照流 |
 
@@ -61,7 +61,9 @@ WebSocket 使用文本 JSON 信封：
 {"type":"room.snapshot","room":{"code":"ABCD","status":"playing","snapshot":{}}}
 ```
 
-网页客户端会明确以 snake_case 发送 `max_players`、`ai_count`、
+`call_uno` 与 `challenge_uno` 是插入式操作：不要求请求者拥有当前回合，并会暂停下一位
+人类玩家的倒计时。`uno_pending_player` 打开时由服务端维护短暂的揭发窗口；窗口关闭后，
+未喊 UNO 的单牌玩家会按标准规则摸两张。网页客户端会明确以 snake_case 发送 `max_players`、`ai_count`、
 `countdown_seconds` 和 `ai_profile`。本地 Vite 开发服务器把 `/api` 代理到
 `127.0.0.1:8787`；部署后的客户端应把 `VITE_ONLINE_API_URL` 设置为 Rust 房间服务的
 HTTPS 地址。

@@ -22,6 +22,11 @@ replay and JSON export. Online rooms can mix multiple humans with AI seats and e
 5–30 second human turn deadline; an expired human turn chooses a legal move or
 draws deterministically. Configure the Rust origin before public use.
 
+Reverse and skip transitions identify the changed order for 2.6 seconds. A
+one-card player gets a three-second UNO call animation; the other seats can
+challenge the open marker before the next turn clock starts. Settlement actions
+appear five seconds after a win or loss.
+
 The lobby defaults to Join room and only shows nickname plus room code. Create
 room is a separate host mode; it reveals seat, AI, and deadline settings, while
 the server generates the code.

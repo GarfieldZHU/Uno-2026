@@ -56,10 +56,16 @@ penalty consumes the penalty and advances the turn. This behavior is visible in
 
 ## UNO call
 
-Playing down to one card creates an `uno_pending` marker. The player must call
-`call_uno` while still holding one card. If the next command resolves the marker
-and the player did not call, two cards are drawn. AI turns call UNO automatically
-after reaching one card; the human UI exposes a `CALL UNO` button.
+Playing down to one card creates an `uno_pending` marker and an interstitial
+challenge window. The player can call `call_uno` while still holding one card;
+any other player can submit `challenge_uno` during that window. A successful
+challenge draws two cards for the offender and does not consume the next
+player's turn clock. If the window expires without a call or challenge, the
+server resolves the same two-card penalty before the next turn. AI turns call
+UNO automatically after reaching one card; the human UI enlarges the `CALL
+UNO` action while it is available and exposes `CHALLENGE UNO` on the offending
+seat. The snapshot field `uno_pending_player` identifies the seat currently
+open to challenge (or `null` when the interstitial phase is closed).
 
 ## Snapshot privacy
 

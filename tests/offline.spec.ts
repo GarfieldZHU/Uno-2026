@@ -379,5 +379,7 @@ test("离线牌局可以完整轮转并显示结算", async ({ page }) => {
   await expect(page.getByTestId("settlement-overlay")).toHaveAttribute("data-result", /win|lose/);
   await expect(page.locator(".status-code")).toContainText("player-");
   await expect(page.getByRole("button", { name: "从摸牌堆摸牌" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "再来一局" })).toBeVisible();
+  await expect(page.getByTestId("table-exit")).toBeVisible();
   await page.screenshot({ path: "test-results/offline-settlement-zh.png", fullPage: true });
 });

@@ -60,6 +60,13 @@ impl UnoGame {
             .unwrap_or_else(|error| self.state.error_json(error))
     }
 
+    /// Challenge the currently open UNO window from the human seat.
+    pub fn challenge_uno(&mut self) -> String {
+        self.state
+            .challenge_uno(0)
+            .unwrap_or_else(|error| self.state.error_json(error))
+    }
+
     /// Advances one AI turn. The UI can call this between small delays to keep the
     /// opponent readable and still use exactly the native AI implementation.
     pub fn ai_step(&mut self) -> String {
@@ -155,6 +162,27 @@ mod tests {
         game.call_uno(0).unwrap();
         assert!(game.players()[0].uno_called);
         assert_eq!(game.players()[0].hand.len(), 1);
+    }
+
+    #[test]
+    fn challenging_an_unannounced_one_card_player_draws_two() {
+        let mut game = GameState::new(12, AiProfile::Garfield1993AiSimple);
+        game.force_human_hand_for_test(vec![
+            Card::number(610, Color::Red, 0),
+            Card::number(611, Color::Red, 1),
+        ]);
+        game.set_active_color_for_test(Color::Red);
+        let card_id = game.players()[0].hand[0].id;
+        game.play_card(0, card_id, None).unwrap();
+        assert_eq!(game.players()[0].hand.len(), 1);
+        let pending: Snapshot = serde_json::from_str(&game.snapshot_json()).unwrap();
+        assert_eq!(pending.uno_pending_player, Some(0));
+
+        game.challenge_uno(1).unwrap();
+        let challenged: Snapshot = serde_json::from_str(&game.snapshot_json()).unwrap();
+        assert_eq!(challenged.uno_pending_player, None);
+        assert_eq!(game.players()[0].hand.len(), 3);
+        assert_eq!(challenged.last_action, "player-0-uno-challenged");
     }
 
     #[test]

@@ -7,7 +7,7 @@ import { ActionEffectOverlay, PenaltyDrawFlight } from "./PenaltyDrawFlight";
 import { copy, localizeEngineMessage, translateColor, type Language } from "./i18n";
 import { clearOnlineResume, connectOnlineRoom, persistOnlineResume, type OnlineApi, type OnlineRoom, type OnlineSyncStatus } from "./online";
 import { NetworkLogExportButton } from "./NetworkLogExportButton";
-import { DealSequenceOverlay, SettlementOverlay, type TablePhase } from "./TableOverlays";
+import { DealSequenceOverlay, SettlementOverlay, TurnTransitionOverlay, type TablePhase } from "./TableOverlays";
 import { GameRecordPanel } from "./GameRecordPanel";
 import { appendSnapshotEvent, createGameRecord, type GameRecord } from "./gameRecord";
 import { TableDirectionArrows } from "./TableDirectionArrows";
@@ -51,6 +51,9 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   const syncStatusRef = useRef<OnlineSyncStatus>("connecting");
   const dealStartedRef = useRef(false);
   const [tableEffect, setTableEffect] = useState<TableEffect>(null);
+  const [turnTransition, setTurnTransition] = useState<{ kind: "reverse" | "skip"; currentId: number; nextId: number } | null>(null);
+  const [unoCallPlayerId, setUnoCallPlayerId] = useState<number | null>(null);
+  const [settlementActionsVisible, setSettlementActionsVisible] = useState(false);
   const [penaltyDraw, setPenaltyDraw] = useState<{ playerId: number; count: number; source: PlayFlightSource } | null>(null);
   const [drawFlight, setDrawFlight] = useState<{ card: Card; playerId: number } | null>(null);
   const [drawnCardId, setDrawnCardId] = useState<number | null>(null);
@@ -63,6 +66,11 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   const suppressDoubleClickRef = useRef(false);
   const drawFlightTimerRef = useRef<number | null>(null);
   const drawnHighlightTimerRef = useRef<number | null>(null);
+  const transitionTimerRef = useRef<number | null>(null);
+  const unoCallTimerRef = useRef<number | null>(null);
+  const settlementTimerRef = useRef<number | null>(null);
+  const dealTimerRef = useRef<number | null>(null);
+  const startTimerRef = useRef<number | null>(null);
   const previousAction = useRef(room.snapshot?.last_action ?? "");
   const humanId = room.session?.playerId ?? HUMAN_ID_FALLBACK;
   const snapshot = room.snapshot;
@@ -105,6 +113,28 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
     const draw = drawInfoForAction(nextSnapshot.last_action);
     setPenaltyDraw(draw && draw.playerId !== humanId ? { playerId: draw.playerId, count: draw.count, source: sourceForPlayer(draw.playerId, humanId, nextSnapshot.players.length, nextSnapshot.players.map((player) => player.id)) } : null);
     if (draw) window.setTimeout(() => setPenaltyDraw(null), 1_100);
+    const played = parsePlayedPlayer(nextSnapshot.last_action);
+    const transitionKind = effect === "reverse" || effect === "skip" ? effect : null;
+    if (transitionTimerRef.current !== null) window.clearTimeout(transitionTimerRef.current);
+    if (transitionKind && played !== null) {
+      setTurnTransition({ kind: transitionKind, currentId: played, nextId: nextSnapshot.current_player });
+      transitionTimerRef.current = window.setTimeout(() => {
+        setTurnTransition(null);
+        transitionTimerRef.current = null;
+      }, 2_600);
+    } else setTurnTransition(null);
+    const called = /^player-(\d+)-called-uno$/.exec(nextSnapshot.last_action);
+    if (unoCallTimerRef.current !== null) window.clearTimeout(unoCallTimerRef.current);
+    if (called) {
+      const playerId = Number(called[1]);
+      setUnoCallPlayerId(playerId);
+      unoCallTimerRef.current = window.setTimeout(() => {
+        setUnoCallPlayerId(null);
+        unoCallTimerRef.current = null;
+      }, 3_000);
+    } else if (nextSnapshot.last_action !== previousAction.current) {
+      setUnoCallPlayerId(null);
+    }
   };
 
   const applyRoom = (next: OnlineRoom) => {
@@ -135,6 +165,25 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   };
 
   useEffect(() => {
+    if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
+    if (snapshot?.status !== "Won") {
+      setSettlementActionsVisible(false);
+      settlementTimerRef.current = null;
+      return;
+    }
+    setSettlementActionsVisible(false);
+    settlementTimerRef.current = window.setTimeout(() => {
+      setSettlementActionsVisible(true);
+      settlementTimerRef.current = null;
+    }, 5_000);
+    return () => {
+      if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
+      if (dealTimerRef.current !== null) window.clearTimeout(dealTimerRef.current);
+      if (startTimerRef.current !== null) window.clearTimeout(startTimerRef.current);
+    };
+  }, [snapshot?.status]);
+
+  useEffect(() => {
     persistOnlineResume(room);
   }, [room.code, room.session?.playerId, room.session?.playerToken, room.session?.host]);
 
@@ -162,6 +211,9 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
       window.clearInterval(timer);
       if (drawFlightTimerRef.current !== null) window.clearTimeout(drawFlightTimerRef.current);
       if (drawnHighlightTimerRef.current !== null) window.clearTimeout(drawnHighlightTimerRef.current);
+      if (transitionTimerRef.current !== null) window.clearTimeout(transitionTimerRef.current);
+      if (unoCallTimerRef.current !== null) window.clearTimeout(unoCallTimerRef.current);
+      if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
     };
   // The room code/token are stable for this table. Keeping the socket effect
   // independent from each pushed snapshot prevents reconnect churn.
@@ -209,7 +261,7 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
     }).map((card) => card.id) ?? []);
   }, [dealPhase, human, humanId, snapshot]);
 
-  async function dispatch(action: "play" | "draw" | "call_uno", card?: Card, chosenColor?: Color) {
+  async function dispatch(action: "play" | "draw" | "call_uno" | "challenge_uno", card?: Card, chosenColor?: Color) {
     if (dealPhase !== null || !room.session || !snapshot) return;
     setNotice(null);
     try {
@@ -237,6 +289,37 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
       setWildCardId(card.id);
     } else {
       void dispatch("play", card);
+    }
+  }
+
+  function challengeUno() {
+    if (dealPhase !== null || !snapshot || snapshot.uno_pending_player === null || snapshot.uno_pending_player === humanId) return;
+    void dispatch("challenge_uno");
+  }
+
+  async function playAgain() {
+    if (!room.session?.host) {
+      setNotice(language === "zh" ? "请等待房主开始下一局。" : "Wait for the host to start the next round.");
+      return;
+    }
+    try {
+      const next = await api.startRoom(room);
+      dealStartedRef.current = true;
+      setStartingPlayerId(next.snapshot?.current_player ?? null);
+      setDealPhase("dealing");
+      applyRoom(next);
+      if (dealTimerRef.current !== null) window.clearTimeout(dealTimerRef.current);
+      if (startTimerRef.current !== null) window.clearTimeout(startTimerRef.current);
+      dealTimerRef.current = window.setTimeout(() => {
+        setDealPhase("starting");
+        dealTimerRef.current = null;
+        startTimerRef.current = window.setTimeout(() => {
+          setDealPhase(null);
+          startTimerRef.current = null;
+        }, START_CALLOUT_MS);
+      }, DEAL_DURATION_MS);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Unable to start another round.");
     }
   }
 
@@ -359,9 +442,12 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
   const discardCards = snapshot.discard_cards?.length ? snapshot.discard_cards : [snapshot.top_card];
   const startingPlayer = startingPlayerId === null ? undefined : snapshot.players.find((player) => player.id === startingPlayerId);
   const winner = snapshot.winner === null ? undefined : snapshot.players.find((player) => player.id === snapshot.winner);
+  const transitionCurrent = turnTransition ? snapshot.players.find((player) => player.id === turnTransition.currentId) : undefined;
+  const transitionNext = turnTransition ? snapshot.players.find((player) => player.id === turnTransition.nextId) : undefined;
   return <div className={`app-shell online-table-shell ${topbarOpen ? "topbar-is-open" : "topbar-is-hidden"}`} data-sync-transport={syncStatus === "connected" ? "websocket" : "rest-fallback"} data-sync-state={syncStatus}>
     <NetworkLogExportButton language={language} />
     <GameRecordPanel language={language} record={gameRecord} open={recordOpen} onToggle={() => setRecordOpen((open) => !open)} />
+    <button className="table-exit-floating" data-testid="table-exit" type="button" onClick={() => { clearOnlineResume(); onLeave(); }} aria-label={language === "zh" ? "退出牌桌" : "Exit table"}>×</button>
     <button className="topbar-toggle" type="button" onClick={() => setTopbarOpen((open) => !open)} aria-expanded={topbarOpen} aria-label={topbarOpen ? (language === "zh" ? "隐藏顶部信息栏" : "Hide top information bar") : (language === "zh" ? "显示顶部信息栏" : "Show top information bar")}>{topbarOpen ? "−" : "☰"}</button>
     <header className="topbar">
       <div className="brand-lockup"><div className="brand-mark">UNO<small>2026</small></div><div className="brand-divider" /><div className="brand-context"><span>{language === "zh" ? "联机牌桌" : "ONLINE TABLE"}</span><small>{room.code} · Rust room service</small></div></div>
@@ -390,14 +476,17 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
               const isNext = player.id === nextId;
               return <div key={player.id} data-player-id={player.id} className={`seat-player player-row seat-${seatSlotForPlayer(player.id, humanId, snapshot.players.length, snapshot.players.map((candidate) => candidate.id))} ${active ? "is-active" : ""} ${isNext ? "is-next" : ""}`}>
                 <span className="seat-avatar-wrap"><span className={`seat-avatar seat-avatar-${player.id % 4}`} />{active && <span className="seat-turn-pip" aria-label={language === "zh" ? "当前回合" : "current turn"} />}</span>
+                {unoCallPlayerId === player.id && <span className="uno-shout" data-testid="uno-shout" aria-live="polite">UNO!</span>}
                 <div className="seat-player-info"><strong title={player.name}>{player.name}</strong><span>{active ? (language === "zh" ? "当前回合" : "CURRENT TURN") : player.kind.startsWith("human") ? `${player.hand_count} ${language === "zh" ? "张牌" : "cards"}` : `AI · ${player.hand_count} ${language === "zh" ? "张牌" : "cards"}`}</span></div>
                 {active && <span className="seat-turn-label">{language === "zh" ? "出牌中" : "TURN"}</span>}
                 <span className="seat-card-fan" aria-hidden="true" style={{ "--fan-total": visible, "--fan-center": center } as CSSProperties}>{Array.from({ length: visible }, (_, cardIndex) => <img key={cardIndex} src="/assets/cards/reference/card-back.svg" alt="" style={{ "--fan-index": cardIndex } as CSSProperties} />)}<b>{player.hand_count}</b></span>
                 {isNext && <><span className="seat-next-label">{text.nextPlayer}</span><span className="seat-next-marker" aria-label={language === "zh" ? "下一位出牌玩家" : "next player to play"}>↗</span></>}
+                {snapshot.uno_pending_player === player.id && player.id !== humanId && <button className="challenge-uno-button" type="button" onClick={challengeUno}>{text.challengeUno}</button>}
               </div>;
             })}
             <div className={`seat-player player-row seat-south seat-human ${human.id === snapshot.current_player ? "is-active" : ""} ${human.id === nextId ? "is-next" : ""}`} data-player-id={human.id}>
               <span className="seat-avatar-wrap"><span className="seat-avatar seat-avatar-human" />{human.id === snapshot.current_player && <span className="seat-turn-pip" aria-label={language === "zh" ? "当前回合" : "current turn"} />}</span>
+              {unoCallPlayerId === human.id && <span className="uno-shout" data-testid="uno-shout" aria-live="polite">UNO!</span>}
               <div className="seat-player-info"><strong title={human.name}>{human.name}</strong><span>{human.id === snapshot.current_player ? (language === "zh" ? "当前回合" : "CURRENT TURN") : (language === "zh" ? "你 / 人类" : "YOU / HUMAN")}</span></div>
               {human.id === snapshot.current_player && <span className="seat-turn-label">{language === "zh" ? "出牌中" : "TURN"}</span>}
               {human.id === nextId && <><span className="seat-next-label">{text.nextPlayer}</span><span className="seat-next-marker" aria-label={language === "zh" ? "下一位出牌玩家" : "next player to play"}>↗</span></>}
@@ -405,12 +494,13 @@ export function OnlineTable({ language, room: initialRoom, api, onLeave, onLangu
           </div>
           <div className="table-center"><div className="piles"><OnlineBackStack count={snapshot.draw_count} language={language} disabled={dealPhase !== null || snapshot.current_player !== humanId || snapshot.status === "Won"} onDraw={() => void dispatch("draw")} /><div className="pile-separator" /><button className="discard-stack" onClick={() => setHistoryOpen(true)} type="button" aria-label={text.viewDiscardHistory}><span className="discard-shadow" /><CardArt card={snapshot.top_card} language={language} compact /></button></div><div className="active-color"><span className={`color-swatch swatch-${snapshot.active_color.toLowerCase()}`} />{text.activeColor} <strong>{translateColor(language, snapshot.active_color)}</strong></div>{snapshot.pending_draw > 0 && <div key={`pending-${snapshot.pending_draw}`} className="pending-draw-badge" data-testid="pending-draw" data-count={snapshot.pending_draw} aria-live="assertive">+{snapshot.pending_draw} {language === "zh" ? "连击抽牌" : "PENALTY DRAW"}</div>}</div>
           <div className="table-scene-status" aria-live="polite"><span className={`status-pulse ${snapshot.status === "Won" ? "is-won" : ""}`} aria-label={localizeEngineMessage(language, snapshot.message)} /><span className="sr-only">{localizeEngineMessage(language, snapshot.message)}</span><span className="status-code sr-only">{snapshot.last_action}</span></div><div className="table-scene-footnote table-metrics" aria-label={`${text.drawPile} ${snapshot.draw_count}, ${text.discard} ${snapshot.discard_count}`}><span className="table-metric" title={text.drawPile}><span aria-hidden="true">▤</span><b>{snapshot.draw_count}</b></span><span className="table-metric" title={text.discard}><span aria-hidden="true">◈</span><b>{snapshot.discard_count}</b></span><span className="table-metric metric-ruleset" title={language === "zh" ? "WebSocket 状态" : "WebSocket state"}>{room.expiresInSeconds === null ? "WS" : `${room.expiresInSeconds}s`}</span></div>{flight && <PlayFlight flight={flight} language={language} />}{drawFlight && <DrawCardFlight card={drawFlight.card} playerId={drawFlight.playerId} language={language} />}{tableEffect && <ActionEffectOverlay effect={tableEffect} language={language} />}{penaltyDraw && <PenaltyDrawFlight count={penaltyDraw.count} playerId={penaltyDraw.playerId} source={penaltyDraw.source} language={language} />}
+          {turnTransition && <TurnTransitionOverlay language={language} kind={turnTransition.kind} current={transitionCurrent} next={transitionNext} />}
           {dealPhase && <DealSequenceOverlay phase={dealPhase} language={language} playerCount={snapshot.players.length} startingPlayer={startingPlayer} />}
-          {snapshot.status === "Won" && <SettlementOverlay language={language} winner={winner} isWinner={snapshot.winner === humanId} />}
+          {snapshot.status === "Won" && <SettlementOverlay language={language} winner={winner} isWinner={snapshot.winner === humanId} showActions={settlementActionsVisible} onPlayAgain={() => { void playAgain(); }} onExit={() => { clearOnlineResume(); onLeave(); }} />}
         </div>
       </section>
       <section className="hand-column">
-        <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human.hand_count).padStart(2, "0")}</p>{human.hand_count === 1 && <h2 className="hand-alert">{text.oneCardLeft}</h2>}</div><div className="hand-actions"><button className="ghost-button" data-testid="sort-hand" disabled={dealPhase !== null || snapshot.status === "Won"} onClick={() => setHandOrder([...human.hand].sort((a, b) => a.color.localeCompare(b.color) || a.kind.localeCompare(b.kind)).map((card) => card.id))} type="button">{language === "zh" ? "整理手牌" : "SORT"}</button><button className="ghost-button" onClick={() => void dispatch("call_uno")} disabled={dealPhase !== null || human.hand_count !== 1 || snapshot.current_player !== humanId} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={() => void dispatch("draw")} disabled={dealPhase !== null || snapshot.current_player !== humanId || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
+        <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human.hand_count).padStart(2, "0")}</p>{human.hand_count === 1 && <h2 className="hand-alert">{text.oneCardLeft}</h2>}</div><div className="hand-actions"><button className="ghost-button" data-testid="sort-hand" disabled={dealPhase !== null || snapshot.status === "Won"} onClick={() => setHandOrder([...human.hand].sort((a, b) => a.color.localeCompare(b.color) || a.kind.localeCompare(b.kind)).map((card) => card.id))} type="button">{language === "zh" ? "整理手牌" : "SORT"}</button><button className={`ghost-button uno-call-button ${snapshot.uno_pending_player === humanId ? "is-uno-ready" : ""}`} data-testid="call-uno" onClick={() => void dispatch("call_uno")} disabled={dealPhase !== null || human.hand_count !== 1 || snapshot.uno_pending_player !== humanId || snapshot.status === "Won"} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={() => void dispatch("draw")} disabled={dealPhase !== null || snapshot.current_player !== humanId || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
         <div className="hand-rail hand-fan" data-testid="hand-rail">
           {orderedHand.map((card, index) => <div className={`hand-card-slot ${draggingCardId === card.id ? "is-dragging" : ""} ${drawnCardId === card.id ? "is-drawn-highlight" : ""}`} key={card.id} data-card-id={card.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const source = Number(event.dataTransfer.getData("text/plain")); if (source) reorderHand(source, card.id); }}>
             <CardArt card={card} language={language} className={`hand-card ${playableIds.has(card.id) ? "is-playable" : "is-unplayable"} ${liftedCardId === card.id ? "is-lifted" : ""} ${drawnCardId === card.id ? "is-drawn-highlight" : ""}`} style={{ "--hand-index": index, "--hand-total": human.hand.length } as CSSProperties} disabled={dealPhase !== null || snapshot.current_player !== humanId || snapshot.status === "Won"} ariaDisabled={!playableIds.has(card.id)} draggable={dealPhase === null && snapshot.current_player === humanId && snapshot.status !== "Won"} onClick={() => handleCardClick(card)} onDoubleClick={() => handleCardDoubleClick(card)} onPointerDown={(event) => handlePointerDown(event, card)} onDragStart={(event) => handleHandDragStart(event, card)} onDragEnd={() => setDraggingCardId(null)} />

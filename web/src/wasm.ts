@@ -3,6 +3,7 @@ export type WasmGame = {
   play_card: (cardId: number, color: string) => string;
   draw: () => string;
   call_uno: () => string;
+  challenge_uno: () => string;
   ai_step: () => string;
   restart: (seed: number) => string;
 };

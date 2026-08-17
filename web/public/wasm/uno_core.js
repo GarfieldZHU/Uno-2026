@@ -53,6 +53,22 @@ export class UnoGame {
         }
     }
     /**
+     * Challenge the currently open UNO window from the human seat.
+     * @returns {string}
+     */
+    challenge_uno() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.unogame_challenge_uno(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * @returns {string}
      */
     draw() {

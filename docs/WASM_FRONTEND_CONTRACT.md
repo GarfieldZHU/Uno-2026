@@ -21,6 +21,7 @@ snapshot(): string
 play_card(card_id: number, chosen_color: string): string
 draw(): string
 call_uno(): string
+challenge_uno(): string
 ai_step(): string
 restart(seed: number): string
 ```
@@ -48,7 +49,7 @@ Normal commands return a `Snapshot`. Rejected commands return:
 
 The snapshot contains `players`, `current_player`, `next_player`, `direction`, `active_color`,
 `top_card`, ordered `discard_cards` (oldest to newest, including `top_card`),
-draw/discard counts, `pending_draw`, `status`, `winner`, `turn_number`, `message`,
+draw/discard counts, `pending_draw`, `uno_pending_player`, `status`, `winner`, `turn_number`, `message`,
 `last_action`, and `ai_profile`. Human `players[0].hand` contains cards; AI hand
 arrays are empty while `hand_count` remains visible. The React discard-history
 dialog renders `discard_cards` and never reconstructs history from CSS or local UI state.

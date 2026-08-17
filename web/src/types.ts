@@ -46,6 +46,7 @@ export type Snapshot = {
   draw_count: number;
   discard_count: number;
   pending_draw: number;
+  uno_pending_player: number | null;
   status: "Playing" | "Won";
   winner: number | null;
   turn_number: number;

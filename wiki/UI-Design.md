@@ -13,12 +13,16 @@ clear for draw/discard piles and card-flight effects. The hand is a single
 high-contrast rail with resolution-independent SVG cards. Direction is drawn as
 seat-aware SVG routes; the current-to-next route is a gold animated connector,
 and the next seat is labelled `NEXT TO PLAY` instead of an ambiguous shorthand.
-Current and next players are shown by elevation, outline, and short labels; long
-explanations are kept in tooltips or accessible text. At narrow widths, the
-layout becomes one column and the hand rail remains horizontally reachable.
+Current and next players are shown by elevation, outline, and short labels; the
+current seat uses the strongest gold treatment while the next seat is deliberately
+quieter. Reverse and skip actions briefly overlay the affected and next players;
+the UNO-ready action grows, a successful call shouts from the avatar, and the
+offending seat exposes `CHALLENGE UNO` during the interstitial phase. At narrow
+widths, the layout becomes one column and the hand rail remains horizontally reachable.
 
 The human draw interaction is private: a back travels from the pile, flips to
 the resolved face, and the inserted card glows for two seconds. Other clients
-only receive the public count update.
+only receive the public count update. Finished tables reveal play-again/exit
+actions after five seconds and keep a compact exit control in the top-right corner.
 
 Implementation reference: [`docs/TABLE_UI_REFERENCE.md`](../docs/TABLE_UI_REFERENCE.md).

@@ -10,6 +10,7 @@ use uno_core::{AiProfile, GameState, PlayerKind};
 pub const ROOM_TTL: Duration = Duration::from_secs(15 * 60);
 pub const DISCONNECTED_ROOM_TTL: Duration = Duration::from_secs(3 * 60);
 pub const STATE_RETENTION: Duration = Duration::from_secs(6 * 60 * 60);
+const UNO_CHALLENGE_WINDOW: Duration = Duration::from_millis(2_500);
 pub const MIN_PLAYERS: usize = 3;
 pub const MAX_PLAYERS: usize = 10;
 
@@ -50,6 +51,10 @@ pub struct Room {
     pub started: bool,
     pub turn_deadline: Option<SystemTime>,
     pub next_ai_at: Option<SystemTime>,
+    /// Short interstitial window after a player reaches one card without
+    /// calling UNO. It pauses the next turn clock while a challenge can be
+    /// submitted, then normal turn scheduling resumes automatically.
+    pub uno_challenge_deadline: Option<SystemTime>,
     pub subscribers: Vec<Subscriber>,
 }
 
@@ -244,6 +249,7 @@ pub fn create_room(body: &str, rooms: &SharedRooms) -> HandlerResult {
             started: false,
             turn_deadline: None,
             next_ai_at: None,
+            uno_challenge_deadline: None,
             subscribers: Vec::new(),
         },
     );
@@ -343,6 +349,7 @@ fn start_game(room: &mut Room) {
     room.last_activity = now();
     room.turn_deadline = Some(now() + room.timeout);
     room.next_ai_at = Some(now() + Duration::from_millis(900));
+    room.uno_challenge_deadline = None;
 }
 
 fn mark_finished_if_needed(room: &mut Room) {
@@ -356,6 +363,7 @@ fn mark_finished_if_needed(room: &mut Room) {
         room.finished_at = Some(now());
         room.turn_deadline = None;
         room.next_ai_at = None;
+        room.uno_challenge_deadline = None;
         if room.subscribers.is_empty() {
             room.disconnect_deadline = Some(now() + DISCONNECTED_ROOM_TTL);
         }
@@ -431,7 +439,7 @@ pub fn start_room(code: &str, token_value: Option<&str>, rooms: &SharedRooms) ->
     if token_value != Some(room.host_token.as_str()) {
         return Err(error("403 Forbidden", "host-required"));
     }
-    if room.started {
+    if room.started && room.finished_at.is_none() {
         return Err(error("409 Conflict", "room-already-started"));
     }
     let total_players = (room.players.len() + room.ai_count).min(room.seat_count);
@@ -462,6 +470,17 @@ pub fn advance_automatic_turns(room: &mut Room) -> bool {
         };
         if snapshot["status"] == "Won" {
             break;
+        }
+        if snapshot["uno_pending_player"].is_number() {
+            let deadline = room
+                .uno_challenge_deadline
+                .get_or_insert_with(|| now() + UNO_CHALLENGE_WINDOW);
+            room.turn_deadline = None;
+            room.next_ai_at = Some(*deadline);
+            if *deadline > now() {
+                break;
+            }
+            room.uno_challenge_deadline = None;
         }
         let current = snapshot["current_player"].as_u64().unwrap_or(0) as usize;
         let is_human = room
@@ -572,7 +591,8 @@ pub fn action_room(
             .ok()
             .and_then(|snapshot| snapshot["current_player"].as_u64())
             .unwrap_or(usize::MAX as u64) as usize;
-        if current != viewer_id {
+        let interstitial = matches!(input.action.as_str(), "call_uno" | "challenge_uno");
+        if current != viewer_id && !interstitial {
             return Err(error("409 Conflict", "not-your-turn"));
         }
         let raw = match input.action.as_str() {
@@ -594,14 +614,24 @@ pub fn action_room(
             "call_uno" => game
                 .call_uno(viewer_id)
                 .unwrap_or_else(|message| game.error_json_for(viewer_id, message)),
+            "challenge_uno" => game
+                .challenge_uno(viewer_id)
+                .unwrap_or_else(|message| game.error_json_for(viewer_id, message)),
             _ => return Err(error("400 Bad Request", "unknown-action")),
         };
         let snapshot = serde_json::from_str::<Value>(&game.snapshot_json_for(viewer_id))
             .unwrap_or_else(|_| json!({}));
         (raw, snapshot)
     };
-    room.turn_deadline = Some(now() + room.timeout);
-    room.next_ai_at = Some(now() + Duration::from_millis(900));
+    if snapshot["uno_pending_player"].is_number() {
+        room.uno_challenge_deadline = Some(now() + UNO_CHALLENGE_WINDOW);
+        room.turn_deadline = None;
+        room.next_ai_at = room.uno_challenge_deadline;
+    } else {
+        room.uno_challenge_deadline = None;
+        room.turn_deadline = Some(now() + room.timeout);
+        room.next_ai_at = Some(now() + Duration::from_millis(900));
+    }
     room.last_activity = now();
     mark_finished_if_needed(room);
     let command = serde_json::from_str::<Value>(&raw).unwrap_or_else(|_| json!({}));
@@ -856,6 +886,7 @@ mod tests {
                 started: false,
                 turn_deadline: None,
                 next_ai_at: None,
+                uno_challenge_deadline: None,
                 subscribers: Vec::new(),
             },
         );

@@ -6,7 +6,8 @@ English | [中文](TESTING.zh-CN.md) · [Development](DEVELOPMENT.md)
 
 1. `cargo fmt --all -- --check` catches formatting drift.
 2. `cargo test --workspace` tests deck shape, 3–10 seat construction, legality,
-   WildDrawFour restriction, AI legality, UNO calls, and snapshot privacy.
+   WildDrawFour restriction, AI legality, UNO calls, UNO challenge penalties,
+   and snapshot privacy.
 3. `pnpm run typecheck` checks the WASM facade and React contract.
 4. `pnpm run build` proves the release artifact and Vite bundle can be produced.
 5. `pnpm run test:browser` boots Vite on port 1411 and checks the Chinese-first
@@ -17,7 +18,8 @@ English | [中文](TESTING.zh-CN.md) · [Development](DEVELOPMENT.md)
    second-click or double-click play, drag/drop, hand sorting, wild-color
    selection, direction/current-turn/next-player markers, AI back-to-front
    flight, action effects, seat-aware direction routes and active-turn label,
-   and offline settlement.
+   action effects, UNO call/challenge affordances, five-second settlement
+   actions, exit-table control, and offline settlement.
 
 On a clean machine, install the browser once with
 `pnpm exec playwright install --with-deps chromium` before running the browser suite.

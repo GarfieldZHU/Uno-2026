@@ -76,7 +76,14 @@ type UiCopy = {
   onlineNote: string;
   oneCardLeft: string;
   callUno: string;
+  challengeUno: string;
   drawCard: string;
+  playAgain: string;
+  exitTable: string;
+  settlementActionsHint: string;
+  directionChanged: string;
+  skippedPlayer: string;
+  unoShout: string;
   clickHint: string;
   drawHint: string;
   playableHint: string;
@@ -194,7 +201,14 @@ const COPY: Record<Language, UiCopy> = {
     onlineNote: "联机房间使用 Rust 服务，房间状态短期保存在内存中。",
     oneCardLeft: "只剩一张。",
     callUno: "喊 UNO",
+    challengeUno: "揭发 UNO",
     drawCard: "摸一张牌",
+    playAgain: "再来一局",
+    exitTable: "退出牌桌",
+    settlementActionsHint: "5 秒后可选择下一步",
+    directionChanged: "方向反转",
+    skippedPlayer: "跳过一位",
+    unoShout: "UNO!",
     clickHint: "点击亮起的牌出牌",
     drawHint: "没有可出牌时摸牌",
     playableHint: "可出的牌会在手牌轨道上发光。",
@@ -310,7 +324,14 @@ const COPY: Record<Language, UiCopy> = {
     onlineNote: "Online rooms use a Rust service and short-lived in-memory room state.",
     oneCardLeft: "One card left.",
     callUno: "CALL UNO",
+    challengeUno: "CHALLENGE UNO",
     drawCard: "DRAW CARD",
+    playAgain: "PLAY AGAIN",
+    exitTable: "EXIT TABLE",
+    settlementActionsHint: "Next actions unlock in 5 seconds",
+    directionChanged: "DIRECTION REVERSED",
+    skippedPlayer: "PLAYER SKIPPED",
+    unoShout: "UNO!",
     clickHint: "a lit card to play",
     drawHint: "when no move is open",
     playableHint: "A playable card glows on the rail.",

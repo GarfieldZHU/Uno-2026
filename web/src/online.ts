@@ -114,7 +114,7 @@ export type CreateRoomRequest = {
 };
 
 export type JoinRoomRequest = { name: string; code: string };
-export type OnlineAction = { action: "play" | "draw" | "call_uno"; cardId?: number; chosenColor?: string };
+export type OnlineAction = { action: "play" | "draw" | "call_uno" | "challenge_uno"; cardId?: number; chosenColor?: string };
 
 export interface OnlineApi {
   createRoom(request: CreateRoomRequest): Promise<OnlineRoom>;

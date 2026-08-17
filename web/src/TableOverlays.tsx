@@ -61,9 +61,12 @@ type SettlementProps = {
   language: Language;
   winner?: Player;
   isWinner: boolean;
+  showActions: boolean;
+  onPlayAgain: () => void;
+  onExit: () => void;
 };
 
-export function SettlementOverlay({ language, winner, isWinner }: SettlementProps) {
+export function SettlementOverlay({ language, winner, isWinner, showActions, onPlayAgain, onExit }: SettlementProps) {
   const text = copy(language);
   return (
     <div className="settlement-layer" data-testid="settlement-overlay" data-result={isWinner ? "win" : "lose"} role="dialog" aria-modal="true" aria-live="assertive">
@@ -75,7 +78,30 @@ export function SettlementOverlay({ language, winner, isWinner }: SettlementProp
         <p>{text.winnerSubtitle(winner?.name ?? (language === "zh" ? "获胜者" : "the winner"))}</p>
         <span className="settlement-result">{text.winnerLabel}</span>
         <strong className="settlement-winner">{winner?.name ?? (language === "zh" ? "未知玩家" : "Unknown player")}</strong>
+        <div className={`settlement-actions ${showActions ? "is-visible" : ""}`} aria-hidden={!showActions}>
+          <button className="primary-button" type="button" onClick={onPlayAgain} disabled={!showActions}>{text.playAgain}</button>
+          <button className="ghost-button" type="button" onClick={onExit} disabled={!showActions}>{text.exitTable}</button>
+        </div>
+        {!showActions && <small className="settlement-actions-countdown">{text.settlementActionsHint}</small>}
       </div>
+    </div>
+  );
+}
+
+type TurnTransitionProps = {
+  language: Language;
+  kind: "reverse" | "skip";
+  current?: Player;
+  next?: Player;
+};
+
+export function TurnTransitionOverlay({ language, kind, current, next }: TurnTransitionProps) {
+  const reverse = kind === "reverse";
+  return (
+    <div className={`turn-transition-overlay transition-${kind}`} data-testid="turn-transition" data-transition={kind} role="status" aria-live="polite">
+      <span className="turn-transition-icon" aria-hidden="true">{reverse ? "↺" : "⤼"}</span>
+      <strong>{reverse ? (language === "zh" ? "方向反转" : "DIRECTION REVERSED") : (language === "zh" ? "跳过一位" : "PLAYER SKIPPED")}</strong>
+      <span>{current?.name ?? "—"} <b>→</b> {next?.name ?? "—"}</span>
     </div>
   );
 }

@@ -13,6 +13,10 @@ export class UnoGame {
      */
     ai_step(): string;
     call_uno(): string;
+    /**
+     * Challenge the currently open UNO window from the human seat.
+     */
+    challenge_uno(): string;
     draw(): string;
     constructor(seed: number, profile: string);
     static new_with_config(seed: number, profile: string, player_count: number): UnoGame;
@@ -28,6 +32,7 @@ export interface InitOutput {
     readonly __wbg_unogame_free: (a: number, b: number) => void;
     readonly unogame_ai_step: (a: number) => [number, number];
     readonly unogame_call_uno: (a: number) => [number, number];
+    readonly unogame_challenge_uno: (a: number) => [number, number];
     readonly unogame_draw: (a: number) => [number, number];
     readonly unogame_new: (a: number, b: number, c: number) => number;
     readonly unogame_new_with_config: (a: number, b: number, c: number, d: number) => number;

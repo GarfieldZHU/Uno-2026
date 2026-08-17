@@ -53,6 +53,10 @@ pub struct Snapshot {
     pub draw_count: usize,
     pub discard_count: usize,
     pub pending_draw: u8,
+    /// The player who most recently reached one card and still has an open
+    /// UNO challenge window. The window is resolved by the player calling
+    /// UNO, another player challenging, or the next turn action.
+    pub uno_pending_player: Option<usize>,
     pub status: GameStatus,
     pub winner: Option<usize>,
     pub turn_number: u32,
@@ -319,16 +323,64 @@ impl GameState {
     }
 
     pub fn call_uno(&mut self, player_id: usize) -> Result<String, String> {
-        let player = self
-            .players
-            .get_mut(player_id)
-            .ok_or_else(|| "player-not-found".to_string())?;
-        if player.hand.len() != 1 || self.uno_pending != Some(player_id) {
-            return Err("uno-not-available".to_string());
-        }
-        player.uno_called = true;
+        let pending_player = self.uno_pending;
+        let player_name = {
+            let player = self
+                .players
+                .get_mut(player_id)
+                .ok_or_else(|| "player-not-found".to_string())?;
+            if player.hand.len() != 1 || pending_player != Some(player_id) {
+                return Err("uno-not-available".to_string());
+            }
+            player.uno_called = true;
+            player.name.clone()
+        };
+        self.uno_pending = None;
         self.last_action = format!("player-{player_id}-called-uno");
-        self.message = format!("{} called UNO!", player.name);
+        self.message = format!("{} called UNO!", player_name);
+        Ok(self.snapshot_json())
+    }
+
+    /// Challenge the open UNO window. This is intentionally independent of
+    /// turn ownership: the challenge is an interstitial action between turns
+    /// and must not consume the next player's clock.
+    pub fn challenge_uno(&mut self, challenger_id: usize) -> Result<String, String> {
+        if self.status != GameStatus::Playing {
+            return Err("game-over".to_string());
+        }
+        let target_id = self
+            .uno_pending
+            .ok_or_else(|| "uno-challenge-not-open".to_string())?;
+        if challenger_id == target_id {
+            return Err("cannot-challenge-your-own-uno".to_string());
+        }
+        let target = self
+            .players
+            .get(target_id)
+            .ok_or_else(|| "player-not-found".to_string())?;
+        let target_name = target.name.clone();
+        let target_hand_len = target.hand.len();
+        let target_called = target.uno_called;
+        if target_hand_len != 1 {
+            self.uno_pending = None;
+            return Err("uno-challenge-not-open".to_string());
+        }
+        if target_called {
+            self.uno_pending = None;
+            self.last_action = format!("player-{challenger_id}-challenged-uno-safe-{target_id}");
+            self.message = format!("{} called UNO in time.", target_name);
+            return Ok(self.snapshot_json());
+        }
+
+        for _ in 0..2 {
+            if let Some(card) = self.draw_one() {
+                self.players[target_id].hand.push(card);
+            }
+        }
+        self.players[target_id].uno_called = false;
+        self.uno_pending = None;
+        self.last_action = format!("player-{target_id}-uno-challenged");
+        self.message = format!("{} was challenged and draws 2.", target_name);
         Ok(self.snapshot_json())
     }
 
@@ -346,10 +398,16 @@ impl GameState {
             } => self.play_card(player_id, card_id, Some(chosen_color)),
             AiDecision::Draw => self.draw_for_player(player_id),
         };
-        if self.players[player_id].hand.len() == 1 && !self.players[player_id].uno_called {
+        if result.is_ok()
+            && self.players[player_id].hand.len() == 1
+            && !self.players[player_id].uno_called
+        {
             let _ = self.call_uno(player_id);
         }
-        result.unwrap_or_else(|error| self.error_json(error))
+        match result {
+            Ok(_) => self.snapshot_json(),
+            Err(error) => self.error_json(error),
+        }
     }
 
     /// Resolve a human turn that expired on the room server. The choice is
@@ -443,6 +501,7 @@ impl GameState {
             draw_count: self.draw_pile.len(),
             discard_count: self.discard_pile.len(),
             pending_draw: self.pending_draw,
+            uno_pending_player: self.uno_pending,
             status: self.status,
             winner: self.winner,
             turn_number: self.turn_number,
