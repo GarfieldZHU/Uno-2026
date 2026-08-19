@@ -11,7 +11,9 @@ largest share of the viewport.
 The information bar is collapsed by default. The center of the felt remains
 clear for draw/discard piles and card-flight effects. The hand is a single
 high-contrast rail with resolution-independent SVG cards. Direction is drawn as
-seat-aware SVG routes; the current-to-next route is a gold animated connector,
+seat-aware SVG routes; each connector is trimmed before the seat cards and
+carries one arrowhead at its geometric midpoint, so it reads as a player-to-player
+edge without covering an avatar. The current-to-next route is a gold animated connector,
 and the next seat is labelled `NEXT TO PLAY` instead of an ambiguous shorthand.
 Current and next players are shown by elevation, outline, and short labels; the
 current seat uses the strongest gold treatment while the next seat is deliberately

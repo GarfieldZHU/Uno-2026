@@ -151,6 +151,7 @@ test("初始发牌结束后会短暂标示起始玩家", async ({ page }) => {
   await expect(page.locator(".direction-arrow-route.is-active-route")).toHaveCount(1);
   await expect(page.getByTestId("table-direction-indicator")).toHaveAttribute("data-active-route", /\d+-\d+/);
   await expect(page.locator(".table-direction-arrows .direction-arrow-line")).toHaveCount(4);
+  await expect(page.locator('.table-direction-arrows .direction-arrow-line[data-arrow-position="midpoint"][marker-mid]')).toHaveCount(4);
   await expect(page.locator(".table-center .table-direction-chip")).toHaveCount(0);
 });
 
@@ -169,6 +170,7 @@ test("五到十席按实际座位环生成对应方向箭头", async ({ page }) 
     await expect(seats).toHaveCount(playerCount);
     await expect(page.locator(".direction-arrow-route")).toHaveCount(playerCount);
     await expect(page.locator(".direction-arrow-line")).toHaveCount(playerCount);
+    await expect(page.locator('.direction-arrow-line[data-arrow-position="midpoint"][marker-mid]')).toHaveCount(playerCount);
     await expect(page.locator(".direction-arrow-route.is-active-route")).toHaveCount(1);
     const playerIds = await seats.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-player-id")));
     expect(new Set(playerIds).size).toBe(playerCount);

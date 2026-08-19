@@ -50,7 +50,9 @@ The route geometry is generated from the same seat resolver as the players:
 3–10 seat layouts use a shallow lower pair for nine and ten seats, and the SVG
 emits exactly one directed segment per live seat. Endpoints are trimmed into
 the gaps between seat cards and curves bend toward the felt rim; the three-seat
-cross-table link takes an upper arc so it never crosses the piles. The active
+cross-table link takes an upper arc so it never crosses the piles. Each segment
+is split at its geometric midpoint so its single arrowhead sits in the open
+space between players; the connector itself stops short of avatars. The active
 arrow is therefore the authoritative current-player → next-player edge rather
 than a fixed eight-seat overlay, even when player IDs are not contiguous.
 

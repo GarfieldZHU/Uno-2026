@@ -34,9 +34,10 @@ function trimEndpoints(from: Point, to: Point): [Point, Point] {
   const dx = to[0] - from[0];
   const dy = to[1] - from[1];
   const distance = Math.hypot(dx, dy) || 1;
-  // Keep arrowheads in the gap between seats. A fixed inset would make the
-  // short 9/10-seat lower links disappear, so scale it with the actual gap.
-  const inset = Math.min(12, Math.max(3.2, distance * .18));
+  // Keep the visible route in the gap between seat cards. The arrowhead is
+  // now placed at the route midpoint, so this inset only protects avatars
+  // from the connector itself and can be a little more generous.
+  const inset = Math.min(15, Math.max(5.5, distance * .22));
   const ux = dx / distance;
   const uy = dy / distance;
   return [
@@ -45,7 +46,35 @@ function trimEndpoints(from: Point, to: Point): [Point, Point] {
   ];
 }
 
-function routePath(from: Point, to: Point) {
+type CubicRoute = {
+  path: string;
+};
+
+function lerp(a: Point, b: Point, t: number): Point {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+}
+
+/**
+ * Split the cubic at t=.5 so SVG's marker-mid can place one crisp arrowhead
+ * at the geometric midpoint. Keeping the curve itself intact avoids the
+ * visual kink that a separate overlay triangle would introduce on oval
+ * tables with different aspect ratios.
+ */
+function splitCubicAtMidpoint(start: Point, c1: Point, c2: Point, end: Point) {
+  const p01 = lerp(start, c1, .5);
+  const p12 = lerp(c1, c2, .5);
+  const p23 = lerp(c2, end, .5);
+  const p012 = lerp(p01, p12, .5);
+  const p123 = lerp(p12, p23, .5);
+  const midpoint = lerp(p012, p123, .5);
+  return { left1: p01, left2: p012, midpoint, right1: p123, right2: p23 };
+}
+
+function formatPoint([x, y]: Point) {
+  return `${x.toFixed(2)} ${y.toFixed(2)}`;
+}
+
+function routePath(from: Point, to: Point): CubicRoute {
   const [start, end] = trimEndpoints(from, to);
   const dx = end[0] - start[0];
   const dy = end[1] - start[1];
@@ -65,7 +94,12 @@ function routePath(from: Point, to: Point) {
     : Math.min(10, Math.max(4.5, Math.hypot(dx, dy) * .14));
   const c1: Point = [start[0] + dx * .32 + outward[0] * bend, start[1] + dy * .32 + outward[1] * bend];
   const c2: Point = [start[0] + dx * .68 + outward[0] * bend, start[1] + dy * .68 + outward[1] * bend];
-  return `M ${start[0].toFixed(2)} ${start[1].toFixed(2)} C ${c1[0].toFixed(2)} ${c1[1].toFixed(2)} ${c2[0].toFixed(2)} ${c2[1].toFixed(2)} ${end[0].toFixed(2)} ${end[1].toFixed(2)}`;
+  const { left1, left2, midpoint: curveMidpoint, right1, right2 } = splitCubicAtMidpoint(start, c1, c2, end);
+  return {
+    // The join at `midpoint` is intentional: marker-mid renders exactly one
+    // direction head there, while the endpoints stay clear of seat avatars.
+    path: `M ${formatPoint(start)} C ${formatPoint(left1)} ${formatPoint(left2)} ${formatPoint(curveMidpoint)} C ${formatPoint(right1)} ${formatPoint(right2)} ${formatPoint(end)}`,
+  };
 }
 
 function playerPoint(playerId: number, players: number[], humanId: number): Point {
@@ -89,7 +123,7 @@ export function TableDirectionArrows({
   const routeEdges = players.map((from, index) => {
     const nextIndex = (index + (clockwise ? 1 : -1) + players.length) % players.length;
     const to = players[nextIndex];
-    return { from, to, path: routePath(playerPoint(from, players, humanId), playerPoint(to, players, humanId)) };
+    return { from, to, ...routePath(playerPoint(from, players, humanId), playerPoint(to, players, humanId)) };
   });
 
   return (
@@ -121,7 +155,12 @@ export function TableDirectionArrows({
           return (
             <g className={`direction-arrow-route ${active ? "is-active-route" : "is-muted-route"}`} data-from-player={from} data-to-player={to} data-active={active ? "true" : undefined} key={`${from}-${to}`}>
               <path className="direction-arrow-route-hit" d={path} />
-              <path className="direction-arrow-route-line direction-arrow-line" d={path} markerEnd={`url(#${active ? `${markerId}-active` : markerId})`} />
+              <path
+                className="direction-arrow-route-line direction-arrow-line"
+                d={path}
+                markerMid={`url(#${active ? `${markerId}-active` : markerId})`}
+                data-arrow-position="midpoint"
+              />
             </g>
           );
         })}
