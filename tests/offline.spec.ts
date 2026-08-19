@@ -237,6 +237,81 @@ test("牌桌语言切换不会改变牌局，八席窄屏仍可读", async ({ pa
   await page.screenshot({ path: "test-results/offline-table-eight-seat-mobile-zh.png", fullPage: true });
 });
 
+test("手机和平板视口内完整显示牌桌与手牌且没有页面滚动", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
+
+  for (const viewport of [{ width: 390, height: 844 }, { width: 667, height: 375 }, { width: 1024, height: 600 }, { width: 1366, height: 1024 }]) {
+    await page.setViewportSize(viewport);
+    const metrics = await page.evaluate(() => {
+      const rect = (selector: string) => {
+        const element = document.querySelector<HTMLElement>(selector);
+        if (!element) return null;
+        const box = element.getBoundingClientRect();
+        return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+      };
+      const table = rect(".felt-table.table-scene");
+      const hand = rect(".hand-column");
+      const rail = rect(".hand-rail.hand-fan");
+      const north = rect(".seat-north");
+      const badge = rect(".table-scene-badge");
+      const active = document.querySelector<HTMLElement>(".seat-player.is-active");
+      const activeBox = active?.getBoundingClientRect();
+      const tableBox = document.querySelector<HTMLElement>(".felt-table.table-scene")?.getBoundingClientRect();
+      const badgeBox = document.querySelector<HTMLElement>(".table-scene-badge")?.getBoundingClientRect();
+      const northBox = document.querySelector<HTMLElement>(".seat-north")?.getBoundingClientRect();
+      const cardArt = document.querySelector<HTMLElement>(".hand-fan .card-art");
+      const cardBoxes = [...document.querySelectorAll<HTMLElement>(".hand-fan .card-art")].map((element) => element.getBoundingClientRect());
+      const seatBoxes = [...document.querySelectorAll<HTMLElement>(".seat-player")].map((element) => element.getBoundingClientRect());
+      const overlap = badgeBox && northBox
+        ? badgeBox.left < northBox.right && badgeBox.right > northBox.left && badgeBox.top < northBox.bottom && badgeBox.bottom > northBox.top
+        : false;
+      const centered = activeBox && tableBox && ["south", "north"].includes(active?.dataset.seat ?? "")
+        ? Math.abs((activeBox.left + activeBox.width / 2) - (tableBox.left + tableBox.width / 2)) < 1
+        : true;
+      return {
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        scrollWidth: document.documentElement.scrollWidth,
+        scrollHeight: document.documentElement.scrollHeight,
+        table,
+        hand,
+        rail,
+        north,
+        badge,
+        centered,
+        badgeOverlapsNorth: overlap,
+        seatsInsideTable: tableBox ? seatBoxes.every((box) => box.left >= tableBox.left - 1 && box.right <= tableBox.right + 1 && box.top >= tableBox.top - 1 && box.bottom <= tableBox.bottom + 1) : false,
+        cardsInsideRail: (() => {
+          const railBox = document.querySelector<HTMLElement>(".hand-rail.hand-fan")?.getBoundingClientRect();
+          return railBox ? cardBoxes.every((box) => box.left >= railBox.left - 1 && box.right <= railBox.right + 1 && box.top >= railBox.top - 1 && box.bottom <= railBox.bottom + 1) : false;
+        })(),
+        cardFrame: cardArt ? {
+          background: getComputedStyle(cardArt).backgroundColor,
+          insetShadow: getComputedStyle(cardArt, "::before").boxShadow,
+          imageFit: getComputedStyle(cardArt.querySelector("img")!).objectFit,
+        } : null,
+      };
+    });
+
+    expect(metrics.viewport).toEqual(viewport);
+    expect(metrics.scrollWidth).toBeLessThanOrEqual(viewport.width);
+    expect(metrics.scrollHeight).toBeLessThanOrEqual(viewport.height);
+    for (const box of [metrics.table, metrics.hand, metrics.rail]) {
+      expect(box).not.toBeNull();
+      expect(box!.left).toBeGreaterThanOrEqual(-1);
+      expect(box!.right).toBeLessThanOrEqual(viewport.width + 1);
+      expect(box!.top).toBeGreaterThanOrEqual(-1);
+      expect(box!.bottom).toBeLessThanOrEqual(viewport.height + 1);
+    }
+    expect(metrics.centered).toBe(true);
+    expect(metrics.badgeOverlapsNorth).toBe(false);
+    expect(metrics.seatsInsideTable).toBe(true);
+    expect(metrics.cardsInsideRail).toBe(true);
+    expect(metrics.cardFrame).toMatchObject({ background: "rgba(0, 0, 0, 0)", insetShadow: "none", imageFit: "fill" });
+  }
+});
+
 test("人类出牌会从手牌飞向弃牌堆", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();

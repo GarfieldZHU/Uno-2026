@@ -1304,3 +1304,101 @@ body {
   .deal-sequence-stack .deal-sequence-card.is-face-up .deal-sequence-card-back { opacity: 0; transform: rotateY(180deg); }
   .deal-sequence-stack .deal-sequence-card.is-face-up .deal-sequence-card-face { opacity: 1; transform: rotateY(0); }
 }
+
+/* Compact mobile/tablet surfaces keep the whole match reachable without a
+   document scroll.  The table owns the flexible height and the hand rail is
+   a fitted fan rather than a second scroll container. */
+.table-seats .seat-player.seat-north.is-active,
+.table-seats .seat-player.seat-south.is-active {
+  transform: translateX(-50%) translateY(-3px) scale(1.035);
+}
+.table-scene-badge { top: 23%; }
+.card-art { background: transparent; }
+.card-art::before { box-shadow: none; }
+
+@media (max-width: 760px) and (orientation: portrait) {
+  html, body { overflow: hidden; }
+  .app-shell { height: 100svh; height: 100dvh; min-height: 0; overflow: hidden; padding: 0 12px 4px; }
+  .app-shell.topbar-is-hidden .topbar { padding: 0; }
+  .game-layout { display: flex; flex-direction: column; height: calc(100% - 8px); min-height: 0; max-width: none; gap: 8px; padding-top: 8px; }
+  .table-column { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+  .table-heading { flex: 0 0 auto; align-items: center; gap: 8px; padding: 0 2px; }
+  .table-heading .eyebrow { margin-bottom: 3px; font-size: 7px; }
+  .table-heading h1 { font-size: clamp(20px, 6vw, 28px); }
+  .round-meta { gap: 5px; font-size: 7px; }
+  .direction-mark { width: 35px; min-height: 28px; padding: 2px; font-size: 13px; }
+  .direction-mark small { font-size: 5px; }
+  .felt-table.table-scene { flex: 1 1 auto; min-height: 0; height: auto; margin-top: 6px; }
+  .hand-column { flex: 0 0 auto; min-height: 0; padding: 0; }
+  .hand-heading { align-items: center; flex-direction: row; gap: 8px; padding: 0 2px; }
+  .hand-heading .eyebrow { margin: 0; font-size: 7px; }
+  .hand-heading h2 { font-size: 13px; }
+  .hand-actions { width: auto; gap: 4px; }
+  .hand-actions > * { flex: 0 0 auto; padding: 6px 8px; font-size: 7px; }
+  .hand-rail.hand-fan { height: 124px; min-height: 0; justify-content: center; gap: 0; margin: 6px 0 0; padding: 5px 8px; overflow: hidden; border: 1px solid rgba(255, 245, 216, .15); border-radius: 12px; }
+  .hand-fan .hand-card-slot { flex: 0 0 auto; height: 100%; min-height: 0; margin-left: -18px; }
+  .hand-fan .hand-card-slot:first-child { margin-left: 0; }
+  .hand-fan .card-art,
+  .hand-fan .hand-card { width: clamp(42px, 14vw, 60px); height: clamp(70px, 23vw, 94px); margin-left: 0; margin-bottom: 12px; }
+  .hand-help { display: none; }
+  .table-seats .seat-player { width: 146px; min-height: 57px; }
+  .table-seats .seat-human { width: 158px; }
+  .table-scene-badge { top: 23%; }
+}
+
+@media (max-width: 1200px) and (orientation: landscape),
+       (min-width: 1300px) and (max-width: 1400px) and (orientation: landscape) {
+  html, body { overflow: hidden; }
+  .app-shell { height: 100svh; height: 100dvh; min-height: 0; overflow: hidden; padding: 0 10px 4px; }
+  .app-shell.topbar-is-hidden .topbar { padding: 0; }
+  .game-layout { display: flex; flex-direction: column; height: calc(100% - 6px); min-height: 0; max-width: none; gap: 5px; padding-top: 6px; }
+  .table-column { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+  .table-heading { flex: 0 0 auto; align-items: center; gap: 8px; padding: 0 2px; }
+  .table-heading .eyebrow { margin-bottom: 2px; font-size: 6px; }
+  .table-heading h1 { font-size: clamp(17px, 3.5vw, 24px); }
+  .round-meta { gap: 5px; font-size: 7px; }
+  .direction-mark { width: 34px; min-height: 26px; padding: 2px; font-size: 12px; }
+  .direction-mark small { font-size: 5px; }
+  .felt-table.table-scene { flex: 1 1 auto; min-height: 0; height: auto; margin-top: 5px; border-radius: 18px; }
+  .table-scene-badge { display: none; }
+  .table-seats .seat-player { width: clamp(96px, 20vw, 150px); min-height: 40px; padding: 3px 4px; gap: 4px; border-width: 1px; border-radius: 9px; }
+  .table-seats .seat-human { width: clamp(112px, 22vw, 164px); }
+  .table-seats .seat-south { bottom: 1%; }
+  .seat-avatar-wrap,
+  .table-seats .seat-human .seat-avatar-wrap { width: 28px; height: 28px; }
+  .seat-player-info { gap: 1px; }
+  .seat-player-info strong { font-size: 7px; }
+  .seat-player-info span { font-size: 5px; }
+  .seat-card-fan { width: 34px; height: 30px; flex-basis: 34px; }
+  .seat-card-fan img { width: 13px; height: 22px; bottom: 2px; }
+  .seat-card-fan b { right: -2px; bottom: -2px; width: 14px; height: 14px; border-width: 1px; font-size: 6px; }
+  .seat-turn-label, .seat-next-label { top: -10px; padding: 2px 4px; border-width: 1px; font-size: 5px; }
+  .seat-next-marker { top: -8px; right: -8px; width: 17px; height: 17px; font-size: 9px; }
+  .table-center { top: 50%; transform: translate(-50%, -50%); }
+  .table-center::before { width: min(170px, 34vw); height: 86px; }
+  .piles { gap: 12px; }
+  .draw-stack, .discard-stack { width: 58px; height: 80px; }
+  .card-back-image, .stack-offset { width: 58px; height: 80px; border-radius: 8px; }
+  .discard-stack .card-art { width: 58px; height: 80px; }
+  .pile-count { right: -4px; bottom: -3px; width: 15px; height: 15px; border-width: 1px; font-size: 6px; }
+  .active-color { gap: 4px; margin-top: 5px; font-size: 6px; }
+  .active-color strong { font-size: 6px; }
+  .table-scene-status { right: 9px; bottom: 8px; left: 9px; }
+  .table-metrics { right: 8px; bottom: 6px; gap: 3px; }
+  .table-metric { min-width: 22px; padding: 2px 3px; border-radius: 4px; }
+  .table-metric > span { font-size: 6px; }
+  .table-metric b { font-size: 6px; }
+  .metric-ruleset { display: none; }
+  .hand-column { flex: 0 0 auto; min-height: 0; padding: 0; }
+  .hand-heading { align-items: center; gap: 8px; padding: 0 2px; }
+  .hand-heading .eyebrow { margin: 0; font-size: 6px; }
+  .hand-heading h2 { font-size: 11px; }
+  .hand-actions { gap: 4px; }
+  .hand-actions > * { flex: 0 0 auto; padding: 5px 7px; font-size: 6px; }
+  .hand-rail.hand-fan { height: clamp(96px, 26dvh, 112px); min-height: 0; justify-content: center; gap: 0; margin: 4px 0 0; padding: 4px 8px; overflow: hidden; border: 1px solid rgba(255, 245, 216, .15); border-radius: 10px; }
+  .hand-fan .hand-card-slot { flex: 0 0 auto; height: 100%; min-height: 0; margin-left: -14px; }
+  .hand-fan .hand-card-slot:first-child { margin-left: 0; }
+  .hand-fan .card-art,
+  .hand-fan .hand-card { width: clamp(36px, 7.2vw, 52px); height: clamp(60px, 11.5vw, 82px); margin-left: 0; margin-bottom: 12px; }
+  .hand-help { display: none; }
+}

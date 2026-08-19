@@ -23,7 +23,12 @@ hand rail is a single high-contrast surface with larger SVG cards. The current
 seat receives the strongest gold ring, elevation, and `YOUR TURN` treatment;
 the next seat uses a quieter mint marker so hierarchy is unambiguous. The same
 layout rules collapse to one column on narrow screens and keep the card rail
-horizontally reachable.
+horizontally reachable. Phone and tablet surfaces use a viewport-height budget:
+portrait keeps a fitted hand fan below the table, while landscape compacts the
+table, seats, piles, and cards into one no-scroll stack and hides the duplicate
+felt turn badge in favor of the heading. Active north/south seats preserve their
+horizontal anchor, and card fronts use the source SVG edge directly without a
+second dark inset frame.
 
 The visual reference is the supplied UNO Offline Google Play surface: players sit around the table, opponent hands are represented by card-back fans, the draw and discard piles share the center, and the human hand is a readable fan along the near edge. The reference informed composition and interaction patterns only; UNO-2026 uses its own generated and authored assets.
 
