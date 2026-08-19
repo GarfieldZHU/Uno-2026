@@ -347,6 +347,35 @@ test("中等浏览器视口保持桌面牌桌与手牌比例", async ({ page }) 
   expect(metrics.minPileWidth).toBeGreaterThanOrEqual(90);
 });
 
+test("顶部和底部下一位席位保持水平锚点", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
+  await page.setViewportSize({ width: 1323, height: 946 });
+
+  const metrics = await page.evaluate(() => {
+    const table = document.querySelector<HTMLElement>(".felt-table.table-scene")?.getBoundingClientRect();
+    if (!table) return [];
+    return ["north", "south"].map((seat) => {
+      const element = document.querySelector<HTMLElement>(`.seat-${seat}`);
+      if (!element) return null;
+      const originalClassName = element.className;
+      const originalTransition = element.style.transition;
+      element.style.transition = "none";
+      element.classList.remove("is-active");
+      element.classList.add("is-next");
+      const nextBox = element.getBoundingClientRect();
+      element.className = originalClassName;
+      element.style.transition = originalTransition;
+      return {
+        offset: Math.abs(nextBox.left + nextBox.width / 2 - (table.left + table.width / 2)),
+      };
+    });
+  });
+
+  expect(metrics.filter((metric): metric is { offset: number } => metric !== null).every((metric) => metric.offset < 1)).toBe(true);
+});
+
 test("人类出牌会从手牌飞向弃牌堆", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();

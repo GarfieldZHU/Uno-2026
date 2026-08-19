@@ -26,9 +26,9 @@ layout rules collapse to one column on narrow screens and keep the card rail
 horizontally reachable. Phone and tablet surfaces use a viewport-height budget:
 portrait keeps a fitted hand fan below the table, while landscape compacts the
 table, seats, piles, and cards into one no-scroll stack and hides the duplicate
-felt turn badge in favor of the heading. Active north/south seats preserve their
-horizontal anchor, and card fronts use the source SVG edge directly without a
-second dark inset frame. Medium browser windows use a separate desktop-scale
+felt turn badge in favor of the heading. Active and next north/south seats
+preserve their horizontal anchor, and card fronts use the source SVG edge
+directly without a second dark inset frame. Medium browser windows use a separate desktop-scale
 single-column stack: the felt keeps flexible space while the hand rail, seat
 cards, piles, and SVG hand cards retain readable desktop sizes.
 

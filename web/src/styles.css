@@ -1312,6 +1312,10 @@ body {
 .table-seats .seat-player.seat-south.is-active {
   transform: translateX(-50%) translateY(-3px) scale(1.035);
 }
+.table-seats .seat-player.seat-north.is-next,
+.table-seats .seat-player.seat-south.is-next {
+  transform: translateX(-50%);
+}
 .table-scene-badge { top: 23%; }
 .card-art { background: transparent; }
 .card-art::before { box-shadow: none; }
