@@ -147,6 +147,9 @@ test("初始发牌结束后会短暂标示起始玩家", async ({ page }) => {
   await expect(page.locator(".deal-sequence-card")).toHaveCount(28);
   await expect(page.getByTestId("initial-deal")).toHaveAttribute("data-human-count", "7", { timeout: 7_000 });
   await page.screenshot({ path: "test-results/offline-initial-deal-geometry.png", fullPage: true });
+  await expect(page.getByTestId("initial-deal")).toHaveAttribute("data-phase", "starting", { timeout: 7_000 });
+  await expect(page.locator(".deal-sequence-card.is-face-up")).toHaveCount(7);
+  await expect.poll(async () => page.locator(".deal-sequence-card.is-face-up .deal-sequence-card-face img").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
   await expect(page.getByTestId("initial-deal")).toBeHidden({ timeout: 8_000 });
   await expect(page.getByTestId("starting-player-callout")).toBeHidden();
   await expect(page.getByTestId("table-direction-indicator")).toBeVisible();
