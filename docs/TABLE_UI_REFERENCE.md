@@ -28,7 +28,9 @@ portrait keeps a fitted hand fan below the table, while landscape compacts the
 table, seats, piles, and cards into one no-scroll stack and hides the duplicate
 felt turn badge in favor of the heading. Active north/south seats preserve their
 horizontal anchor, and card fronts use the source SVG edge directly without a
-second dark inset frame.
+second dark inset frame. Medium browser windows use a separate desktop-scale
+single-column stack: the felt keeps flexible space while the hand rail, seat
+cards, piles, and SVG hand cards retain readable desktop sizes.
 
 The visual reference is the supplied UNO Offline Google Play surface: players sit around the table, opponent hands are represented by card-back fans, the draw and discard piles share the center, and the human hand is a readable fan along the near edge. The reference informed composition and interaction patterns only; UNO-2026 uses its own generated and authored assets.
 

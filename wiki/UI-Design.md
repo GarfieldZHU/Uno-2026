@@ -24,8 +24,10 @@ widths, the layout becomes one column and the hand rail remains horizontally rea
 Phone and tablet layouts spend the viewport height on a fitted table-and-hand
 stack with document overflow disabled; landscape reduces secondary labels,
 seat cards, piles, and hand cards, while the heading remains the single turn
-cue. Active north/south seats retain their center anchor, and SVG card edges are
-not surrounded by a second dark inset frame.
+cue. Medium browser windows use a separate desktop-scale single-column stack
+so the table remains flexible without shrinking seats, piles, or hand cards into
+an unreadable compact mode. Active north/south seats retain their center anchor,
+and SVG card edges are not surrounded by a second dark inset frame.
 
 The human draw interaction is private: a back travels from the pile, flips to
 the resolved face, and the inserted card glows for two seconds. Other clients

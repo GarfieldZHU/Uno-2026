@@ -1402,3 +1402,58 @@ body {
   .hand-fan .hand-card { width: clamp(36px, 7.2vw, 52px); height: clamp(60px, 11.5vw, 82px); margin-left: 0; margin-bottom: 12px; }
   .hand-help { display: none; }
 }
+
+/* Medium browser windows keep the desktop visual hierarchy while still
+   fitting the single-column canvas used by the landscape shell.  The phone
+   and small-tablet compact sizes above remain unchanged. */
+@media (min-width: 1201px) and (max-width: 1400px) and (orientation: landscape) {
+  .game-layout { gap: 10px; padding-top: 10px; }
+  .table-heading { padding: 0 6px; }
+  .table-heading .eyebrow { margin-bottom: 5px; font-size: 8px; }
+  .table-heading h1 { font-size: clamp(28px, 3.2vw, 38px); }
+  .round-meta { gap: 8px; font-size: 9px; }
+  .direction-mark { width: 48px; min-height: 34px; padding: 3px 5px; font-size: 16px; }
+  .direction-mark small { font-size: 6px; }
+  .felt-table.table-scene { margin-top: 11px; border-radius: 32px; }
+
+  .table-seats .seat-player { width: 194px; min-height: 72px; padding: 7px 9px; gap: 8px; border-width: 2px; border-radius: 16px; }
+  .table-seats .seat-human { width: 184px; padding: 7px 11px; }
+  .seat-avatar-wrap,
+  .table-seats .seat-human .seat-avatar-wrap { width: 50px; height: 50px; }
+  .table-seats .seat-human .seat-avatar-wrap { width: 56px; height: 56px; }
+  .seat-player-info { gap: 4px; }
+  .seat-player-info strong { font-size: 11px; }
+  .seat-player-info span { font-size: 8px; }
+  .seat-card-fan { width: 72px; height: 58px; flex-basis: 72px; transform: none; }
+  .seat-card-fan img { top: auto; left: calc(50% + (var(--fan-index) - var(--fan-center)) * 8px); bottom: 5px; width: 29px; height: 48px; border: 1px solid rgba(245, 239, 203, .68); border-radius: 6px; object-fit: cover; transform: translateX(-50%) rotate(calc((var(--fan-index) - var(--fan-center)) * 7deg)); }
+  .seat-card-fan b { right: -3px; bottom: -3px; width: 21px; height: 21px; border-width: 2px; font-size: 9px; }
+  .seat-turn-label,
+  .seat-next-label { top: -17px; padding: 4px 9px; border-width: 2px; font-size: 8px; }
+  .seat-next-marker { top: -14px; right: -14px; width: 30px; height: 30px; font-size: 17px; }
+
+  .table-center { top: 50%; transform: translate(-50%, -45%); }
+  .table-center::before { width: 260px; height: 180px; }
+  .piles { gap: 34px; }
+  .pile-separator { height: 112px; }
+  .draw-stack,
+  .discard-stack { width: 102px; height: 142px; }
+  .card-back-image,
+  .stack-offset { width: 102px; height: 142px; border-radius: 15px; }
+  .stack-offset-one { left: 8px; top: 8px; }
+  .stack-offset-two { left: 4px; top: 5px; }
+  .discard-stack .card-art { width: 102px; height: 142px; }
+  .discard-shadow { width: 91px; height: 128px; }
+  .pile-count { right: -7px; bottom: -4px; width: 24px; height: 24px; border-width: 2px; font-size: 9px; }
+  .active-color { gap: 7px; margin-top: 22px; font-size: 8px; }
+  .active-color strong { font-size: 9px; }
+  .table-scene-status { right: 46px; bottom: 28px; left: 46px; font-size: 11px; }
+  .table-metrics { right: 46px; bottom: 25px; gap: 7px; }
+  .table-metric { min-width: 31px; padding: 4px 6px; border-radius: 7px; }
+  .table-metric > span { font-size: 10px; }
+  .table-metric b { font-size: 9px; }
+
+  .hand-rail.hand-fan { height: 174px; min-height: 174px; margin-top: 12px; padding: 17px 24px 19px; border-radius: 20px; }
+  .hand-fan .card-art,
+  .hand-fan .hand-card { width: 96px; height: 135px; margin-bottom: 4px; }
+  .hand-fan .hand-card-slot { height: 137px; min-height: 137px; }
+}

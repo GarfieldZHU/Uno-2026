@@ -312,6 +312,41 @@ test("手机和平板视口内完整显示牌桌与手牌且没有页面滚动",
   }
 });
 
+test("中等浏览器视口保持桌面牌桌与手牌比例", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始游戏" }).click();
+  await waitForInitialDeal(page);
+  await page.setViewportSize({ width: 1323, height: 946 });
+
+  const metrics = await page.evaluate(() => {
+    const box = (selector: string) => document.querySelector<HTMLElement>(selector)?.getBoundingClientRect();
+    const table = box(".felt-table.table-scene");
+    const rail = box(".hand-rail.hand-fan");
+    const cards = [...document.querySelectorAll<HTMLElement>(".hand-fan .card-art")].map((element) => element.getBoundingClientRect());
+    const seats = [...document.querySelectorAll<HTMLElement>(".seat-player")].map((element) => element.getBoundingClientRect());
+    const piles = [...document.querySelectorAll<HTMLElement>(".draw-stack, .discard-stack")].map((element) => element.getBoundingClientRect());
+    return {
+      scrollWidth: document.documentElement.scrollWidth,
+      scrollHeight: document.documentElement.scrollHeight,
+      table: table ? { width: table.width, height: table.height } : null,
+      rail: rail ? { width: rail.width, height: rail.height } : null,
+      minCardWidth: Math.min(...cards.map((card) => card.width)),
+      minSeatWidth: Math.min(...seats.map((seat) => seat.width)),
+      minPileWidth: Math.min(...piles.map((pile) => pile.width)),
+    };
+  });
+
+  expect(metrics.scrollWidth).toBeLessThanOrEqual(1323);
+  expect(metrics.scrollHeight).toBeLessThanOrEqual(946);
+  expect(metrics.table).not.toBeNull();
+  expect(metrics.rail).not.toBeNull();
+  expect(metrics.table!.height / metrics.table!.width).toBeLessThan(0.56);
+  expect(metrics.rail!.height).toBeGreaterThanOrEqual(150);
+  expect(metrics.minCardWidth).toBeGreaterThanOrEqual(82);
+  expect(metrics.minSeatWidth).toBeGreaterThanOrEqual(180);
+  expect(metrics.minPileWidth).toBeGreaterThanOrEqual(90);
+});
+
 test("人类出牌会从手牌飞向弃牌堆", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "开始游戏" }).click();
