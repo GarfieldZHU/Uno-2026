@@ -1189,3 +1189,118 @@ body {
 .turn-transition-overlay { z-index: 31; }
 .table-exit-floating { position: fixed; z-index: 90; top: 12px; right: 58px; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(255, 245, 216, .2); border-radius: 50%; color: rgba(255, 245, 216, .74); background: rgba(2, 19, 18, .72); box-shadow: 0 8px 18px rgba(0,0,0,.2); font-size: 20px; line-height: 1; transition: color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease; }
 .table-exit-floating:hover, .table-exit-floating:focus-visible { border-color: rgba(246, 204, 113, .72); color: var(--ui-gold); background: rgba(18, 52, 40, .9); transform: translateY(-1px); }
+
+/* Opening deal: every destination is measured from the rendered table.  The
+   layer spans the table and hand rail so the flight ends on the exact card
+   slot that the player will see, even when the viewport or seat count changes. */
+.game-layout { position: relative; }
+.game-layout[data-deal-phase="dealing"] .hand-card-slot,
+.game-layout[data-deal-phase="starting"] .hand-card-slot,
+.game-layout[data-deal-phase="dealing"] .seat-card-fan,
+.game-layout[data-deal-phase="starting"] .seat-card-fan { visibility: hidden; }
+.game-layout[data-deal-phase="dealing"] .draw-stack,
+.game-layout[data-deal-phase="starting"] .draw-stack { opacity: .2; }
+.deal-sequence-layer {
+  position: absolute;
+  z-index: 42;
+  inset: 0;
+  display: block;
+  overflow: visible;
+  border-radius: 0;
+  color: #fff7dc;
+  pointer-events: none;
+  perspective: 1000px;
+}
+.deal-sequence-vignette { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, rgba(4, 20, 18, .12), rgba(2, 13, 13, .53) 82%); backdrop-filter: blur(.8px); }
+.deal-sequence-layer.is-starting .deal-sequence-vignette { background: radial-gradient(circle at 50% 45%, rgba(20, 75, 52, .08), rgba(2, 13, 13, .18) 84%); backdrop-filter: blur(.2px); }
+.deal-sequence-stack { position: absolute; inset: 0; z-index: 2; width: auto; height: auto; transform: none; pointer-events: none; }
+.deal-sequence-stack::before { display: none; }
+.deal-sequence-stack .deal-source-stack {
+  position: absolute;
+  z-index: 3;
+  display: block;
+  margin: 0;
+  border: 1px solid rgba(255, 247, 218, .72);
+  border-radius: 12px;
+  background: rgba(4, 18, 18, .86);
+  box-shadow: 0 0 0 6px rgba(245, 201, 107, .07), 0 16px 34px rgba(0, 0, 0, .46);
+  transform: translate(-50%, -50%) rotate(-4deg);
+}
+.deal-source-offset { position: absolute; inset: 0; display: block; border: 1px solid rgba(255, 247, 218, .28); border-radius: inherit; background: rgba(16, 35, 36, .55); }
+.deal-source-offset-one { transform: translate(7px, 7px) rotate(2deg); opacity: .52; }
+.deal-source-offset-two { transform: translate(3px, 4px) rotate(1deg); opacity: .72; }
+.deal-sequence-stack .deal-source-card,
+.deal-sequence-stack .deal-sequence-card-back {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0;
+  border: 0;
+  border-radius: 10px;
+  object-fit: fill;
+  box-shadow: 0 13px 24px rgba(0, 0, 0, .42);
+}
+.deal-sequence-stack .deal-source-card { z-index: 2; opacity: 1; transform: none; animation: none; }
+.deal-sequence-stack .deal-sequence-card-back { z-index: 1; backface-visibility: hidden; top: 0 !important; left: 0 !important; transform: none; animation: none; opacity: 1; }
+.deal-sequence-stack .deal-sequence-card {
+  position: absolute;
+  z-index: 4;
+  display: block;
+  margin: 0;
+  opacity: 0;
+  transform-origin: center;
+  transform-style: preserve-3d;
+  animation: deal-card-to-seat .64s cubic-bezier(.16, .76, .2, 1) var(--deal-delay) both;
+}
+.deal-sequence-stack .deal-sequence-card-face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  opacity: 0;
+  transform: rotateY(180deg) scale(.9);
+  transform-origin: center;
+  backface-visibility: hidden;
+}
+.deal-sequence-stack .deal-sequence-card-face .card-art { width: 100%; height: 100%; margin: 0; transform: none !important; box-shadow: 0 12px 22px rgba(0, 0, 0, .38); }
+.deal-sequence-stack .deal-sequence-card-face .card-art img { position: relative !important; top: auto !important; left: auto !important; width: 100%; height: 100%; object-fit: fill; border-radius: 7%; transform: none !important; animation: none !important; }
+.deal-sequence-layer.is-starting .deal-sequence-card { opacity: 1; animation: deal-card-settle 1.35s ease-in-out both; }
+.deal-sequence-layer.is-human .deal-sequence-card { isolation: isolate; }
+.deal-sequence-stack .deal-sequence-card.is-face-up .deal-sequence-card-back { animation: deal-face-back-out .62s cubic-bezier(.2, .72, .2, 1) both; }
+.deal-sequence-stack .deal-sequence-card.is-face-up .deal-sequence-card-face { animation: deal-face-front-in .62s cubic-bezier(.2, .72, .2, 1) both; }
+.deal-sequence-stack .deal-sequence-card.is-face-up .deal-sequence-card-face .card-art { box-shadow: 0 12px 22px rgba(0, 0, 0, .42), 0 0 18px rgba(142, 232, 212, .2); }
+.deal-human-progress { position: absolute; z-index: 8; display: flex; align-items: center; gap: 9px; min-width: 126px; padding: 6px 11px; border: 1px solid rgba(142, 232, 212, .38); border-radius: 999px; color: rgba(255, 247, 218, .78); background: rgba(3, 26, 23, .82); box-shadow: 0 8px 20px rgba(0, 0, 0, .25); font-size: 8px; letter-spacing: .08em; transform: translate(-50%, -50%); }
+.deal-human-progress strong { color: var(--ui-gold); font-size: 11px; letter-spacing: .04em; }
+.deal-sequence-copy { position: absolute; z-index: 9; top: 50%; left: 50%; display: grid; justify-items: center; gap: 8px; width: min(330px, calc(100% - 38px)); text-align: center; transform: translate(-50%, -50%); pointer-events: none; }
+.deal-sequence-copy > strong { color: #fff5d6; font-size: clamp(18px, 2.3vw, 28px); letter-spacing: .12em; text-shadow: 0 5px 20px rgba(0, 0, 0, .48); }
+.deal-sequence-copy > small, .starting-player-callout small { color: rgba(255, 247, 218, .7); font-size: 10px; }
+.deal-sequence-layer.is-starting .deal-sequence-copy { display: none; }
+@keyframes deal-card-to-seat {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate(0, 0) rotate(-8deg) scale(var(--deal-source-scale)); }
+  12% { opacity: 1; }
+  72% { opacity: 1; transform: translate(-50%, -50%) translate(var(--deal-dx), var(--deal-dy)) rotate(var(--deal-target-rotate)) scale(1.06); }
+  88% { opacity: 1; transform: translate(-50%, -50%) translate(var(--deal-dx), var(--deal-dy)) rotate(var(--deal-target-rotate)) scale(.94); }
+  100% { opacity: 1; transform: translate(-50%, -50%) translate(var(--deal-dx), var(--deal-dy)) rotate(var(--deal-target-rotate)) scale(1); }
+}
+@keyframes deal-card-settle {
+  0%, 100% { opacity: 1; transform: translate(-50%, -50%) translate(var(--deal-dx), var(--deal-dy)) rotate(var(--deal-target-rotate)) scale(1); }
+  48% { opacity: 1; transform: translate(-50%, -50%) translate(var(--deal-dx), var(--deal-dy)) rotate(var(--deal-target-rotate)) scale(1.035); }
+}
+@keyframes deal-face-back-out { 0% { opacity: 1; transform: rotateY(0) scale(1); } 100% { opacity: 0; transform: rotateY(180deg) scale(.9); } }
+@keyframes deal-face-front-in { 0% { opacity: 0; transform: rotateY(-180deg) scale(.9); } 100% { opacity: 1; transform: rotateY(0) scale(1); } }
+
+@media (max-width: 760px) {
+  .deal-human-progress { min-width: 112px; padding: 5px 9px; font-size: 7px; }
+  .deal-sequence-copy { width: min(280px, calc(100% - 26px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deal-sequence-stack .deal-sequence-card,
+  .deal-sequence-stack .deal-sequence-card.is-face-up .deal-sequence-card-back,
+  .deal-sequence-stack .deal-sequence-card.is-face-up .deal-sequence-card-face { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .deal-sequence-stack .deal-sequence-card { opacity: 1; transform: translate(-50%, -50%) translate(var(--deal-dx), var(--deal-dy)) rotate(var(--deal-target-rotate)) scale(1); }
+  .deal-sequence-stack .deal-sequence-card-back { opacity: 1; }
+  .deal-sequence-stack .deal-sequence-card.is-face-up .deal-sequence-card-back { opacity: 0; transform: rotateY(180deg); }
+  .deal-sequence-stack .deal-sequence-card.is-face-up .deal-sequence-card-face { opacity: 1; transform: rotateY(0); }
+}

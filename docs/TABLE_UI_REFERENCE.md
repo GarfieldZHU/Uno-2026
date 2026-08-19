@@ -36,9 +36,13 @@ Interaction rules:
 4. The table exposes only high-signal controls; settings and language remain outside the playfield.
 5. The online lobby and table keep a quiet `⌁` control that exports redacted network diagnostics only when clicked; nothing is uploaded.
 
-When assets finish loading, the table runs a 3.8-second initial deal from the
-centre pile to the perimeter seats and then calls out the starting player before
-enabling input. The play direction is a translucent, seat-aware SVG route over
+When assets finish loading, the table runs a 3.8-second initial deal. The source
+is measured from the rendered draw pile, while every destination is measured from
+the rendered opponent fan or human hand slot; it therefore follows the actual
+table geometry at any supported seat count and viewport size. Human cards travel
+back-side up, the visible hand count advances from `0/N`, and only after the last
+card lands do the human cards flip to their resolved SVG faces. The overlay then
+calls out the starting player before enabling input. The play direction is a translucent, seat-aware SVG route over
 the felt. Each route connects one player to the next in the active direction;
 the current player-to-next-player route uses a gold animated stroke, while the
 other routes remain quiet. Hovering a route lifts its contrast; the old center

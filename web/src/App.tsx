@@ -152,6 +152,7 @@ export function App() {
   const [handOrder, setHandOrder] = useState<number[]>([]);
   const [animation, setAnimation] = useState<TableAnimation>(null);
   const [dealPhase, setDealPhase] = useState<TablePhase>(null);
+  const [dealHumanCount, setDealHumanCount] = useState(0);
   const [startingPlayerId, setStartingPlayerId] = useState<number | null>(null);
   const [playFlight, setPlayFlight] = useState<PlayFlightEvent | null>(null);
   const [tableEffect, setTableEffect] = useState<TableEffect>(null);
@@ -212,6 +213,7 @@ export function App() {
     if (startingTimerRef.current !== null) window.clearTimeout(startingTimerRef.current);
     if (animationTimerRef.current !== null) window.clearTimeout(animationTimerRef.current);
     setStartingPlayerId(playerId);
+    setDealHumanCount(0);
     setDealPhase("dealing");
     setAnimation("deal");
     dealTimerRef.current = window.setTimeout(() => {
@@ -319,6 +321,7 @@ export function App() {
     setSettlementActionsVisible(false);
     setPenaltyDraw(null);
     setDealPhase(null);
+    setDealHumanCount(0);
     setStartingPlayerId(null);
     setAssetProgress({ loaded: 0, total: TABLE_ASSET_URLS.length });
     try {
@@ -714,7 +717,7 @@ export function App() {
         <div className="top-actions"><div className="table-profile"><span>{text.aiProfile}</span><strong>{profileLabel(language, activeConfig.profile)}</strong><small>{text.seats(snapshot.players.length)} · {text.basePause(activeConfig.defaultPauseSeconds)}</small></div><button className="language-toggle" type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} aria-label={language === "zh" ? text.switchToEnglish : text.switchToChinese}>{language === "zh" ? "EN" : "中文"}</button><button className="icon-button" onClick={openMenu} aria-label={language === "zh" ? "返回主菜单" : "Return to main menu"} type="button">×</button></div>
       </header>
 
-      <main className="game-layout">
+      <main className="game-layout" data-deal-phase={dealPhase ?? "ready"}>
         <section className="table-column">
           <div className="table-heading"><div><p className="eyebrow">{text.match} / 001 · {text.seats(snapshot.players.length)}</p><h1>{text.makeYourMove}</h1></div><div className="round-meta"><span>{text.turn} {String(snapshot.turn_number).padStart(2, "0")}</span><span className="direction-mark" data-testid="direction-indicator" data-direction={snapshot.direction === 1 ? "clockwise" : "counter-clockwise"} aria-label={snapshot.direction === 1 ? (language === "zh" ? "顺时针出牌" : "Clockwise play") : (language === "zh" ? "逆时针出牌" : "Counter-clockwise play")}><b>{snapshot.direction === 1 ? "↻" : "↺"}</b><small>{snapshot.direction === 1 ? (language === "zh" ? "顺时针" : "CW") : (language === "zh" ? "逆时针" : "CCW")}</small></span></div></div>
           <div ref={tableDropRef} className={`felt-table table-scene ${draggingCardId !== null ? "is-card-drop-target" : ""}`} data-animation={animation ?? undefined} data-deal-phase={dealPhase ?? "ready"} data-drop-target="table" onDragEnter={handleTableDragEnter} onDragOver={handleTableDragOver} onDrop={handleTableDrop}>
@@ -741,19 +744,19 @@ export function App() {
             {tableEffect && <ActionEffectOverlay effect={tableEffect} language={language} />}
             {penaltyDraw && <PenaltyDrawFlight count={penaltyDraw.count} playerId={penaltyDraw.playerId} source={penaltyDraw.source} language={language} />}
             {turnTransition && <TurnTransitionOverlay language={language} kind={turnTransition.kind} current={transitionCurrent} next={transitionNext} />}
-            {dealPhase && <DealSequenceOverlay phase={dealPhase} language={language} playerCount={snapshot.players.length} startingPlayer={startingPlayer} />}
             {snapshot.status === "Won" && <SettlementOverlay language={language} winner={winner} isWinner={snapshot.winner === HUMAN_ID} showActions={settlementActionsVisible} onPlayAgain={() => { if (activeConfig) void startGame(activeConfig); }} onExit={openMenu} />}
           </div>
         </section>
 
         <section className="hand-column">
-          <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(human?.hand_count ?? 0).padStart(2, "0")}</p>{human?.hand_count === 1 && <h2 className="hand-alert">{text.oneCardLeft}</h2>}</div><div className="hand-actions"><button className="ghost-button" data-testid="sort-hand" disabled={dealPhase !== null || snapshot.status === "Won"} onClick={() => { if (human) setHandOrder([...human.hand].sort((a, b) => a.color.localeCompare(b.color) || a.kind.localeCompare(b.kind)).map((card) => card.id)); }} type="button">{language === "zh" ? "整理手牌" : "SORT"}</button><button className={`ghost-button uno-call-button ${snapshot.uno_pending_player === HUMAN_ID ? "is-uno-ready" : ""}`} data-testid="call-uno" onClick={handleUno} disabled={dealPhase !== null || human?.hand_count !== 1 || snapshot.uno_pending_player !== HUMAN_ID || snapshot.status === "Won"} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={handleDraw} disabled={dealPhase !== null || snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
+          <div className="hand-heading"><div><p className="eyebrow">{language === "zh" ? "你的手牌" : "YOUR HAND"} / {String(dealPhase !== null ? dealHumanCount : human?.hand_count ?? 0).padStart(2, "0")}</p>{human?.hand_count === 1 && <h2 className="hand-alert">{text.oneCardLeft}</h2>}</div><div className="hand-actions"><button className="ghost-button" data-testid="sort-hand" disabled={dealPhase !== null || snapshot.status === "Won"} onClick={() => { if (human) setHandOrder([...human.hand].sort((a, b) => a.color.localeCompare(b.color) || a.kind.localeCompare(b.kind)).map((card) => card.id)); }} type="button">{language === "zh" ? "整理手牌" : "SORT"}</button><button className={`ghost-button uno-call-button ${snapshot.uno_pending_player === HUMAN_ID ? "is-uno-ready" : ""}`} data-testid="call-uno" onClick={handleUno} disabled={dealPhase !== null || human?.hand_count !== 1 || snapshot.uno_pending_player !== HUMAN_ID || snapshot.status === "Won"} type="button">{text.callUno} <span>!</span></button><button className="primary-button" onClick={handleDraw} disabled={dealPhase !== null || snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} type="button">{text.drawCard}</button></div></div>
           <div className="hand-rail hand-fan" data-testid="hand-rail">{orderedHand.map((card, index) => <div className={`hand-card-slot ${draggingCardId === card.id ? "is-dragging" : ""} ${drawnCardId === card.id ? "is-drawn-highlight" : ""}`} key={card.id} data-card-id={card.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const source = Number(event.dataTransfer.getData("text/plain")); if (source) reorderHand(source, card.id); }}>
             <CardArt card={card} language={language} className={`hand-card ${playableIds.has(card.id) ? "is-playable" : "is-unplayable"} ${liftedCardId === card.id ? "is-lifted" : ""} ${drawnCardId === card.id ? "is-drawn-highlight" : ""}`} style={{ "--hand-index": index, "--hand-total": human?.hand.length ?? 0 } as CSSProperties} disabled={snapshot.current_player !== HUMAN_ID || snapshot.status === "Won"} ariaDisabled={!playableIds.has(card.id)} draggable={snapshot.current_player === HUMAN_ID && snapshot.status !== "Won"} onClick={() => handleCardClick(card)} onDoubleClick={() => handleCardDoubleClick(card)} onDragStart={(event) => handleDragStart(event, card)} onDragEnd={handleDragEnd} onPointerDown={(event) => handlePointerDown(event, card)} />
             {wildCardId === card.id && <div className="wild-picker" role="dialog" aria-modal="false" aria-labelledby="color-title"><span className="wild-picker-stem" /><p className="eyebrow">{text.wildCard}</p><strong id="color-title">{text.chooseColor}</strong><div className="wild-picker-options">{COLORS.map((color) => <button key={color.name} className={`wild-picker-option color-option-${color.className}`} onClick={() => handleWildColor(color.name)} aria-label={translateColor(language, color.name)} type="button"><span className={`color-swatch swatch-${color.className}`} /></button>)}</div><button className="wild-picker-cancel" onClick={() => setWildCardId(null)} type="button">×</button></div>}
           </div>)}</div>
           <div className="hand-help compact-help" aria-label={language === "zh" ? "牌桌操作提示" : "Table controls"}><span className="help-action" title={language === "zh" ? "拖拽亮起的牌到牌桌出牌" : "Drag a lit card to the table"}><kbd>↕</kbd><span className="sr-only">{language === "zh" ? "拖拽亮起的牌到牌桌出牌" : "Drag a lit card to the table"}</span></span><span className="help-action" title={text.drawHint}><kbd>＋</kbd><span className="sr-only">{text.drawHint}</span></span><span className={`help-state ${notice ? "is-alert" : "is-ready"}`} title={notice ? localizeEngineMessage(language, notice) : text.playableHint}><span className="status-pulse" /><span className="sr-only">{notice ? localizeEngineMessage(language, notice) : text.playableHint}</span></span></div>
         </section>
+        {dealPhase && <DealSequenceOverlay phase={dealPhase} language={language} players={snapshot.players} humanId={HUMAN_ID} humanCards={orderedHand} startingPlayer={startingPlayer} onHumanCountChange={setDealHumanCount} />}
       </main>
 
       <DiscardHistory cards={discardCards} language={language} open={historyOpen} onClose={() => setHistoryOpen(false)} />

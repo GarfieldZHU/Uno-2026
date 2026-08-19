@@ -27,4 +27,10 @@ the resolved face, and the inserted card glows for two seconds. Other clients
 only receive the public count update. Finished tables reveal play-again/exit
 actions after five seconds and keep a compact exit control in the top-right corner.
 
+The opening deal is measured rather than guessed: the animation reads the
+rendered draw-pile rectangle and each rendered seat/hand slot, then sends the
+backs to those coordinates. The human hand displays `0/N` while cards arrive
+back-side up and reveals the SVG faces only after the final card lands. This
+keeps the 3.8-second opening readable across responsive layouts and seat counts.
+
 Implementation reference: [`docs/TABLE_UI_REFERENCE.md`](../docs/TABLE_UI_REFERENCE.md).

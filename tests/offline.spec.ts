@@ -143,6 +143,10 @@ test("初始发牌结束后会短暂标示起始玩家", async ({ page }) => {
   await page.getByRole("button", { name: "开始游戏" }).click();
   await expect(page.getByTestId("initial-deal")).toBeVisible();
   await expect(page.getByTestId("initial-deal")).toHaveAttribute("data-phase", "dealing");
+  await expect(page.getByTestId("deal-human-progress")).toBeVisible();
+  await expect(page.locator(".deal-sequence-card")).toHaveCount(28);
+  await expect(page.getByTestId("initial-deal")).toHaveAttribute("data-human-count", "7", { timeout: 7_000 });
+  await page.screenshot({ path: "test-results/offline-initial-deal-geometry.png", fullPage: true });
   await expect(page.getByTestId("initial-deal")).toBeHidden({ timeout: 8_000 });
   await expect(page.getByTestId("starting-player-callout")).toBeHidden();
   await expect(page.getByTestId("table-direction-indicator")).toBeVisible();
